@@ -15,9 +15,18 @@ import { runCheckout } from "./commands/checkout.js";
 import { runExec } from "./commands/exec.js";
 import { runSync } from "./commands/sync.js";
 import { runLabelAdd, runLabelList, runLabelRemove } from "./commands/label.js";
+import {
+  assertOverviewCoverage,
+  assertProgramRegistrationCoverage,
+  getCommandDefinition,
+} from "./command-registry.js";
 import packageJson from "../package.json";
 
 const VERSION = packageJson.version;
+
+function commandDescription(id: string): string {
+  return getCommandDefinition(id).description;
+}
 
 function showDeprecationWarning(oldName: string, newName: string) {
   console.warn(
@@ -43,7 +52,7 @@ program.action(async () => {
 
 program
   .command("init")
-  .description("Setup wizard for configuring repos CLI")
+  .description(commandDescription("init"))
   .option("-f, --force", "Overwrite existing configuration")
   .action(async (options) => {
     await runInit(options.force);
@@ -51,7 +60,7 @@ program
 
 program
   .command("status")
-  .description("Check status of all repositories")
+  .description(commandDescription("status"))
   .option("-s, --summary", "Show only summary counts")
   .option("-q, --quiet", "Minimal output, only show repos with changes")
   .option("-f, --filter <pattern>", "Filter repos by pattern (e.g., 'api-*')")
@@ -69,7 +78,7 @@ program
 
 program
   .command("fetch")
-  .description("Fetch latest changes from remotes for all repositories")
+  .description(commandDescription("fetch"))
   .option("-n, --dry-run", "Show what would be fetched without fetching")
   .option("-q, --quiet", "Minimal output")
   .option("-f, --filter <pattern>", "Filter repos by pattern (e.g., 'api-*')")
@@ -91,7 +100,7 @@ program
 
 program
   .command("pull")
-  .description("Pull latest changes for all repositories")
+  .description(commandDescription("pull"))
   .option("-n, --dry-run", "Show what would be updated without pulling")
   .option("-q, --quiet", "Minimal output")
   .option("-f, --filter <pattern>", "Filter repos by pattern (e.g., 'api-*')")
@@ -109,7 +118,7 @@ program
 
 program
   .command("update")
-  .description("(Deprecated: use 'pull') Pull latest changes for all repositories")
+  .description(commandDescription("update"))
   .option("-n, --dry-run", "Show what would be updated without pulling")
   .option("-q, --quiet", "Minimal output")
   .option("-f, --filter <pattern>", "Filter repos by pattern (e.g., 'api-*')")
@@ -128,7 +137,7 @@ program
 
 program
   .command("clone")
-  .description("Clone active repositories from GitHub organization")
+  .description(commandDescription("clone"))
   .option("-n, --dry-run", "Show what would be cloned without cloning")
   .option("-o, --org <name>", "GitHub organization or username")
   .option("-h, --host <host>", "GitHub host (default: github.com)")
@@ -148,7 +157,7 @@ program
 
 program
   .command("clean")
-  .description("Clean repositories by reverting changes")
+  .description(commandDescription("clean"))
   .option("-n, --dry-run", "Show what would be cleaned without cleaning")
   .option("--force", "Skip confirmation prompt")
   .option("-a, --all", "Also remove untracked files")
@@ -166,7 +175,7 @@ program
 
 program
   .command("cleanup")
-  .description("(Deprecated: use 'clean') Clean repositories by reverting changes")
+  .description(commandDescription("cleanup"))
   .option("-n, --dry-run", "Show what would be cleaned without cleaning")
   .option("-f, --force", "Skip confirmation prompt")
   .option("-a, --all", "Also remove untracked files")
@@ -185,7 +194,7 @@ program
 
 program
   .command("diff")
-  .description("Show diffs across all repositories")
+  .description(commandDescription("diff"))
   .option("-q, --quiet", "Only list repos with changes (no diff output)")
   .option("--stat", "Show diffstat summary instead of full diff")
   .option("-f, --filter <pattern>", "Filter repos by pattern (e.g., 'api-*')")
@@ -205,7 +214,7 @@ program
 
 program
   .command("checkout <branch>")
-  .description("Switch branches across all repositories")
+  .description(commandDescription("checkout"))
   .option("-b, --create", "Create branch if it doesn't exist")
   .option("--force", "Skip repos with uncommitted changes")
   .option("-f, --filter <pattern>", "Filter repos by pattern (e.g., 'api-*')")
@@ -224,7 +233,7 @@ program
 
 program
   .command("exec <command>")
-  .description("Run arbitrary command across all repositories")
+  .description(commandDescription("exec"))
   .option("-q, --quiet", "Only show output for repos with non-empty results")
   .option("-p, --parallel <number>", "Number of parallel operations", parseInt)
   .option("-f, --filter <pattern>", "Filter repos by pattern (e.g., 'api-*')")
@@ -243,14 +252,14 @@ program
 
 program
   .command("sync")
-  .description("Sync local repository database (paths, labels, exclusions)")
+  .description(commandDescription("sync"))
   .action(async () => {
     await runSync();
   });
 
 const labelCommand = program
   .command("label")
-  .description("Manage repository labels");
+  .description(commandDescription("label"));
 
 labelCommand
   .command("add <label> [repos...]")
@@ -281,7 +290,7 @@ labelCommand
 
 program
   .command("config")
-  .description("View or modify configuration")
+  .description(commandDescription("config"))
   .option("-g, --get <key>", "Get a specific config value")
   .option("-s, --set <key>", "Set a config value")
   .option("-v, --value <value>", "Value to set")
@@ -296,5 +305,8 @@ program
       location: options.location,
     });
   });
+
+assertOverviewCoverage();
+assertProgramRegistrationCoverage(program.commands.map((command) => command.name()));
 
 program.parse();

@@ -11,10 +11,16 @@ import { FetchApp } from "../commands/fetch.js";
 import { DiffApp } from "../commands/diff.js";
 import { CheckoutApp } from "../commands/checkout.js";
 import { ExecApp } from "../commands/exec.js";
+import { SyncApp } from "../commands/sync.js";
+import { LabelMenuApp } from "../commands/label-menu.js";
 import { loadConfig } from "../lib/config.js";
 import { selectLocalRepos } from "../lib/repo-selection.js";
 import { OptionsForm, type FormField } from "./OptionsForm.js";
 import { GroupedMenu, type MenuItem, type MenuGroup } from "./GroupedMenu.js";
+import {
+  assertOverviewCoverage,
+  getOverviewMenuGroups,
+} from "../command-registry.js";
 import type {
   ReposConfig,
   StatusOptions,
@@ -36,39 +42,14 @@ type Command =
   | "clone"
   | "clean"
   | "exec"
+  | "sync"
+  | "label"
   | "config"
   | "init";
 
-const menuGroups: MenuGroup[] = [
-  {
-    category: "git",
-    label: "Git Operations",
-    items: [
-      { label: "Status", value: "status", key: "s", description: "Check status of all repositories" },
-      { label: "Fetch", value: "fetch", key: "f", description: "Fetch updates from remote repositories" },
-      { label: "Pull", value: "pull", key: "p", description: "Pull changes into clean repositories" },
-      { label: "Diff", value: "diff", key: "d", description: "Show uncommitted changes across repos" },
-      { label: "Checkout", value: "checkout", key: "c", description: "Switch branches across repositories" },
-    ],
-  },
-  {
-    category: "repo",
-    label: "Management",
-    items: [
-      { label: "Clone", value: "clone", key: "o", description: "Clone repositories from GitHub organization" },
-      { label: "Clean", value: "clean", key: "x", description: "Remove untracked and ignored files" },
-      { label: "Exec", value: "exec", key: "e", description: "Execute command in all repositories" },
-    ],
-  },
-  {
-    category: "settings",
-    label: "Settings",
-    items: [
-      { label: "Config", value: "config", key: "g", description: "View and edit configuration" },
-      { label: "Init", value: "init", key: "i", description: "Initialize repos in current directory" },
-    ],
-  },
-];
+assertOverviewCoverage();
+
+const menuGroups: MenuGroup[] = getOverviewMenuGroups();
 
 function getCommandFields(
   command: Command,
@@ -396,6 +377,8 @@ type CommandOptions =
   | { command: "exec"; options: ExecOptions }
   | { command: "clone"; options: CloneOptions }
   | { command: "clean"; options: CleanupOptions }
+  | { command: "sync" }
+  | { command: "label" }
   | { command: "config" }
   | { command: "init" };
 
@@ -436,6 +419,12 @@ export function App() {
     setState("running");
 
     switch (command) {
+      case "sync":
+        setRunningCommand({ command: "sync" });
+        break;
+      case "label":
+        setRunningCommand({ command: "label" });
+        break;
       case "config":
         setRunningCommand({ command: "config" });
         break;
@@ -622,6 +611,14 @@ export function App() {
             options={runningCommand.options}
             onComplete={handleCommandComplete}
           />
+        );
+      case "sync":
+        return (
+          <SyncApp onComplete={handleCommandComplete} />
+        );
+      case "label":
+        return (
+          <LabelMenuApp onComplete={handleCommandComplete} />
         );
       case "config":
         return (
