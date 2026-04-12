@@ -65,7 +65,8 @@ export function InitApp({ force, basePath, onComplete }: InitAppProps) {
 
   useEffect(() => {
     async function check() {
-      if (!force && (await configExists("any", basePath))) {
+      const configLocation = basePath ? "cwd" : "global";
+      if (!force && (await configExists(configLocation, basePath))) {
         setError(
           "Configuration already exists. Use --force to overwrite or 'repos config' to view/edit."
         );
