@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { render, Box, Text, useInput } from "ink";
 import Spinner from "ink-spinner";
+import { relative } from "path";
 import { selectLocalRepos } from "../lib/repo-selection.js";
 import { isRepoLocallyActiveWithinDays } from "../lib/git.js";
+import { resolveCodeDir } from "../lib/config.js";
 import type { ListOptions } from "../types.js";
 
 interface ListAppProps {
@@ -11,6 +13,11 @@ interface ListAppProps {
 }
 
 type Phase = "finding" | "done" | "error";
+
+export function toDisplayRepoPath(codeDir: string, repoPath: string): string {
+  const relPath = relative(codeDir, repoPath).replace(/\\/g, "/");
+  return relPath && !relPath.startsWith("..") ? relPath : repoPath;
+}
 
 export function ListApp({ options, onComplete }: ListAppProps) {
   const [phase, setPhase] = useState<Phase>("finding");
@@ -32,6 +39,7 @@ export function ListApp({ options, onComplete }: ListAppProps) {
   useEffect(() => {
     async function runList() {
       try {
+        const codeDir = await resolveCodeDir(options.basePath);
         let repos = await selectLocalRepos({
           basePath: options.basePath,
           filter: options.filter,
@@ -48,7 +56,9 @@ export function ListApp({ options, onComplete }: ListAppProps) {
           repos = active;
         }
 
-        setRepoPaths(repos);
+        const displayPaths = repos.map((repoPath) => toDisplayRepoPath(codeDir, repoPath));
+
+        setRepoPaths(displayPaths);
         setPhase("done");
       } catch (err) {
         setError(err instanceof Error ? err.message : String(err));
