@@ -1,1 +1,2 @@
-For new meaningful features or changes. Write a concise explanation in README.md
+- For new meaningful features or changes. Write a concise explanation in README.md
+- It's early development, it's fine making breaking changes to keep the project simple.
