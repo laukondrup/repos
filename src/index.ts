@@ -68,7 +68,7 @@ program
       quiet: options.quiet,
       filter: options.filter,
       fetch: options.fetch,
-      noExclude: options.exclude,
+      noExclude: !options.exclude,
     });
   });
 
@@ -90,7 +90,7 @@ program
       parallel: options.parallel,
       prune: options.prune,
       all: options.all,
-      noExclude: options.exclude,
+      noExclude: !options.exclude,
     });
   });
 
@@ -108,7 +108,7 @@ program
       quiet: options.quiet,
       filter: options.filter,
       parallel: options.parallel,
-      noExclude: options.exclude,
+      noExclude: !options.exclude,
     });
   });
 
@@ -146,7 +146,7 @@ program
       force: options.force,
       all: options.all,
       filter: options.filter,
-      noExclude: options.exclude,
+      noExclude: !options.exclude,
     });
   });
 
@@ -166,7 +166,7 @@ program
       filter: options.filter,
       parallel: options.parallel,
       maxLines: options.maxLines,
-      noExclude: options.exclude,
+      noExclude: !options.exclude,
     });
   });
 
@@ -185,7 +185,7 @@ program
       force: options.force,
       filter: options.filter,
       parallel: options.parallel,
-      noExclude: options.exclude,
+      noExclude: !options.exclude,
     });
   });
 
@@ -204,7 +204,7 @@ program
       parallel: options.parallel,
       filter: options.filter,
       days: options.days,
-      noExclude: options.exclude,
+      noExclude: !options.exclude,
     });
   });
 
@@ -219,7 +219,7 @@ program
     await runList({
       filter: options.filter,
       days: options.days,
-      noExclude: options.exclude,
+      noExclude: !options.exclude,
     });
   });
 

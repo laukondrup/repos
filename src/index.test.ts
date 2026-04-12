@@ -46,6 +46,30 @@ describe("CLI exclusion flags", () => {
       expect(block).toContain('--no-exclude');
     }
   });
+
+  test("inverts commander --no-exclude flag into noExclude option", () => {
+    const commands = [
+      "status",
+      "fetch",
+      "pull",
+      "clean",
+      "diff",
+      "checkout <branch>",
+      "exec <command>",
+      "list",
+    ];
+
+    for (const command of commands) {
+      const escaped = command.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const actionRegex = new RegExp(
+        `\\.command\\("${escaped}"\\)[\\s\\S]*?\\.action\\(async \\([^)]*\\) => \\{([\\s\\S]*?)\\}\\);`,
+        "m",
+      );
+      const match = source.match(actionRegex);
+      const actionBody = match?.[1] ?? "";
+      expect(actionBody).toContain("noExclude: !options.exclude");
+    }
+  });
 });
 
 describe("CLI exec options", () => {
