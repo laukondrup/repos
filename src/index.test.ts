@@ -42,6 +42,7 @@ describe("CLI exclusion flags", () => {
       "diff",
       "checkout <branch>",
       "exec <command>",
+      "list",
     ];
 
     for (const command of commands) {
@@ -55,6 +56,14 @@ describe("CLI exec options", () => {
   test("supports --days for local activity filtering", () => {
     const block = commandBlock("exec <command>");
     expect(block).toContain('--days <number>');
+  });
+});
+
+describe("CLI list options", () => {
+  test("supports --days and --no-exclude for repo preview selection", () => {
+    const block = commandBlock("list");
+    expect(block).toContain('--days <number>');
+    expect(block).toContain('--no-exclude');
   });
 });
 

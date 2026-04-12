@@ -13,6 +13,7 @@ describe("command registry coverage", () => {
 
   test("includes sync and label in no-command overview", () => {
     const overviewIds = getOverviewCommandIds();
+    expect(overviewIds).toContain("list");
     expect(overviewIds).toContain("sync");
     expect(overviewIds).toContain("label");
   });

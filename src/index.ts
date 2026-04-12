@@ -13,6 +13,7 @@ import { runFetch } from "./commands/fetch.js";
 import { runDiff } from "./commands/diff.js";
 import { runCheckout } from "./commands/checkout.js";
 import { runExec } from "./commands/exec.js";
+import { runList } from "./commands/list.js";
 import { runSync } from "./commands/sync.js";
 import { runLabelAdd, runLabelList, runLabelRemove } from "./commands/label.js";
 import {
@@ -244,6 +245,21 @@ program
       command,
       quiet: options.quiet,
       parallel: options.parallel,
+      filter: options.filter,
+      days: options.days,
+      noExclude: options.exclude,
+    });
+  });
+
+program
+  .command("list")
+  .alias("ls")
+  .description(commandDescription("list"))
+  .option("-f, --filter <pattern>", "Filter repos by pattern (e.g., 'api-*')")
+  .option("-d, --days <number>", "Only include repos locally active in the last N days", parseInt)
+  .option("--no-exclude", "Include repos excluded by config/DB")
+  .action(async (options) => {
+    await runList({
       filter: options.filter,
       days: options.days,
       noExclude: options.exclude,

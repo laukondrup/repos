@@ -147,6 +147,13 @@ export interface ExecOptions {
   days?: number;
 }
 
+export interface ListOptions {
+  filter?: string;
+  days?: number;
+  basePath?: string;
+  noExclude?: boolean;
+}
+
 export interface RepoDbRepoRecord {
   id: string;
   name: string;

@@ -11,6 +11,7 @@ import { FetchApp } from "../commands/fetch.js";
 import { DiffApp } from "../commands/diff.js";
 import { CheckoutApp } from "../commands/checkout.js";
 import { ExecApp } from "../commands/exec.js";
+import { ListApp } from "../commands/list.js";
 import { SyncApp } from "../commands/sync.js";
 import { LabelMenuApp } from "../commands/label-menu.js";
 import { loadConfig } from "../lib/config.js";
@@ -31,6 +32,7 @@ import type {
   DiffOptions,
   CheckoutOptions,
   ExecOptions,
+  ListOptions,
 } from "../types.js";
 
 type Command =
@@ -42,6 +44,7 @@ type Command =
   | "clone"
   | "clean"
   | "exec"
+  | "list"
   | "sync"
   | "label"
   | "config"
@@ -282,6 +285,32 @@ function getCommandFields(
         },
       ];
 
+    case "list":
+      return [
+        {
+          name: "days",
+          label: "Days threshold",
+          type: "number",
+          defaultValue: undefined,
+          placeholder: "optional",
+          hint: "Only include repositories locally active in last N days",
+        },
+        {
+          name: "filter",
+          label: "Filter pattern",
+          type: "text",
+          placeholder: "e.g., api-*",
+          hint: "Only include repos matching this pattern",
+        },
+        {
+          name: "noExclude",
+          label: "Include excluded repos",
+          type: "toggle",
+          defaultValue: false,
+          hint: "Bypass exclusion rules and include all discovered repos",
+        },
+      ];
+
     case "status":
       return [
         {
@@ -351,6 +380,7 @@ const commandTitles: Partial<Record<Command, string>> = {
   diff: "Diff Options",
   checkout: "Checkout Options",
   exec: "Exec Options",
+  list: "List Options",
   status: "Status Options",
   clean: "Clean Options",
 };
@@ -362,6 +392,7 @@ const commandsWithOptions: Command[] = [
   "diff",
   "checkout",
   "exec",
+  "list",
   "status",
   "clean",
 ];
@@ -375,6 +406,7 @@ type CommandOptions =
   | { command: "diff"; options: DiffOptions }
   | { command: "checkout"; options: CheckoutOptions }
   | { command: "exec"; options: ExecOptions }
+  | { command: "list"; options: ListOptions }
   | { command: "clone"; options: CloneOptions }
   | { command: "clean"; options: CleanupOptions }
   | { command: "sync" }
@@ -521,6 +553,16 @@ export function App() {
           },
         });
         break;
+      case "list":
+        setRunningCommand({
+          command: "list",
+          options: {
+            days: values.days as number | undefined,
+            filter: values.filter as string | undefined,
+            noExclude: values.noExclude as boolean | undefined,
+          },
+        });
+        break;
       case "clone":
         setRunningCommand({
           command: "clone",
@@ -598,6 +640,13 @@ export function App() {
             onComplete={handleCommandComplete}
           />
         );
+      case "list":
+        return (
+          <ListApp
+            options={runningCommand.options}
+            onComplete={handleCommandComplete}
+          />
+        );
       case "clone":
         return (
           <CloneApp
@@ -663,6 +712,7 @@ export function App() {
         diff: "Diff",
         checkout: "Checkout",
         exec: "Exec",
+        list: "List",
         clean: "Clean",
         status: "Check",
       };

@@ -116,6 +116,16 @@ export const TOP_LEVEL_COMMANDS: TopLevelCommandDefinition[] = [
     },
   },
   {
+    id: "list",
+    description: "List local repositories selected by filters/exclusion rules",
+    overview: {
+      category: "repo",
+      label: "List",
+      key: "t",
+      description: "Preview repository selection (like a dry run)",
+    },
+  },
+  {
     id: "sync",
     description: "Sync local repository database (paths, labels, exclusions)",
     overview: {

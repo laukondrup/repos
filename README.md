@@ -12,6 +12,7 @@
 - `repos sync` command to reconcile local path/name changes and refresh exclusion state
 - Label workflow for subsets (`repos label add|rm|list`) with repo args and glob targeting
 - Default repo exclusion rules with per-command bypass (`--no-exclude`)
+- `repos list` / `repos ls` preview command (supports `--days`, filters, exclusion bypass)
 - Local activity filtering for exec (`repos exec --days <n>`)
 
 ![demo](https://github.com/user-attachments/assets/00fdfece-06bc-4cb6-a4e1-1086bdc8432c)
@@ -117,7 +118,7 @@ repos
 | `↑↓` / `jk` | Navigate menu |
 | `Enter` | Select command |
 | `s,f,p,d,c` | Jump to git commands (Status, Fetch, Pull, Diff, Checkout) |
-| `o,x,e` | Jump to repo commands (Clone, Clean, Exec) |
+| `o,x,e,t` | Jump to repo commands (Clone, Clean, Exec, List) |
 | `g,i` | Jump to settings (Config, Init) |
 | `q` | Quit |
 
@@ -135,6 +136,7 @@ repos
 | `repos clone`             | Clone repos from GitHub org            |
 | `repos clean`             | Revert changes in repositories         |
 | `repos exec "<command>"`  | Run arbitrary command across all repos |
+| `repos list` / `repos ls` | List repos selected by filters/excludes |
 | `repos config`            | View or modify configuration           |
 
 ### Status Command
@@ -242,6 +244,16 @@ repos exec "git branch" --filter 'api-*'  # Run only in matching repos
 
 > [!TIP]
 > Use `repos exec` as an escape hatch for any command not directly supported.
+
+### List Command
+
+```sh
+repos list                     # List repos selected by default rules
+repos ls                       # Alias for `repos list`
+repos list --days 7            # Only repos locally active in last 7 days
+repos list --filter 'api-*'    # Only matching repos
+repos list --no-exclude        # Bypass exclusion rules
+```
 
 ### Config Command
 
