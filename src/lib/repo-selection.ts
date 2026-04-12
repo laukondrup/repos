@@ -1,7 +1,8 @@
-import { filterRepos, findReposRecursive, getRepoName } from "./repos.js";
+import { filterRepos, getRepoName } from "./repos.js";
 import { getRepoDb, getRepoOwnerFromRecord } from "./repo-db.js";
 import { loadConfig, resolveCodeDir } from "./config.js";
 import { matchesConfigExclusion } from "./exclusions.js";
+import type { RepoDbRepoRecord } from "../types.js";
 
 export interface SelectLocalReposOptions {
   basePath?: string;
@@ -15,24 +16,22 @@ export async function selectLocalRepos(
   options: SelectLocalReposOptions = {},
 ): Promise<string[]> {
   const codeDir = await resolveCodeDir(options.basePath);
-  let repoPaths = await findReposRecursive(codeDir);
   const configBasePath = options.basePath ? codeDir : undefined;
   const config = await loadConfig(configBasePath);
+  const { db } = await getRepoDb({
+    basePath: codeDir,
+    configBasePath,
+  });
 
+  let selectedRecords: RepoDbRepoRecord[] = db.repos;
   const configuredOrg = config.org?.trim().toLowerCase();
   if (configuredOrg && !options.bypassOrg) {
-    const { db } = await getRepoDb({
-      basePath: codeDir,
-      configBasePath,
-      sync: false,
-    });
-    const allowedPaths = new Set(
-      db.repos
-        .filter((repo) => getRepoOwnerFromRecord(repo) === configuredOrg)
-        .map((repo) => repo.path),
+    selectedRecords = selectedRecords.filter(
+      (repo) => getRepoOwnerFromRecord(repo) === configuredOrg,
     );
-    repoPaths = repoPaths.filter((repoPath) => allowedPaths.has(repoPath));
   }
+
+  let repoPaths = selectedRecords.map((repo) => repo.path);
 
   if (!options.noExclude) {
     const configExclusions = config.exclusions ?? [];
@@ -46,11 +45,6 @@ export async function selectLocalRepos(
         ),
     );
 
-    const { db } = await getRepoDb({
-      basePath: codeDir,
-      configBasePath,
-      sync: false,
-    });
     const excludedPaths = new Set(
       db.repos.filter((repo) => repo.excluded).map((repo) => repo.path),
     );
@@ -61,11 +55,6 @@ export async function selectLocalRepos(
     .map((label) => label.trim().toLowerCase())
     .filter(Boolean);
   if (normalizedLabels.length > 0) {
-    const { db } = await getRepoDb({
-      basePath: codeDir,
-      configBasePath,
-      sync: false,
-    });
     const labelsByPath = new Map(
       db.repos.map((repo) => [
         repo.path,

@@ -7,7 +7,7 @@ import { $ } from "bun";
 import { selectLocalRepos } from "./repo-selection.js";
 import { syncRepoDb } from "./repo-db.js";
 
-async function createGitRepo(path: string): Promise<void> {
+async function createGitRepo(path: string, remoteUrl?: string): Promise<void> {
   await mkdir(path, { recursive: true });
   await $`git init ${path}`.quiet();
   await $`git -C ${path} config user.email "test@test.com"`.quiet();
@@ -16,6 +16,9 @@ async function createGitRepo(path: string): Promise<void> {
   await Bun.write(join(path, "README.md"), "# test\n");
   await $`git -C ${path} add -A`.quiet();
   await $`git -C ${path} commit -m "init"`.quiet();
+  if (remoteUrl) {
+    await $`git -C ${path} remote add origin ${remoteUrl}`.quiet();
+  }
 }
 
 describe("repo selection", () => {
@@ -104,8 +107,8 @@ describe("repo selection", () => {
     }
   });
 
-  test("does not force DB sync during selection", async () => {
-    const basePath = join(tmpdir(), `repo-select-nosync-${randomUUID().slice(0, 8)}`);
+  test("forces DB sync during selection", async () => {
+    const basePath = join(tmpdir(), `repo-select-sync-${randomUUID().slice(0, 8)}`);
     await mkdir(basePath, { recursive: true });
 
     await writeFile(
@@ -120,7 +123,7 @@ describe("repo selection", () => {
     try {
       const selection = await selectLocalRepos({ basePath });
       expect(selection).toHaveLength(1);
-      expect(await Bun.file(join(basePath, ".reposdb.json")).exists()).toBe(false);
+      expect(await Bun.file(join(basePath, ".reposdb.json")).exists()).toBe(true);
     } finally {
       await rm(basePath, { recursive: true, force: true });
     }
@@ -139,7 +142,7 @@ describe("repo selection", () => {
 
     const alphaPath = join(basePath, "alpha");
     const betaPath = join(basePath, "beta");
-    await createGitRepo(alphaPath);
+    await createGitRepo(alphaPath, "https://github.com/acme/alpha.git");
     await createGitRepo(betaPath);
 
     await writeFile(
@@ -266,7 +269,7 @@ describe("repo selection", () => {
     await mkdir(basePath, { recursive: true });
 
     const alphaPath = join(basePath, "alpha");
-    await createGitRepo(alphaPath);
+    await createGitRepo(alphaPath, "https://github.com/acme/alpha.git");
 
     await writeFile(
       join(basePath, ".reposrc.json"),

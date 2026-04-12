@@ -1,10 +1,10 @@
 import { readdir, stat } from "fs/promises";
-import { join } from "path";
+import { dirname, join, relative } from "path";
 import { getRepoStatus } from "./git.js";
 import type { RepoStatus } from "../types.js";
 
 const DEFAULT_DISCOVERY_MAX_DEPTH = 10;
-const IGNORED_DISCOVERY_DIRS = new Set([".git", "node_modules"]);
+const decoder = new TextDecoder();
 
 async function hasGitMetadata(path: string): Promise<boolean> {
   try {
@@ -14,6 +14,29 @@ async function hasGitMetadata(path: string): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+export function assertFdInstalled(): void {
+  const result = Bun.spawnSync({
+    cmd: ["fd", "--version"],
+    stdout: "ignore",
+    stderr: "pipe",
+  });
+  if (result.exitCode !== 0) {
+    throw new Error(
+      "`fd` is required for repository discovery. Install it and retry.",
+    );
+  }
+}
+
+function shouldIgnoreDiscoveredRepo(basePath: string, repoPath: string): boolean {
+  const rel = relative(basePath, repoPath).replace(/\\/g, "/");
+  const parts = rel.split("/").filter(Boolean);
+  return parts.some(
+    (part) =>
+      ((part.startsWith(".") && part !== "." && part !== "..")
+        || part === "node_modules"),
+  );
 }
 
 export async function findRepos(
@@ -43,38 +66,43 @@ export async function findReposRecursive(
   basePath: string = process.cwd(),
   maxDepth: number = DEFAULT_DISCOVERY_MAX_DEPTH,
 ): Promise<string[]> {
-  const repos: string[] = [];
-  const queue: Array<{ path: string; depth: number }> = [{ path: basePath, depth: 0 }];
+  assertFdInstalled();
+  const result = Bun.spawnSync({
+    cmd: [
+      "fd",
+      "--hidden",
+      "--no-ignore",
+      "--glob",
+      "--max-depth",
+      String(maxDepth + 1),
+      ".git",
+      basePath,
+    ],
+    stdout: "pipe",
+    stderr: "pipe",
+  });
 
-  while (queue.length > 0) {
-    const current = queue.shift();
-    if (!current) continue;
-
-    let entries;
-    try {
-      entries = await readdir(current.path, { withFileTypes: true });
-    } catch {
-      continue;
-    }
-
-    for (const entry of entries) {
-      if (!entry.isDirectory()) continue;
-      if (entry.name.startsWith(".")) continue;
-      if (IGNORED_DISCOVERY_DIRS.has(entry.name)) continue;
-
-      const fullPath = join(current.path, entry.name);
-      if (await hasGitMetadata(fullPath)) {
-        repos.push(fullPath);
-        continue;
-      }
-
-      if (current.depth < maxDepth) {
-        queue.push({ path: fullPath, depth: current.depth + 1 });
-      }
-    }
+  if (result.exitCode !== 0) {
+    const stderr = decoder.decode(result.stderr).trim();
+    throw new Error(stderr || "Failed to discover repositories with fd.");
   }
 
-  return repos.sort();
+  const output = decoder.decode(result.stdout).trim();
+  if (!output) return [];
+
+  const repos = new Set<string>();
+  for (const gitMetadataPath of output.split("\n")) {
+    const candidate = gitMetadataPath.trim();
+    const resolvedMetadataPath = candidate.startsWith("/")
+      ? candidate
+      : join(basePath, candidate);
+    const repoPath = dirname(resolvedMetadataPath);
+    if (!repoPath) continue;
+    if (shouldIgnoreDiscoveredRepo(basePath, repoPath)) continue;
+    repos.add(repoPath);
+  }
+
+  return Array.from(repos).sort();
 }
 
 export function filterRepos(repos: string[], pattern: string): string[] {
