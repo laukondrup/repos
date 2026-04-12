@@ -223,9 +223,16 @@ export async function syncRepoDb(options: SyncRepoDbOptions = {}): Promise<SyncR
   const dbPath = resolveRepoDbPath(configPath, ensuredConfig.repoDbPath);
   const existingDb = await loadRepoDb(dbPath);
   const byOrigin = new Map<string, RepoDbRepoRecord>();
+  const byPath = new Map<string, RepoDbRepoRecord>();
+  const byNameWithoutOrigin = new Map<string, RepoDbRepoRecord[]>();
   for (const record of existingDb.repos) {
+    byPath.set(record.path, record);
     if (record.originFullName) {
       byOrigin.set(record.originFullName.toLowerCase(), record);
+    } else {
+      const list = byNameWithoutOrigin.get(record.name) ?? [];
+      list.push(record);
+      byNameWithoutOrigin.set(record.name, list);
     }
   }
 
@@ -236,20 +243,20 @@ export async function syncRepoDb(options: SyncRepoDbOptions = {}): Promise<SyncR
 
   for (const repoPath of discovered) {
     const name = getRepoName(repoPath);
-    const originFullName = await getOriginRepoFullName(repoPath);
-    const originKey = originFullName?.toLowerCase() ?? null;
+    let existing: RepoDbRepoRecord | undefined = byPath.get(repoPath);
+    let originFullName: string | null = existing?.originFullName ?? null;
 
-    let existing: RepoDbRepoRecord | undefined;
-    if (originKey) {
-      existing = byOrigin.get(originKey);
-    }
+    // Only resolve remote identity for repos not already mapped in DB.
     if (!existing) {
-      existing = existingDb.repos.find((repo) => repo.path === repoPath);
-    }
-    if (!existing) {
-      existing = existingDb.repos.find(
-        (repo) => !repo.originFullName && repo.name === name,
-      );
+      originFullName = await getOriginRepoFullName(repoPath);
+      const originKey = originFullName?.toLowerCase() ?? null;
+      if (originKey) {
+        existing = byOrigin.get(originKey);
+      }
+      if (!existing) {
+        const unnamed = byNameWithoutOrigin.get(name);
+        existing = unnamed?.[0];
+      }
     }
 
     const baseRecord: RepoDbRepoRecord = existing
@@ -257,7 +264,7 @@ export async function syncRepoDb(options: SyncRepoDbOptions = {}): Promise<SyncR
           ...existing,
           name,
           path: repoPath,
-          originFullName,
+          originFullName: existing.originFullName ?? originFullName,
         }
       : {
           id: nextRecordId(originFullName, name, repoPath),

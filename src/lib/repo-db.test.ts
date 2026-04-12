@@ -181,6 +181,63 @@ describe("repo-db sync", () => {
       await rm(xdgConfigHome, { recursive: true, force: true });
     }
   });
+
+  test("does not refresh origin for repos already mapped by path", async () => {
+    const basePath = join(tmpdir(), `repos-db-origin-stable-${randomUUID().slice(0, 8)}`);
+    await mkdir(basePath, { recursive: true });
+
+    await writeFile(
+      join(basePath, ".reposrc.json"),
+      JSON.stringify({
+        repoDbPath: ".reposdb.json",
+        exclusions: [],
+      }),
+    );
+
+    const alphaPath = join(basePath, "alpha");
+    await createGitRepo(
+      alphaPath,
+      "https://github.com/acme/alpha.git",
+    );
+
+    await writeFile(
+      join(basePath, ".reposdb.json"),
+      JSON.stringify(
+        {
+          version: 1,
+          repos: [
+            {
+              id: "origin:acme/alpha",
+              name: "alpha",
+              path: alphaPath,
+              originFullName: "acme/alpha",
+              labels: ["stable"],
+              excluded: false,
+            },
+          ],
+        },
+        null,
+        2,
+      ) + "\n",
+    );
+
+    await $`git -C ${alphaPath} remote set-url origin https://github.com/other/alpha.git`.quiet();
+
+    try {
+      const result = await syncRepoDb({ basePath });
+      expect(result.total).toBe(1);
+
+      const db = JSON.parse(
+        await readFile(join(basePath, ".reposdb.json"), "utf-8"),
+      );
+      expect(db.repos).toHaveLength(1);
+      expect(db.repos[0].originFullName).toBe("acme/alpha");
+      expect(db.repos[0].id).toBe("origin:acme/alpha");
+      expect(db.repos[0].labels).toEqual(["stable"]);
+    } finally {
+      await rm(basePath, { recursive: true, force: true });
+    }
+  });
 });
 
 describe("repo-db labels", () => {
