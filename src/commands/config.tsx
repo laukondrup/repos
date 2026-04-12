@@ -141,6 +141,7 @@ export function ConfigApp({ options, onComplete }: ConfigAppProps) {
         <ConfigValue label="daysThreshold" value={config.daysThreshold} />
         <ConfigValue label="parallel" value={config.parallel} />
         <ConfigValue label="timeout" value={config.timeout} />
+        <ConfigValue label="repoDbPath" value={config.repoDbPath} />
         <ConfigValue label="exclusions" value={config.exclusions} />
       </Box>
       <Box marginTop={1}>

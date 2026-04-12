@@ -112,6 +112,7 @@ export function InitApp({ force, basePath, onComplete }: InitAppProps) {
           codeDir: codeDir.trim() || process.cwd(),
           daysThreshold: parseInt(days) || 90,
           parallel: 10,
+          repoDbPath: ".reposdb.json",
         };
 
         await saveConfig(config, "global");

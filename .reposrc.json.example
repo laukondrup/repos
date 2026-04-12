@@ -7,5 +7,6 @@
   "daysThreshold": 90,
   "parallel": 10,
   "timeout": 10000,
+  "repoDbPath": ".reposdb.json",
   "exclusions": ["archive/*", "legacy-service"]
 }

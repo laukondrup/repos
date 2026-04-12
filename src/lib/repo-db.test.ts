@@ -136,6 +136,51 @@ describe("repo-db sync", () => {
       await rm(basePath, { recursive: true, force: true });
     }
   });
+
+  test("stores repo DB beside XDG config and persists repoDbPath", async () => {
+    const basePath = join(tmpdir(), `repos-db-xdg-code-${randomUUID().slice(0, 8)}`);
+    const xdgConfigHome = join(tmpdir(), `repos-db-xdg-home-${randomUUID().slice(0, 8)}`);
+    await mkdir(basePath, { recursive: true });
+    await mkdir(join(xdgConfigHome, "repos"), { recursive: true });
+
+    const originalXdg = process.env.XDG_CONFIG_HOME;
+    process.env.XDG_CONFIG_HOME = xdgConfigHome;
+
+    await writeFile(
+      join(xdgConfigHome, "repos", ".reposrc.json"),
+      JSON.stringify({
+        org: "test-org",
+        codeDir: basePath,
+      }),
+    );
+
+    await createGitRepo(
+      join(basePath, "alpha"),
+      "https://github.com/acme/alpha.git",
+    );
+
+    try {
+      const result = await syncRepoDb({ basePath });
+      expect(result.total).toBe(1);
+
+      const configPath = join(xdgConfigHome, "repos", ".reposrc.json");
+      const config = JSON.parse(await readFile(configPath, "utf-8"));
+      expect(config.repoDbPath).toBe(".reposdb.json");
+
+      const dbPath = join(xdgConfigHome, "repos", ".reposdb.json");
+      const db = JSON.parse(await readFile(dbPath, "utf-8"));
+      expect(db.repos).toHaveLength(1);
+      expect(result.dbPath).toBe(dbPath);
+    } finally {
+      if (originalXdg === undefined) {
+        delete process.env.XDG_CONFIG_HOME;
+      } else {
+        process.env.XDG_CONFIG_HOME = originalXdg;
+      }
+      await rm(basePath, { recursive: true, force: true });
+      await rm(xdgConfigHome, { recursive: true, force: true });
+    }
+  });
 });
 
 describe("repo-db labels", () => {
