@@ -9,6 +9,7 @@
 ## 🆕 Fork Additions
 
 - Sidecar repo database (`.reposdb.json`) linked from config for labels/exclusion state
+- Global config supports XDG (`$XDG_CONFIG_HOME/repos/.reposrc.json`), with repo DB stored beside it
 - `repos sync` command to reconcile local path/name changes and refresh exclusion state
 - `repos sync` reconciles local repo DB state without rewriting exclusion patterns
 - Label workflow for subsets (`repos label add|rm|list`) with repo args and glob targeting
@@ -37,7 +38,7 @@ Managing hundreds of repositories across an organization is tedious. You constan
 - 📊 **Terminal UI**: Progress bars, tables, spinners, and colored output
 - ⚡ **Parallel Operations**: Fast updates with configurable concurrency
 - 🐙 **GitHub Integration**: Clone repos from any GitHub org (Cloud or Enterprise)
-- 🔧 **Smart Defaults**: Detects `gh` CLI config and respects `.gitignore` patterns
+- 🔧 **Smart Defaults**: Detects `gh` CLI config and supports gitignore-like exclusion patterns
 - 📁 **Config File Support**: Save your settings in `.reposrc.json`
 - 🛠️ **Escape Hatch**: Run any command across repos with `repos exec`
 
@@ -260,6 +261,8 @@ repos list --filter 'api-*'    # Only matching repos
 repos list --no-exclude        # Bypass exclusion rules
 ```
 
+`repos list` prints paths relative to `codeDir` from config.
+
 ### Exclude Command
 
 ```sh
@@ -268,7 +271,7 @@ repos exclude --glob 'apps/*'                 # Exclude repos matched by glob
 repos exclude legacy-service --glob 'apps/*'  # Mix dirs + globs
 ```
 
-`repos exclude` updates config exclusions and/or per-repo DB exclusion flags, then runs sync. `--glob` values are stored as-is in config patterns.
+`repos exclude` updates config exclusions and/or per-repo DB exclusion flags, then runs sync. Patterns are normalized relative to `codeDir` and use gitignore-like matching semantics (`clones`, `apps/*`, etc.).
 
 ### Config Command
 
@@ -295,6 +298,7 @@ Create `.reposrc.json` in your project directory or home folder:
   "parallel": 10,
   "timeout": 30000,
   "diffMaxLines": 500,
+  "repoDbPath": ".reposdb.json",
   "exclusions": ["archive/*", "legacy-service"]
 }
 ```
@@ -308,6 +312,7 @@ Create `.reposrc.json` in your project directory or home folder:
 | `parallel`      | `10`                     | Number of concurrent operations       |
 | `timeout`       | `30000`                  | Network timeout in milliseconds       |
 | `diffMaxLines`  | `500`                    | Max lines per diff (0 for unlimited)  |
+| `repoDbPath`    | `.reposdb.json`          | Repo DB file path (relative to config file if not absolute) |
 | `exclusions`    | `[]`                     | Excluded repo dirs/globs (use `--no-exclude` to bypass) |
 
 <details>
@@ -329,7 +334,7 @@ Create `.reposrc.json` in your project directory or home folder:
 
 1. **CLI flags** (highest) — `--org`, `--parallel`, etc.
 2. **Project config** — `.reposrc.json` in current directory
-3. **User config** — `~/.reposrc.json`
+3. **User config** — `$XDG_CONFIG_HOME/repos/.reposrc.json` (fallback: `~/.reposrc.json`)
 4. **gh CLI** — Detected from `~/.config/gh/hosts.yml`
 5. **Defaults** (lowest)
 
