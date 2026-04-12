@@ -118,6 +118,7 @@ export function FetchApp({ options, onComplete }: FetchAppProps) {
         let repoPaths = await selectLocalRepos({
           basePath: options.basePath,
           filter: options.filter,
+          labels: options.labels,
           noExclude: options.noExclude,
         });
 

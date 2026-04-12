@@ -43,6 +43,7 @@ export function ListApp({ options, onComplete }: ListAppProps) {
         let repos = await selectLocalRepos({
           basePath: options.basePath,
           filter: options.filter,
+          labels: options.labels,
           noExclude: options.noExclude,
         });
 

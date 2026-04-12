@@ -78,6 +78,7 @@ export function StatusApp({ options, onComplete }: StatusAppProps) {
         let repoPaths = await selectLocalRepos({
           basePath: options.basePath,
           filter: options.filter,
+          labels: options.labels,
           noExclude: options.noExclude,
         });
 

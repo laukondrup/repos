@@ -56,6 +56,13 @@ assertOverviewCoverage();
 
 const menuGroups: MenuGroup[] = getOverviewMenuGroups();
 
+function parseLabelsInput(value: string | undefined): string[] {
+  return (value ?? "")
+    .split(/[,\s]+/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
 function getCommandFields(
   command: Command,
   config: ReposConfig,
@@ -145,6 +152,20 @@ function getCommandFields(
           placeholder: `default: ${defaultParallel}`,
           hint: "Number of concurrent fetch operations",
         },
+        {
+          name: "labels",
+          label: "Labels",
+          type: "text",
+          placeholder: "e.g., backend,critical",
+          hint: "Only include repos matching all listed labels",
+        },
+        {
+          name: "noExclude",
+          label: "Include excluded repos",
+          type: "toggle",
+          defaultValue: false,
+          hint: "Bypass exclusion rules and include all discovered repos",
+        },
       ];
 
     case "pull":
@@ -178,6 +199,20 @@ function getCommandFields(
           placeholder: `default: ${defaultParallel}`,
           hint: "Number of concurrent pull operations",
         },
+        {
+          name: "labels",
+          label: "Labels",
+          type: "text",
+          placeholder: "e.g., backend,critical",
+          hint: "Only include repos matching all listed labels",
+        },
+        {
+          name: "noExclude",
+          label: "Include excluded repos",
+          type: "toggle",
+          defaultValue: false,
+          hint: "Bypass exclusion rules and include all discovered repos",
+        },
       ];
 
     case "diff":
@@ -210,6 +245,20 @@ function getCommandFields(
           defaultValue: defaultParallel,
           placeholder: `default: ${defaultParallel}`,
           hint: "Number of concurrent diff operations",
+        },
+        {
+          name: "labels",
+          label: "Labels",
+          type: "text",
+          placeholder: "e.g., backend,critical",
+          hint: "Only include repos matching all listed labels",
+        },
+        {
+          name: "noExclude",
+          label: "Include excluded repos",
+          type: "toggle",
+          defaultValue: false,
+          hint: "Bypass exclusion rules and include all discovered repos",
         },
       ];
 
@@ -251,6 +300,20 @@ function getCommandFields(
           placeholder: `default: ${defaultParallel}`,
           hint: "Number of concurrent checkout operations",
         },
+        {
+          name: "labels",
+          label: "Labels",
+          type: "text",
+          placeholder: "e.g., backend,critical",
+          hint: "Only include repos matching all listed labels",
+        },
+        {
+          name: "noExclude",
+          label: "Include excluded repos",
+          type: "toggle",
+          defaultValue: false,
+          hint: "Bypass exclusion rules and include all discovered repos",
+        },
       ];
 
     case "exec":
@@ -285,6 +348,20 @@ function getCommandFields(
           placeholder: `default: ${defaultParallel}`,
           hint: "Number of concurrent operations",
         },
+        {
+          name: "labels",
+          label: "Labels",
+          type: "text",
+          placeholder: "e.g., backend,critical",
+          hint: "Only include repos matching all listed labels",
+        },
+        {
+          name: "noExclude",
+          label: "Include excluded repos",
+          type: "toggle",
+          defaultValue: false,
+          hint: "Bypass exclusion rules and include all discovered repos",
+        },
       ];
 
     case "list":
@@ -303,6 +380,13 @@ function getCommandFields(
           type: "text",
           placeholder: "e.g., api-*",
           hint: "Only include repos matching this pattern",
+        },
+        {
+          name: "labels",
+          label: "Labels",
+          type: "text",
+          placeholder: "e.g., backend,critical",
+          hint: "Only include repos matching all listed labels",
         },
         {
           name: "noExclude",
@@ -361,6 +445,20 @@ function getCommandFields(
           placeholder: "e.g., api-*",
           hint: "Only show repos matching this pattern",
         },
+        {
+          name: "labels",
+          label: "Labels",
+          type: "text",
+          placeholder: "e.g., backend,critical",
+          hint: "Only include repos matching all listed labels",
+        },
+        {
+          name: "noExclude",
+          label: "Include excluded repos",
+          type: "toggle",
+          defaultValue: false,
+          hint: "Bypass exclusion rules and include all discovered repos",
+        },
       ];
 
     case "clean":
@@ -385,6 +483,20 @@ function getCommandFields(
           type: "text",
           placeholder: "e.g., api-*",
           hint: "Only clean repos matching this pattern",
+        },
+        {
+          name: "labels",
+          label: "Labels",
+          type: "text",
+          placeholder: "e.g., backend,critical",
+          hint: "Only include repos matching all listed labels",
+        },
+        {
+          name: "noExclude",
+          label: "Include excluded repos",
+          type: "toggle",
+          defaultValue: false,
+          hint: "Bypass exclusion rules and include all discovered repos",
         },
       ];
 
@@ -510,7 +622,9 @@ export function App() {
             summary: values.summary as boolean | undefined,
             quiet: values.quiet as boolean | undefined,
             filter: values.filter as string | undefined,
+            labels: parseLabelsInput(values.labels as string | undefined),
             fetch: values.fetch as boolean | undefined,
+            noExclude: values.noExclude as boolean | undefined,
           },
         });
         break;
@@ -522,8 +636,10 @@ export function App() {
             prune: values.prune as boolean | undefined,
             all: values.all as boolean | undefined,
             filter: values.filter as string | undefined,
+            labels: parseLabelsInput(values.labels as string | undefined),
             parallel: values.parallel as number | undefined,
             interactive: true,
+            noExclude: values.noExclude as boolean | undefined,
           },
         });
         break;
@@ -534,8 +650,10 @@ export function App() {
             dryRun: values.dryRun as boolean | undefined,
             quiet: values.quiet as boolean | undefined,
             filter: values.filter as string | undefined,
+            labels: parseLabelsInput(values.labels as string | undefined),
             parallel: values.parallel as number | undefined,
             interactive: true,
+            noExclude: values.noExclude as boolean | undefined,
           },
         });
         break;
@@ -546,8 +664,10 @@ export function App() {
             quiet: values.quiet as boolean | undefined,
             stat: values.stat as boolean | undefined,
             filter: values.filter as string | undefined,
+            labels: parseLabelsInput(values.labels as string | undefined),
             parallel: values.parallel as number | undefined,
             interactive: true,
+            noExclude: values.noExclude as boolean | undefined,
           },
         });
         break;
@@ -559,8 +679,10 @@ export function App() {
             create: values.create as boolean | undefined,
             force: values.force as boolean | undefined,
             filter: values.filter as string | undefined,
+            labels: parseLabelsInput(values.labels as string | undefined),
             parallel: values.parallel as number | undefined,
             interactive: true,
+            noExclude: values.noExclude as boolean | undefined,
           },
         });
         break;
@@ -571,8 +693,10 @@ export function App() {
             command: values.command as string,
             quiet: values.quiet as boolean | undefined,
             filter: values.filter as string | undefined,
+            labels: parseLabelsInput(values.labels as string | undefined),
             parallel: values.parallel as number | undefined,
             interactive: true,
+            noExclude: values.noExclude as boolean | undefined,
           },
         });
         break;
@@ -582,6 +706,7 @@ export function App() {
           options: {
             days: values.days as number | undefined,
             filter: values.filter as string | undefined,
+            labels: parseLabelsInput(values.labels as string | undefined),
             noExclude: values.noExclude as boolean | undefined,
           },
         });
@@ -623,7 +748,9 @@ export function App() {
             dryRun: values.dryRun as boolean | undefined,
             all: values.all as boolean | undefined,
             filter: values.filter as string | undefined,
+            labels: parseLabelsInput(values.labels as string | undefined),
             interactive: true,
+            noExclude: values.noExclude as boolean | undefined,
           },
         });
         break;

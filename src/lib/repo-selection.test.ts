@@ -125,4 +125,71 @@ describe("repo selection", () => {
       await rm(basePath, { recursive: true, force: true });
     }
   });
+
+  test("filters repositories by labels from repo DB", async () => {
+    const basePath = join(tmpdir(), `repo-select-labels-${randomUUID().slice(0, 8)}`);
+    await mkdir(basePath, { recursive: true });
+
+    await writeFile(
+      join(basePath, ".reposrc.json"),
+      JSON.stringify({
+        exclusions: [],
+      }),
+    );
+
+    const alphaPath = join(basePath, "alpha");
+    const betaPath = join(basePath, "beta");
+    await createGitRepo(alphaPath);
+    await createGitRepo(betaPath);
+
+    await writeFile(
+      join(basePath, ".reposdb.json"),
+      JSON.stringify(
+        {
+          version: 1,
+          repos: [
+            {
+              id: "local:alpha",
+              name: "alpha",
+              path: alphaPath,
+              originFullName: null,
+              labels: ["backend", "critical"],
+              excluded: false,
+            },
+            {
+              id: "local:beta",
+              name: "beta",
+              path: betaPath,
+              originFullName: null,
+              labels: ["frontend"],
+              excluded: false,
+            },
+          ],
+        },
+        null,
+        2,
+      ) + "\n",
+    );
+
+    try {
+      const backend = await selectLocalRepos({ basePath, labels: ["backend"] });
+      expect(backend).toHaveLength(1);
+      expect(backend[0]).toContain("alpha");
+
+      const criticalBackend = await selectLocalRepos({
+        basePath,
+        labels: ["backend", "critical"],
+      });
+      expect(criticalBackend).toHaveLength(1);
+      expect(criticalBackend[0]).toContain("alpha");
+
+      const none = await selectLocalRepos({
+        basePath,
+        labels: ["backend", "frontend"],
+      });
+      expect(none).toHaveLength(0);
+    } finally {
+      await rm(basePath, { recursive: true, force: true });
+    }
+  });
 });

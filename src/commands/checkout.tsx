@@ -90,6 +90,7 @@ export function CheckoutApp({ options, onComplete }: CheckoutAppProps) {
         let repoPaths = await selectLocalRepos({
           basePath: options.basePath,
           filter: options.filter,
+          labels: options.labels,
           noExclude: options.noExclude,
         });
 

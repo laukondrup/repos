@@ -72,6 +72,50 @@ describe("CLI exclusion flags", () => {
   });
 });
 
+describe("CLI label filters", () => {
+  test("supports repeated --label on local repo commands", () => {
+    const commands = [
+      "status",
+      "fetch",
+      "pull",
+      "clean",
+      "diff",
+      "checkout <branch>",
+      "exec <command>",
+      "list",
+    ];
+
+    for (const command of commands) {
+      const block = commandBlock(command);
+      expect(block).toContain('--label <label>');
+    }
+  });
+
+  test("passes collected labels into command options", () => {
+    const commands = [
+      "status",
+      "fetch",
+      "pull",
+      "clean",
+      "diff",
+      "checkout <branch>",
+      "exec <command>",
+      "list",
+    ];
+
+    for (const command of commands) {
+      const escaped = command.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const actionRegex = new RegExp(
+        `\\.command\\("${escaped}"\\)[\\s\\S]*?\\.action\\(async \\([^)]*\\) => \\{([\\s\\S]*?)\\}\\);`,
+        "m",
+      );
+      const match = source.match(actionRegex);
+      const actionBody = match?.[1] ?? "";
+      expect(actionBody).toContain("labels: options.label");
+    }
+  });
+});
+
 describe("CLI exec options", () => {
   test("supports --days for local activity filtering", () => {
     const block = commandBlock("exec <command>");

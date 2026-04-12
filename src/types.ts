@@ -77,6 +77,7 @@ export interface StatusOptions {
   summary?: boolean;
   quiet?: boolean;
   filter?: string;
+  labels?: string[];
   fetch?: boolean;
   basePath?: string;
   noExclude?: boolean;
@@ -86,6 +87,7 @@ export interface UpdateOptions {
   dryRun?: boolean;
   parallel?: number;
   filter?: string;
+  labels?: string[];
   quiet?: boolean;
   interactive?: boolean;
   basePath?: string;
@@ -97,6 +99,7 @@ export interface CleanupOptions {
   force?: boolean;
   all?: boolean;
   filter?: string;
+  labels?: string[];
   interactive?: boolean;
   basePath?: string;
   noExclude?: boolean;
@@ -108,6 +111,7 @@ export interface FetchOptions {
   all?: boolean;
   parallel?: number;
   filter?: string;
+  labels?: string[];
   quiet?: boolean;
   interactive?: boolean;
   basePath?: string;
@@ -116,6 +120,7 @@ export interface FetchOptions {
 
 export interface DiffOptions {
   filter?: string;
+  labels?: string[];
   quiet?: boolean;
   stat?: boolean;
   parallel?: number;
@@ -128,6 +133,7 @@ export interface DiffOptions {
 export interface CheckoutOptions {
   branch: string;
   filter?: string;
+  labels?: string[];
   create?: boolean;
   force?: boolean;
   parallel?: number;
@@ -139,6 +145,7 @@ export interface CheckoutOptions {
 export interface ExecOptions {
   command: string;
   filter?: string;
+  labels?: string[];
   parallel?: number;
   quiet?: boolean;
   interactive?: boolean;
@@ -149,6 +156,7 @@ export interface ExecOptions {
 
 export interface ListOptions {
   filter?: string;
+  labels?: string[];
   days?: number;
   basePath?: string;
   noExclude?: boolean;
