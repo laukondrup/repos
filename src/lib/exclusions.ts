@@ -23,15 +23,37 @@ export function matchesConfigExclusion(
   const relPath = relative(basePath, recordPath).replace(/\\/g, "/");
 
   return exclusions.some((item) => {
-    if (isGlobPattern(item)) {
-      const regex = globToRegex(item);
-      return regex.test(relPath) || regex.test(repoName);
+    const normalized = item.trim().replace(/\\/g, "/");
+    if (!normalized) return false;
+
+    if (normalized.startsWith("/")) {
+      if (isGlobPattern(normalized)) {
+        const relFromRoot = relative(basePath, resolve(normalized)).replace(/\\/g, "/");
+        if (!relFromRoot.startsWith("..")) {
+          const regex = globToRegex(relFromRoot);
+          return regex.test(relPath);
+        }
+      }
+      return resolve(normalized) === resolve(recordPath);
     }
 
-    if (item.startsWith("/")) {
-      return resolve(item) === resolve(recordPath);
+    if (isGlobPattern(normalized)) {
+      const regex = globToRegex(normalized.replace(/^\.?\//, ""));
+      return regex.test(relPath) || (!normalized.includes("/") && regex.test(repoName));
     }
 
-    return item === relPath || item === repoName;
+    const trimmed = normalized.replace(/^\.?\//, "").replace(/\/+$/, "");
+    if (!trimmed) return false;
+
+    if (trimmed.includes("/")) {
+      return relPath === trimmed || relPath.startsWith(`${trimmed}/`);
+    }
+
+    if (relPath === trimmed || relPath.startsWith(`${trimmed}/`)) {
+      return true;
+    }
+
+    const segments = relPath.split("/");
+    return segments.includes(trimmed) || repoName === trimmed;
   });
 }

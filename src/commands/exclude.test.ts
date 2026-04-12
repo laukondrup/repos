@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { mkdir, readFile, rm, writeFile } from "fs/promises";
-import { join } from "path";
+import { join, resolve } from "path";
 import { tmpdir } from "os";
 import { randomUUID } from "crypto";
 import { $ } from "bun";
@@ -94,6 +94,39 @@ describe("exclude command", () => {
       expect(web.excluded).toBe(false);
       expect(api.excluded).toBe(false);
       expect(tools.excluded).toBe(false);
+    } finally {
+      await rm(basePath, { recursive: true, force: true });
+    }
+  });
+
+  test("stores globs relative to the code directory", async () => {
+    const basePath = join(tmpdir(), `exclude-rel-${randomUUID().slice(0, 8)}`);
+    await mkdir(basePath, { recursive: true });
+
+    await writeFile(
+      join(basePath, ".reposrc.json"),
+      JSON.stringify({
+        repoDbPath: ".reposdb.json",
+        exclusions: [],
+      }),
+    );
+
+    await createGitRepo(join(basePath, "clones", "alpha"));
+    await createGitRepo(join(basePath, "beta"));
+
+    try {
+      const result = await applyExclusions({
+        repos: [],
+        globs: [resolve(basePath, "clones/*")],
+        basePath,
+        configBasePath: basePath,
+      });
+
+      expect(result.addedConfigExclusions).toContain("clones/*");
+
+      const config = JSON.parse(await readFile(join(basePath, ".reposrc.json"), "utf-8"));
+      expect(config.exclusions).toContain("clones/*");
+      expect(config.exclusions).not.toContain(resolve(basePath, "clones/*"));
     } finally {
       await rm(basePath, { recursive: true, force: true });
     }

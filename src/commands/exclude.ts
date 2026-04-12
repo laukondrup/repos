@@ -40,8 +40,9 @@ export async function applyExclusions(
   const existing = config.exclusions ?? [];
 
   const repoDirs = options.repos.map((value) => toRelativePath(codeDir, value));
+  const globPatterns = options.globs.map((value) => toRelativePath(codeDir, value));
 
-  const nextExclusions = uniqueSorted([...existing, ...options.globs]);
+  const nextExclusions = uniqueSorted([...existing, ...globPatterns]);
   const before = new Set(existing);
   const addedConfigExclusions = nextExclusions.filter((value) => !before.has(value));
 
