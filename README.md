@@ -17,6 +17,7 @@
 - `repos list` / `repos ls` preview command (supports `--days`, filters, exclusion bypass)
 - Top-level `repos exclude` command for dirs/globs, with sync-backed exclusion updates
 - Local activity filtering for exec (`repos exec --days <n>`)
+- Label-based filtering (`--label`) and exclusion bypass (`--no-exclude`) across local repo commands
 
 ![demo](https://github.com/user-attachments/assets/00fdfece-06bc-4cb6-a4e1-1086bdc8432c)
 
@@ -153,6 +154,8 @@ repos status --fetch           # Fetch from remotes first
 repos status --summary         # Just show counts
 repos status --quiet           # Only show repos with changes
 repos status --filter 'api-*'  # Filter by pattern
+repos status --label backend   # Filter by label (repeatable)
+repos status --no-exclude      # Include excluded repos
 ```
 
 **Example output:**
@@ -173,6 +176,8 @@ repos fetch --prune           # Remove stale remote-tracking refs
 repos fetch --all             # Fetch from all remotes
 repos fetch --dry-run         # Preview what would be fetched
 repos fetch --filter 'api-*'  # Fetch only matching repos
+repos fetch --label backend   # Filter by label (repeatable)
+repos fetch --no-exclude      # Include excluded repos
 ```
 
 ### Pull Command
@@ -183,6 +188,8 @@ repos pull --dry-run         # Preview what would be updated
 repos pull --quiet           # Minimal output
 repos pull --parallel 5      # Limit concurrent operations
 repos pull --filter 'api-*'  # Pull only matching repos
+repos pull --label backend   # Filter by label (repeatable)
+repos pull --no-exclude      # Include excluded repos
 ```
 
 > [!NOTE]
@@ -210,6 +217,8 @@ repos diff --stat            # Show diffstat summary
 repos diff --quiet           # Only list repos with changes
 repos diff --parallel 5      # Limit concurrent operations
 repos diff --filter 'api-*'  # Diff only matching repos
+repos diff --label backend   # Filter by label (repeatable)
+repos diff --no-exclude      # Include excluded repos
 ```
 
 ### Checkout Command
@@ -220,6 +229,8 @@ repos checkout -b feature/new    # Create and switch to new branch
 repos checkout main --force      # Skip repos with uncommitted changes
 repos checkout main --parallel 5 # Limit concurrent operations
 repos checkout main --filter '*' # Checkout only matching repos
+repos checkout main --label backend # Filter by label (repeatable)
+repos checkout main --no-exclude    # Include excluded repos
 ```
 
 > [!NOTE]
@@ -233,6 +244,8 @@ repos clean                   # Revert tracked file changes
 repos clean --all             # Also remove untracked files
 repos clean --force           # Skip confirmation prompt
 repos clean --filter 'api-*'  # Clean only matching repos
+repos clean --label backend   # Filter by label (repeatable)
+repos clean --no-exclude      # Include excluded repos
 ```
 
 > [!WARNING]
@@ -246,6 +259,8 @@ repos exec "npm install"           # Run npm install in all repos
 repos exec "pwd" --quiet           # Only show repos with output
 repos exec "make test" --parallel 5  # Run with limited concurrency
 repos exec "git branch" --filter 'api-*'  # Run only in matching repos
+repos exec "pwd" --label backend      # Filter by label (repeatable)
+repos exec "pwd" --no-exclude         # Include excluded repos
 ```
 
 > [!TIP]
@@ -258,10 +273,12 @@ repos list                     # List repos selected by default rules
 repos ls                       # Alias for `repos list`
 repos list --days 7            # Only repos locally active in last 7 days
 repos list --filter 'api-*'    # Only matching repos
+repos list --label backend     # Filter by label (repeatable)
 repos list --no-exclude        # Bypass exclusion rules
 ```
 
 `repos list` prints paths relative to `codeDir` from config.
+When multiple `--label` flags are provided, repos must match all listed labels.
 
 ### Exclude Command
 
