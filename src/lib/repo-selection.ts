@@ -31,6 +31,7 @@ export async function selectLocalRepos(
     const { db } = await getRepoDb({
       basePath: codeDir,
       configBasePath: options.basePath ? codeDir : undefined,
+      sync: false,
     });
     const excludedPaths = new Set(
       db.repos.filter((repo) => repo.excluded).map((repo) => repo.path),

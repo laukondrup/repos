@@ -1,10 +1,20 @@
 import { readdir, stat } from "fs/promises";
 import { join } from "path";
-import { isGitRepo, getRepoStatus } from "./git.js";
+import { getRepoStatus } from "./git.js";
 import type { RepoStatus } from "../types.js";
 
 const DEFAULT_DISCOVERY_MAX_DEPTH = 10;
 const IGNORED_DISCOVERY_DIRS = new Set([".git", "node_modules"]);
+
+async function hasGitMetadata(path: string): Promise<boolean> {
+  try {
+    const gitPath = join(path, ".git");
+    const gitStats = await stat(gitPath);
+    return gitStats.isDirectory() || gitStats.isFile();
+  } catch {
+    return false;
+  }
+}
 
 export async function findRepos(
   basePath: string = process.cwd()
@@ -19,7 +29,7 @@ export async function findRepos(
       if (entry.name.startsWith(".")) continue;
 
       const fullPath = join(basePath, entry.name);
-      if (await isGitRepo(fullPath)) {
+      if (await hasGitMetadata(fullPath)) {
         repos.push(fullPath);
       }
     }
@@ -53,7 +63,7 @@ export async function findReposRecursive(
       if (IGNORED_DISCOVERY_DIRS.has(entry.name)) continue;
 
       const fullPath = join(current.path, entry.name);
-      if (await isGitRepo(fullPath)) {
+      if (await hasGitMetadata(fullPath)) {
         repos.push(fullPath);
         continue;
       }

@@ -10,6 +10,7 @@ const DEFAULT_DB_FILENAME = ".reposdb.json";
 export interface SyncRepoDbOptions {
   basePath?: string;
   configBasePath?: string;
+  sync?: boolean;
 }
 
 export interface RepoLabelUpdateOptions {
@@ -161,7 +162,9 @@ export async function getRepoDb(options: SyncRepoDbOptions = {}): Promise<{
   dbPath: string;
   basePath: string;
 }> {
-  await syncRepoDb({ basePath: options.basePath, configBasePath: options.configBasePath });
+  if (options.sync !== false) {
+    await syncRepoDb({ basePath: options.basePath, configBasePath: options.configBasePath });
+  }
   const { dbPath, basePath } = await ensureDbContext(options.basePath, options.configBasePath);
   const db = await loadRepoDb(dbPath);
   return { db, dbPath, basePath };

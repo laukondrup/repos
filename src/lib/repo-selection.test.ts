@@ -103,4 +103,26 @@ describe("repo selection", () => {
       await rm(basePath, { recursive: true, force: true });
     }
   });
+
+  test("does not force DB sync during selection", async () => {
+    const basePath = join(tmpdir(), `repo-select-nosync-${randomUUID().slice(0, 8)}`);
+    await mkdir(basePath, { recursive: true });
+
+    await writeFile(
+      join(basePath, ".reposrc.json"),
+      JSON.stringify({
+        exclusions: [],
+      }),
+    );
+
+    await createGitRepo(join(basePath, "alpha"));
+
+    try {
+      const selection = await selectLocalRepos({ basePath });
+      expect(selection).toHaveLength(1);
+      expect(await Bun.file(join(basePath, ".reposdb.json")).exists()).toBe(false);
+    } finally {
+      await rm(basePath, { recursive: true, force: true });
+    }
+  });
 });
