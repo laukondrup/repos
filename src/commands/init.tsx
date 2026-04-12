@@ -46,6 +46,7 @@ export function InitApp({ force, basePath, onComplete }: InitAppProps) {
   const [org, setOrg] = useState<string>("");
   const [days, setDays] = useState<string>("90");
   const [codeDir, setCodeDir] = useState<string>(basePath ?? process.cwd());
+  const [saveStage, setSaveStage] = useState<"config" | "sync">("config");
   const [error, setError] = useState<string | null>(null);
 
   useInput(
@@ -98,6 +99,7 @@ export function InitApp({ force, basePath, onComplete }: InitAppProps) {
 
     async function save() {
       try {
+        setSaveStage("config");
         const host = selectedHost === "custom" ? customHost : selectedHost;
         const github: GitHubConfig = {
           host,
@@ -113,6 +115,7 @@ export function InitApp({ force, basePath, onComplete }: InitAppProps) {
         };
 
         await saveConfig(config, "global");
+        setSaveStage("sync");
         await syncRepoDb({ basePath: config.codeDir });
         setStep("done");
       } catch (err) {
@@ -379,13 +382,18 @@ export function InitApp({ force, basePath, onComplete }: InitAppProps) {
   }
 
   if (step === "saving") {
+    const statusText =
+      saveStage === "config"
+        ? "Saving configuration..."
+        : "Running `repos sync` to update local repository database...";
+
     return (
       <Box padding={1}>
         <Text color="cyan">
           <Spinner type="dots" />
         </Text>
         <Box marginLeft={1}>
-          <Text>Saving configuration...</Text>
+          <Text>{statusText}</Text>
         </Box>
       </Box>
     );

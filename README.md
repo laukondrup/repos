@@ -84,6 +84,8 @@ bun link  # Link globally for development
    repos init
    ```
 
+   `init` now saves config and runs `repos sync` to build/update the local repo DB.
+
 2. Check the status of all repos in your current directory:
 
    ```sh
