@@ -4,11 +4,7 @@ import { join } from "path";
 import { tmpdir } from "os";
 import { randomUUID } from "crypto";
 import { $ } from "bun";
-import {
-  syncRepoDb,
-  updateRepoLabels,
-  listRepoLabels,
-} from "./repo-db.js";
+import { syncRepoDb, updateRepoLabels, listRepoLabels } from "./repo-db.js";
 
 async function createGitRepo(path: string, remoteUrl?: string): Promise<void> {
   await mkdir(path, { recursive: true });
@@ -61,8 +57,12 @@ describe("repo-db sync", () => {
       expect(Array.isArray(db.repos)).toBe(true);
       expect(db.repos).toHaveLength(2);
 
-      const alpha = db.repos.find((repo: { name: string }) => repo.name === "alpha");
-      const beta = db.repos.find((repo: { name: string }) => repo.name === "beta");
+      const alpha = db.repos.find(
+        (repo: { name: string }) => repo.name === "alpha",
+      );
+      const beta = db.repos.find(
+        (repo: { name: string }) => repo.name === "beta",
+      );
       expect(alpha.excluded).toBe(false);
       expect(beta.excluded).toBe(false);
 
@@ -75,8 +75,11 @@ describe("repo-db sync", () => {
     }
   });
 
-  test("reconciles moved repo path via originFullName and preserves labels", async () => {
-    const basePath = join(tmpdir(), `repos-db-move-${randomUUID().slice(0, 8)}`);
+  test("reconciles moved repo path via originFullName, preserves labels, and clears stale exclusion", async () => {
+    const basePath = join(
+      tmpdir(),
+      `repos-db-move-${randomUUID().slice(0, 8)}`,
+    );
     await mkdir(basePath, { recursive: true });
 
     await writeFile(
@@ -131,15 +134,21 @@ describe("repo-db sync", () => {
       expect(db.repos[0].path).toBe(join(basePath, "after-name"));
       expect(db.repos[0].name).toBe("after-name");
       expect(db.repos[0].labels).toEqual(["common"]);
-      expect(db.repos[0].excluded).toBe(true);
+      expect(db.repos[0].excluded).toBe(false);
     } finally {
       await rm(basePath, { recursive: true, force: true });
     }
   });
 
   test("stores repo DB beside XDG config and persists repoDbPath", async () => {
-    const basePath = join(tmpdir(), `repos-db-xdg-code-${randomUUID().slice(0, 8)}`);
-    const xdgConfigHome = join(tmpdir(), `repos-db-xdg-home-${randomUUID().slice(0, 8)}`);
+    const basePath = join(
+      tmpdir(),
+      `repos-db-xdg-code-${randomUUID().slice(0, 8)}`,
+    );
+    const xdgConfigHome = join(
+      tmpdir(),
+      `repos-db-xdg-home-${randomUUID().slice(0, 8)}`,
+    );
     await mkdir(basePath, { recursive: true });
     await mkdir(join(xdgConfigHome, "repos"), { recursive: true });
 
@@ -183,7 +192,10 @@ describe("repo-db sync", () => {
   });
 
   test("does not refresh origin for repos already mapped by path", async () => {
-    const basePath = join(tmpdir(), `repos-db-origin-stable-${randomUUID().slice(0, 8)}`);
+    const basePath = join(
+      tmpdir(),
+      `repos-db-origin-stable-${randomUUID().slice(0, 8)}`,
+    );
     await mkdir(basePath, { recursive: true });
 
     await writeFile(
@@ -195,10 +207,7 @@ describe("repo-db sync", () => {
     );
 
     const alphaPath = join(basePath, "alpha");
-    await createGitRepo(
-      alphaPath,
-      "https://github.com/acme/alpha.git",
-    );
+    await createGitRepo(alphaPath, "https://github.com/acme/alpha.git");
 
     await writeFile(
       join(basePath, ".reposdb.json"),
@@ -242,7 +251,10 @@ describe("repo-db sync", () => {
 
 describe("repo-db labels", () => {
   test("adds and removes labels via repo args and globs", async () => {
-    const basePath = join(tmpdir(), `repos-db-labels-${randomUUID().slice(0, 8)}`);
+    const basePath = join(
+      tmpdir(),
+      `repos-db-labels-${randomUUID().slice(0, 8)}`,
+    );
     await mkdir(basePath, { recursive: true });
 
     await writeFile(
@@ -278,10 +290,19 @@ describe("repo-db labels", () => {
       });
       expect(added.matched).toBe(3);
 
-      const labels = await listRepoLabels({ basePath, configBasePath: basePath });
-      expect(labels.find((item) => item.name === "api-one")?.labels).toContain("common");
-      expect(labels.find((item) => item.name === "api-two")?.labels).toContain("common");
-      expect(labels.find((item) => item.name === "web")?.labels).toContain("common");
+      const labels = await listRepoLabels({
+        basePath,
+        configBasePath: basePath,
+      });
+      expect(labels.find((item) => item.name === "api-one")?.labels).toContain(
+        "common",
+      );
+      expect(labels.find((item) => item.name === "api-two")?.labels).toContain(
+        "common",
+      );
+      expect(labels.find((item) => item.name === "web")?.labels).toContain(
+        "common",
+      );
 
       const removed = await updateRepoLabels({
         basePath,
@@ -293,16 +314,26 @@ describe("repo-db labels", () => {
       });
       expect(removed.matched).toBe(1);
 
-      const afterRemove = await listRepoLabels({ basePath, configBasePath: basePath });
-      expect(afterRemove.find((item) => item.name === "api-one")?.labels).toEqual([]);
-      expect(afterRemove.find((item) => item.name === "api-two")?.labels).toContain("common");
+      const afterRemove = await listRepoLabels({
+        basePath,
+        configBasePath: basePath,
+      });
+      expect(
+        afterRemove.find((item) => item.name === "api-one")?.labels,
+      ).toEqual([]);
+      expect(
+        afterRemove.find((item) => item.name === "api-two")?.labels,
+      ).toContain("common");
     } finally {
       await rm(basePath, { recursive: true, force: true });
     }
   });
 
   test("scopes label list/mutations to configured org unless bypassed", async () => {
-    const basePath = join(tmpdir(), `repos-db-labels-org-${randomUUID().slice(0, 8)}`);
+    const basePath = join(
+      tmpdir(),
+      `repos-db-labels-org-${randomUUID().slice(0, 8)}`,
+    );
     await mkdir(basePath, { recursive: true });
 
     await writeFile(
@@ -313,13 +344,22 @@ describe("repo-db labels", () => {
       }),
     );
 
-    await createGitRepo(join(basePath, "alpha"), "https://github.com/acme/alpha.git");
-    await createGitRepo(join(basePath, "beta"), "https://github.com/other/beta.git");
+    await createGitRepo(
+      join(basePath, "alpha"),
+      "https://github.com/acme/alpha.git",
+    );
+    await createGitRepo(
+      join(basePath, "beta"),
+      "https://github.com/other/beta.git",
+    );
 
     try {
       await syncRepoDb({ basePath, configBasePath: basePath });
 
-      const scopedList = await listRepoLabels({ basePath, configBasePath: basePath });
+      const scopedList = await listRepoLabels({
+        basePath,
+        configBasePath: basePath,
+      });
       expect(scopedList).toHaveLength(1);
       expect(scopedList[0].name).toBe("alpha");
 
@@ -332,9 +372,17 @@ describe("repo-db labels", () => {
         globs: ["*"],
       });
 
-      const afterScoped = await listRepoLabels({ basePath, configBasePath: basePath, bypassOrg: true });
-      expect(afterScoped.find((item) => item.name === "alpha")?.labels).toContain("scoped");
-      expect(afterScoped.find((item) => item.name === "beta")?.labels).toEqual([]);
+      const afterScoped = await listRepoLabels({
+        basePath,
+        configBasePath: basePath,
+        bypassOrg: true,
+      });
+      expect(
+        afterScoped.find((item) => item.name === "alpha")?.labels,
+      ).toContain("scoped");
+      expect(afterScoped.find((item) => item.name === "beta")?.labels).toEqual(
+        [],
+      );
 
       await updateRepoLabels({
         basePath,
@@ -346,9 +394,17 @@ describe("repo-db labels", () => {
         bypassOrg: true,
       });
 
-      const afterBypass = await listRepoLabels({ basePath, configBasePath: basePath, bypassOrg: true });
-      expect(afterBypass.find((item) => item.name === "alpha")?.labels).toContain("all");
-      expect(afterBypass.find((item) => item.name === "beta")?.labels).toContain("all");
+      const afterBypass = await listRepoLabels({
+        basePath,
+        configBasePath: basePath,
+        bypassOrg: true,
+      });
+      expect(
+        afterBypass.find((item) => item.name === "alpha")?.labels,
+      ).toContain("all");
+      expect(
+        afterBypass.find((item) => item.name === "beta")?.labels,
+      ).toContain("all");
     } finally {
       await rm(basePath, { recursive: true, force: true });
     }

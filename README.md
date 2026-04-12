@@ -12,6 +12,7 @@
 - Global config supports XDG (`$XDG_CONFIG_HOME/repos/.reposrc.json`), with repo DB stored beside it
 - Repo DB location no longer implicitly switches to `codeDir`; it stays beside the selected config file (global by default, local only when explicitly scoped)
 - `repos sync` command to reconcile local path/name changes and refresh exclusion state
+- `repos sync` clears stale per-repo exclusion flags when a repo is detected at a new path
 - `repos sync` reconciles local repo DB state without rewriting exclusion patterns
 - Label workflow for subsets (`repos label add|rm|list`) with repo args and glob targeting
 - Simplified exclusion model: single repo `excluded` state from config `exclusions` (dirs or globs)
@@ -133,21 +134,21 @@ repos
 
 ### Commands
 
-| Command                   | Description                            |
-| :------------------------ | :------------------------------------- |
-| `repos`                   | Launch interactive menu                |
-| `repos init`              | Setup wizard for configuration         |
-| `repos status`            | Check status of all repositories       |
-| `repos fetch`             | Fetch latest changes from remotes      |
-| `repos pull`              | Pull latest changes for all repos      |
-| `repos diff`              | Show diffs across all repositories     |
-| `repos checkout <branch>` | Switch branches across all repos       |
-| `repos clone`             | Clone repos from GitHub org            |
-| `repos clean`             | Revert changes in repositories         |
-| `repos exec "<command>"`  | Run arbitrary command across all repos |
-| `repos list` / `repos ls` | List repos selected by filters/excludes |
-| `repos exclude [repos...]`| Exclude repos by dir/glob and sync DB  |
-| `repos config`            | View or modify configuration           |
+| Command                    | Description                             |
+| :------------------------- | :-------------------------------------- |
+| `repos`                    | Launch interactive menu                 |
+| `repos init`               | Setup wizard for configuration          |
+| `repos status`             | Check status of all repositories        |
+| `repos fetch`              | Fetch latest changes from remotes       |
+| `repos pull`               | Pull latest changes for all repos       |
+| `repos diff`               | Show diffs across all repositories      |
+| `repos checkout <branch>`  | Switch branches across all repos        |
+| `repos clone`              | Clone repos from GitHub org             |
+| `repos clean`              | Revert changes in repositories          |
+| `repos exec "<command>"`   | Run arbitrary command across all repos  |
+| `repos list` / `repos ls`  | List repos selected by filters/excludes |
+| `repos exclude [repos...]` | Exclude repos by dir/glob and sync DB   |
+| `repos config`             | View or modify configuration            |
 
 ### Status Command
 
@@ -323,17 +324,17 @@ Create `.reposrc.json` in your project directory or home folder:
 }
 ```
 
-| Option          | Default                  | Description                           |
-| :-------------- | :----------------------- | :------------------------------------ |
-| `github.host`   | `github.com`             | GitHub host (for Enterprise)          |
-| `github.apiUrl` | `https://api.github.com` | GitHub API URL                        |
-| `org`           | -                        | Default organization to clone from    |
-| `daysThreshold` | `90`                     | Only clone repos active within N days |
-| `parallel`      | `10`                     | Number of concurrent operations       |
-| `timeout`       | `30000`                  | Network timeout in milliseconds       |
-| `diffMaxLines`  | `500`                    | Max lines per diff (0 for unlimited)  |
+| Option          | Default                  | Description                                                 |
+| :-------------- | :----------------------- | :---------------------------------------------------------- |
+| `github.host`   | `github.com`             | GitHub host (for Enterprise)                                |
+| `github.apiUrl` | `https://api.github.com` | GitHub API URL                                              |
+| `org`           | -                        | Default organization to clone from                          |
+| `daysThreshold` | `90`                     | Only clone repos active within N days                       |
+| `parallel`      | `10`                     | Number of concurrent operations                             |
+| `timeout`       | `30000`                  | Network timeout in milliseconds                             |
+| `diffMaxLines`  | `500`                    | Max lines per diff (0 for unlimited)                        |
 | `repoDbPath`    | `.reposdb.json`          | Repo DB file path (relative to config file if not absolute) |
-| `exclusions`    | `[]`                     | Excluded repo dirs/globs (use `--no-exclude` to bypass) |
+| `exclusions`    | `[]`                     | Excluded repo dirs/globs (use `--no-exclude` to bypass)     |
 
 <details>
 <summary><strong>GitHub Enterprise Configuration</strong></summary>

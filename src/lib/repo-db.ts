@@ -1,6 +1,11 @@
 import { dirname, join, relative, resolve } from "path";
 import { mkdir, readFile } from "fs/promises";
-import { loadConfig, getCwdConfigPath, getHomeConfigPath, resolveCodeDir } from "./config.js";
+import {
+  getCwdConfigPath,
+  getHomeConfigPath,
+  loadConfig,
+  resolveCodeDir,
+} from "./config.js";
 import { findReposRecursive, getRepoName, runParallel } from "./repos.js";
 import { getOriginRepoFullName } from "./git.js";
 import type { RepoDb, RepoDbRepoRecord, ReposConfig } from "../types.js";
@@ -62,7 +67,9 @@ function normalizeConfigForWrite(config: ReposConfig): ReposConfig {
   return normalized;
 }
 
-async function getConfigContext(configBasePath?: string): Promise<ConfigContext> {
+async function getConfigContext(
+  configBasePath?: string,
+): Promise<ConfigContext> {
   if (configBasePath) {
     const scopedPath = getCwdConfigPath(configBasePath);
     const config = await loadConfig(configBasePath);
@@ -83,7 +90,10 @@ async function resolveConfigBasePath(
   return undefined;
 }
 
-export function resolveRepoDbPath(configPath: string, repoDbPath?: string): string {
+export function resolveRepoDbPath(
+  configPath: string,
+  repoDbPath?: string,
+): string {
   if (!repoDbPath) {
     return join(dirname(configPath), DEFAULT_DB_FILENAME);
   }
@@ -100,8 +110,7 @@ async function loadRepoDb(dbPath: string): Promise<RepoDb> {
     if (Array.isArray(parsed.repos)) {
       return parsed;
     }
-  } catch {
-  }
+  } catch {}
   return { version: 1, repos: [] };
 }
 
@@ -129,12 +138,18 @@ function matchesPattern(
   return regex.test(relPath) || regex.test(repoName);
 }
 
-function nextRecordId(originFullName: string | null, name: string, path: string): string {
+function nextRecordId(
+  originFullName: string | null,
+  name: string,
+  path: string,
+): string {
   if (originFullName) return `origin:${originFullName.toLowerCase()}`;
   return `local:${name.toLowerCase()}:${path}`;
 }
 
-export function getRepoOwnerFromRecord(record: RepoDbRepoRecord): string | null {
+export function getRepoOwnerFromRecord(
+  record: RepoDbRepoRecord,
+): string | null {
   if (record.id.startsWith("origin:")) {
     const fullName = record.id.slice("origin:".length);
     const slashIndex = fullName.indexOf("/");
@@ -166,18 +181,22 @@ function applyOrgScope(
   return repos.filter((repo) => getRepoOwnerFromRecord(repo) === configuredOrg);
 }
 
-async function ensureDbContext(basePath?: string, configBasePath?: string): Promise<{
+async function ensureDbContext(
+  basePath?: string,
+  configBasePath?: string,
+): Promise<{
   basePath: string;
   configPath: string;
   dbPath: string;
   config: ReposConfig;
 }> {
   const resolvedBasePath = await resolveCodeDir(basePath);
-  const resolvedConfigBasePath = await resolveConfigBasePath(
-    configBasePath,
-  );
+  const resolvedConfigBasePath = await resolveConfigBasePath(configBasePath);
   const { config, configPath } = await getConfigContext(resolvedConfigBasePath);
-  const dbPath = resolveRepoDbPath(configPath, config.repoDbPath || DEFAULT_DB_FILENAME);
+  const dbPath = resolveRepoDbPath(
+    configPath,
+    config.repoDbPath || DEFAULT_DB_FILENAME,
+  );
   return { basePath: resolvedBasePath, configPath, dbPath, config };
 }
 
@@ -187,25 +206,34 @@ export async function getRepoDb(options: SyncRepoDbOptions = {}): Promise<{
   basePath: string;
 }> {
   if (options.sync !== false) {
-    await syncRepoDb({ basePath: options.basePath, configBasePath: options.configBasePath });
+    await syncRepoDb({
+      basePath: options.basePath,
+      configBasePath: options.configBasePath,
+    });
   }
-  const { dbPath, basePath } = await ensureDbContext(options.basePath, options.configBasePath);
+  const { dbPath, basePath } = await ensureDbContext(
+    options.basePath,
+    options.configBasePath,
+  );
   const db = await loadRepoDb(dbPath);
   return { db, dbPath, basePath };
 }
 
-export async function syncRepoDb(options: SyncRepoDbOptions = {}): Promise<SyncRepoDbResult> {
+export async function syncRepoDb(
+  options: SyncRepoDbOptions = {},
+): Promise<SyncRepoDbResult> {
   const basePath = await resolveCodeDir(options.basePath);
-  const configBasePath = await resolveConfigBasePath(
-    options.configBasePath,
-  );
+  const configBasePath = await resolveConfigBasePath(options.configBasePath);
   const { config, configPath } = await getConfigContext(configBasePath);
 
   const ensuredConfig: ReposConfig = { ...config };
   if (!ensuredConfig.repoDbPath) {
     ensuredConfig.repoDbPath = DEFAULT_DB_FILENAME;
     await mkdir(dirname(configPath), { recursive: true });
-    await Bun.write(configPath, JSON.stringify(normalizeConfigForWrite(ensuredConfig), null, 2) + "\n");
+    await Bun.write(
+      configPath,
+      JSON.stringify(normalizeConfigForWrite(ensuredConfig), null, 2) + "\n",
+    );
   }
 
   const dbPath = resolveRepoDbPath(configPath, ensuredConfig.repoDbPath);
@@ -265,12 +293,15 @@ export async function syncRepoDb(options: SyncRepoDbOptions = {}): Promise<SyncR
       }
     }
 
+    const pathChanged = Boolean(existing && existing.path !== repoPath);
     const baseRecord: RepoDbRepoRecord = existing
       ? {
           ...existing,
           name,
           path: repoPath,
           originFullName: existing.originFullName ?? originFullName,
+          // Keep manual exclusions for stable paths, but clear stale exclusions after path moves.
+          excluded: pathChanged ? false : existing.excluded,
         }
       : {
           id: nextRecordId(originFullName, name, repoPath),
@@ -316,7 +347,9 @@ function resolveTargetMatches(
   for (const target of targets) {
     const hasPathSeparator = target.includes("/");
     if (hasPathSeparator) {
-      const targetPath = target.startsWith("/") ? target : resolve(basePath, target);
+      const targetPath = target.startsWith("/")
+        ? target
+        : resolve(basePath, target);
       const pathMatch = repos.find((repo) => repo.path === targetPath);
       if (pathMatch) {
         matched.add(pathMatch);
@@ -326,9 +359,7 @@ function resolveTargetMatches(
 
     const sameName = repos.filter((repo) => repo.name === target);
     if (sameName.length > 1) {
-      throw new Error(
-        `Ambiguous repo target '${target}'. Use a path instead.`,
-      );
+      throw new Error(`Ambiguous repo target '${target}'. Use a path instead.`);
     }
     if (sameName.length === 1) {
       matched.add(sameName[0]);
@@ -420,7 +451,12 @@ export async function updateRepoExclusions(
   }
 
   const scopedRepos = applyOrgScope(db.repos, config.org, options.bypassOrg);
-  const matches = resolveTargetMatches(scopedRepos, options.targets, [], basePath);
+  const matches = resolveTargetMatches(
+    scopedRepos,
+    options.targets,
+    [],
+    basePath,
+  );
   const targetIds = new Set(matches.map((repo) => repo.id));
 
   let updated = 0;
