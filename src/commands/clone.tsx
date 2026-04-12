@@ -8,8 +8,8 @@ import {
   getCloneUrl,
   getGitHubConfig,
 } from "../lib/github.js";
-import { cloneRepo, pullRepo } from "../lib/git.js";
-import { directoryExists, runParallel } from "../lib/repos.js";
+import { cloneRepo, pullRepo, getOriginRepoFullName } from "../lib/git.js";
+import { findReposRecursive, runParallel, getRepoName } from "../lib/repos.js";
 import { ProgressBar } from "../components/ProgressBar.js";
 import { ResultList, OperationStats } from "../components/RepoList.js";
 import { Confirm } from "../components/Confirm.js";
@@ -37,13 +37,43 @@ export function CloneApp({ options, onComplete }: CloneAppProps) {
   const cancelledRef = useRef(false);
   const { write } = useStdout();
 
-  useEffect(() => {
-    if (!onComplete && (phase === "done" || phase === "cancelled")) {
-      setTimeout(() => process.exit(0), 100);
-    }
-  }, [phase, onComplete]);
+  const getExistingRepoPath = useCallback(
+    (repo: GitHubRepo, existingPaths: Map<string, string>): string | undefined =>
+      existingPaths.get(`full:${repo.fullName.toLowerCase()}`) ??
+      existingPaths.get(`name:${repo.name}`),
+    [],
+  );
 
-  const runCloneOperations = useCallback(async (reposToClone: GitHubRepo[]) => {
+  const discoverExistingRepoPaths = useCallback(async (): Promise<Map<string, string>> => {
+    const discoveredRepos = await findReposRecursive(process.cwd());
+    const existingPaths = new Map<string, string>();
+
+    for (const repoPath of discoveredRepos) {
+      const repoName = getRepoName(repoPath);
+      if (!existingPaths.has(`name:${repoName}`)) {
+        existingPaths.set(`name:${repoName}`, repoPath);
+      }
+
+      const fullName = await getOriginRepoFullName(repoPath);
+      if (fullName && !existingPaths.has(`full:${fullName}`)) {
+        existingPaths.set(`full:${fullName}`, repoPath);
+      }
+    }
+
+    return existingPaths;
+  }, []);
+
+  useEffect(() => {
+    if (!options.interactive && onComplete && (phase === "done" || phase === "cancelled")) {
+      const timer = setTimeout(() => onComplete(), 250);
+      return () => clearTimeout(timer);
+    }
+  }, [phase, onComplete, options.interactive]);
+
+  const runCloneOperations = useCallback(async (
+    reposToClone: GitHubRepo[],
+    existingPaths: Map<string, string>,
+  ) => {
     const config = await loadConfig();
     const resultsMap = new Map<number, RepoOperationResult>();
     const currentlyActive = new Set<string>();
@@ -55,8 +85,9 @@ export function CloneApp({ options, onComplete }: CloneAppProps) {
         currentlyActive.add(repo.name);
         setActiveReposSet(new Set(currentlyActive));
         
-        const targetPath = repo.name;
-        const exists = await directoryExists(targetPath);
+        const existingPath = getExistingRepoPath(repo, existingPaths);
+        const targetPath = existingPath ?? repo.name;
+        const exists = !!existingPath;
 
         let result: RepoOperationResult;
 
@@ -92,13 +123,9 @@ export function CloneApp({ options, onComplete }: CloneAppProps) {
     setActiveReposSet(new Set());
     setResults(opResults.filter(Boolean));
     setPhase(cancelled ? "cancelled" : "done");
-  }, [options.parallel, options.shallow]);
+  }, [options.parallel, options.shallow, getExistingRepoPath]);
 
   useEffect(() => {
-    if (repos.length > 0 && !isDryRun && phase === "cloning") {
-      return;
-    }
-
     async function run() {
       try {
         const config = await loadConfig();
@@ -142,15 +169,20 @@ export function CloneApp({ options, onComplete }: CloneAppProps) {
         setRepos(activeRepos);
         setProgress({ completed: 0, total: activeRepos.length });
 
+        const existingPaths = await discoverExistingRepoPaths();
+
         if (isDryRun) {
           const dryRunResults: RepoOperationResult[] = [];
           for (const repo of activeRepos) {
-            const exists = await directoryExists(repo.name);
+            const existingPath = getExistingRepoPath(repo, existingPaths);
+            const exists = !!existingPath;
             dryRunResults.push({
               name: repo.name,
               success: true,
               message: exists ? "would pull" : "would clone",
-              details: `Last activity: ${repo.pushedAt.slice(0, 10)}`,
+              details: exists
+                ? `Last activity: ${repo.pushedAt.slice(0, 10)} | Found: ${existingPath}`
+                : `Last activity: ${repo.pushedAt.slice(0, 10)}`,
             });
           }
           setResults(dryRunResults);
@@ -163,7 +195,7 @@ export function CloneApp({ options, onComplete }: CloneAppProps) {
         }
 
         setPhase("cloning");
-        await runCloneOperations(activeRepos);
+        await runCloneOperations(activeRepos, existingPaths);
       } catch (err) {
         setError(err instanceof Error ? err.message : String(err));
         setPhase("done");
@@ -171,16 +203,14 @@ export function CloneApp({ options, onComplete }: CloneAppProps) {
     }
 
     run();
-  }, [options, isDryRun, runKey, runCloneOperations]);
-
-  useEffect(() => {
-    if (repos.length > 0 && !isDryRun && phase === "cloning") {
-      runCloneOperations(repos).catch((err) => {
-        setError(err instanceof Error ? err.message : String(err));
-        setPhase("done");
-      });
-    }
-  }, [repos, isDryRun, phase, runKey, runCloneOperations]);
+  }, [
+    options,
+    isDryRun,
+    runKey,
+    runCloneOperations,
+    discoverExistingRepoPaths,
+    getExistingRepoPath,
+  ]);
 
   const handleProceedWithLiveRun = useCallback(() => {
     write("\x1B[2J\x1B[H");
@@ -226,7 +256,7 @@ export function CloneApp({ options, onComplete }: CloneAppProps) {
             </Text>
           </Box>
         )}
-        {onComplete && (
+        {options.interactive && onComplete && (
           <Box marginTop={1}>
             <Text dimColor>⌫/Esc Back</Text>
           </Box>
@@ -408,7 +438,7 @@ export function CloneApp({ options, onComplete }: CloneAppProps) {
             </Box>
           )}
 
-          {onComplete && (
+          {options.interactive && onComplete && (
             <Box marginTop={1}>
               <Text dimColor>⌫/Esc Back</Text>
             </Box>
@@ -420,7 +450,15 @@ export function CloneApp({ options, onComplete }: CloneAppProps) {
 }
 
 export async function runClone(options: CloneOptions): Promise<void> {
-  const { waitUntilExit } = render(<CloneApp options={options} />);
+  let unmountFn: (() => void) | null = null;
+  const { waitUntilExit, unmount } = render(
+    <CloneApp
+      options={options}
+      onComplete={() => {
+        unmountFn?.();
+      }}
+    />
+  );
+  unmountFn = unmount;
   await waitUntilExit();
 }
-

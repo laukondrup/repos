@@ -94,6 +94,33 @@ export async function getCurrentBranch(repoPath: string): Promise<string> {
   }
 }
 
+function parseRemoteRepoFullName(remoteUrl: string): string | null {
+  const sshMatch = remoteUrl.match(/^[^@]+@[^:]+:([^/]+\/[^/]+?)(?:\.git)?$/);
+  if (sshMatch) {
+    return sshMatch[1].toLowerCase();
+  }
+
+  const httpsMatch = remoteUrl.match(/^https?:\/\/[^/]+\/([^/]+\/[^/]+?)(?:\.git)?$/);
+  if (httpsMatch) {
+    return httpsMatch[1].toLowerCase();
+  }
+
+  return null;
+}
+
+export async function getOriginRepoFullName(repoPath: string): Promise<string | null> {
+  try {
+    const result = await $`git -C ${repoPath} remote get-url origin`.quiet();
+    if (result.exitCode !== 0) {
+      return null;
+    }
+
+    return parseRemoteRepoFullName(result.text().trim());
+  } catch {
+    return null;
+  }
+}
+
 export async function getRepoStatus(repoPath: string): Promise<RepoStatus> {
   const name = repoPath.split("/").pop() || repoPath;
   const branch = await getCurrentBranch(repoPath);

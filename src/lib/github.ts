@@ -136,6 +136,10 @@ interface GitHubApiRepo {
   default_branch: string;
 }
 
+interface GitHubAuthenticatedUser {
+  login: string;
+}
+
 function toGitHubRepo(repo: GitHubApiRepo): GitHubRepo {
   return {
     name: repo.name,
@@ -193,10 +197,27 @@ export async function listUserRepos(
   const repos: GitHubRepo[] = [];
   let page = 1;
   const perPage = 100;
+  let useAuthenticatedEndpoint = false;
+
+  try {
+    const user = await githubFetch<GitHubAuthenticatedUser>(
+      "/user",
+      ghConfig,
+      {},
+      opts.timeout,
+    );
+    useAuthenticatedEndpoint = user.login.toLowerCase() === username.toLowerCase();
+  } catch {
+    useAuthenticatedEndpoint = false;
+  }
 
   while (true) {
+    const endpoint = useAuthenticatedEndpoint
+      ? `/user/repos?per_page=${perPage}&page=${page}&affiliation=owner&visibility=all`
+      : `/users/${username}/repos?per_page=${perPage}&page=${page}&type=owner`;
+
     const response = await githubFetch<GitHubApiRepo[]>(
-      `/users/${username}/repos?per_page=${perPage}&page=${page}&type=owner`,
+      endpoint,
       ghConfig,
       {},
       opts.timeout,

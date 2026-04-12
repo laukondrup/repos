@@ -5,6 +5,7 @@ import { join } from "path";
 import {
   isGitRepo,
   getCurrentBranch,
+  getOriginRepoFullName,
   getRepoStatus,
   pullRepo,
   cleanRepo,
@@ -65,6 +66,34 @@ describe("git.ts", () => {
 
         const branch = await getCurrentBranch(repo.path);
         expect(branch).toBe("detached");
+      } finally {
+        await repo.cleanup();
+      }
+    });
+  });
+
+  describe("getOriginRepoFullName", () => {
+    test("parses HTTPS origin URL", async () => {
+      const repo = await createTempRepo();
+      try {
+        const { $ } = await import("bun");
+        await $`git -C ${repo.path} remote add origin https://github.com/laukondrup/testing-123.git`.quiet();
+
+        const fullName = await getOriginRepoFullName(repo.path);
+        expect(fullName).toBe("laukondrup/testing-123");
+      } finally {
+        await repo.cleanup();
+      }
+    });
+
+    test("parses SSH origin URL", async () => {
+      const repo = await createTempRepo();
+      try {
+        const { $ } = await import("bun");
+        await $`git -C ${repo.path} remote add origin git@github.com:laukondrup/repos.git`.quiet();
+
+        const fullName = await getOriginRepoFullName(repo.path);
+        expect(fullName).toBe("laukondrup/repos");
       } finally {
         await repo.cleanup();
       }

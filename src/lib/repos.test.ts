@@ -4,6 +4,7 @@ import { mkdir, rm } from "fs/promises";
 import { join } from "path";
 import {
   findRepos,
+  findReposRecursive,
   filterRepos,
   getAllRepoStatuses,
   directoryExists,
@@ -105,6 +106,42 @@ describe("repos.ts", () => {
         expect(names).toEqual(["alpha", "middle", "zebra"]);
       } finally {
         await cleanup();
+      }
+    });
+  });
+
+  describe("findReposRecursive", () => {
+    test("finds git repositories in nested directories", async () => {
+      const tempDir = join("/tmp", `nested-repos-${Date.now()}`);
+      await mkdir(tempDir, { recursive: true });
+
+      const { $ } = await import("bun");
+      const nestedRepoPath = join(tempDir, "clones", "my-repo");
+      await mkdir(nestedRepoPath, { recursive: true });
+      await $`git init ${nestedRepoPath}`.quiet();
+
+      try {
+        const found = await findReposRecursive(tempDir, 2);
+        expect(found).toContain(nestedRepoPath);
+      } finally {
+        await rm(tempDir, { recursive: true, force: true });
+      }
+    });
+
+    test("respects max depth", async () => {
+      const tempDir = join("/tmp", `deep-repos-${Date.now()}`);
+      await mkdir(tempDir, { recursive: true });
+
+      const { $ } = await import("bun");
+      const deepRepoPath = join(tempDir, "one", "two", "three", "deep-repo");
+      await mkdir(deepRepoPath, { recursive: true });
+      await $`git init ${deepRepoPath}`.quiet();
+
+      try {
+        const found = await findReposRecursive(tempDir, 2);
+        expect(found).not.toContain(deepRepoPath);
+      } finally {
+        await rm(tempDir, { recursive: true, force: true });
       }
     });
   });

@@ -3,6 +3,9 @@ import { join } from "path";
 import { isGitRepo, getRepoStatus } from "./git.js";
 import type { RepoStatus } from "../types.js";
 
+const DEFAULT_DISCOVERY_MAX_DEPTH = 10;
+const IGNORED_DISCOVERY_DIRS = new Set([".git", "node_modules"]);
+
 export async function findRepos(
   basePath: string = process.cwd()
 ): Promise<string[]> {
@@ -21,6 +24,44 @@ export async function findRepos(
       }
     }
   } catch {
+  }
+
+  return repos.sort();
+}
+
+export async function findReposRecursive(
+  basePath: string = process.cwd(),
+  maxDepth: number = DEFAULT_DISCOVERY_MAX_DEPTH,
+): Promise<string[]> {
+  const repos: string[] = [];
+  const queue: Array<{ path: string; depth: number }> = [{ path: basePath, depth: 0 }];
+
+  while (queue.length > 0) {
+    const current = queue.shift();
+    if (!current) continue;
+
+    let entries;
+    try {
+      entries = await readdir(current.path, { withFileTypes: true });
+    } catch {
+      continue;
+    }
+
+    for (const entry of entries) {
+      if (!entry.isDirectory()) continue;
+      if (entry.name.startsWith(".")) continue;
+      if (IGNORED_DISCOVERY_DIRS.has(entry.name)) continue;
+
+      const fullPath = join(current.path, entry.name);
+      if (await isGitRepo(fullPath)) {
+        repos.push(fullPath);
+        continue;
+      }
+
+      if (current.depth < maxDepth) {
+        queue.push({ path: fullPath, depth: current.depth + 1 });
+      }
+    }
   }
 
   return repos.sort();
@@ -94,4 +135,3 @@ export async function runParallel<T, U>(
 
   return { results, cancelled };
 }
-
