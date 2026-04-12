@@ -12,7 +12,7 @@ import { DiffApp } from "../commands/diff.js";
 import { CheckoutApp } from "../commands/checkout.js";
 import { ExecApp } from "../commands/exec.js";
 import { loadConfig } from "../lib/config.js";
-import { findRepos } from "../lib/repos.js";
+import { selectLocalRepos } from "../lib/repo-selection.js";
 import { OptionsForm, type FormField } from "./OptionsForm.js";
 import { GroupedMenu, type MenuItem, type MenuGroup } from "./GroupedMenu.js";
 import type {
@@ -410,7 +410,7 @@ export function App() {
   const [repoCount, setRepoCount] = useState<number | null>(null);
 
   useEffect(() => {
-    findRepos()
+    selectLocalRepos({ noExclude: true })
       .then((repos) => setRepoCount(repos.length))
       .catch(() => {}); // Silently handle errors - count stays null
   }, []);

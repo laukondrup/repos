@@ -286,7 +286,7 @@ program
   .option("-s, --set <key>", "Set a config value")
   .option("-v, --value <value>", "Value to set")
   .option("-l, --list", "List all config values")
-  .option("--location <loc>", "Config file location (cwd or home)")
+  .option("--location <loc>", "Config file location (global)")
   .action(async (options) => {
     await runConfig({
       get: options.get,

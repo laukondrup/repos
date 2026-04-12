@@ -3,8 +3,6 @@ import { render, Box, Text, useInput } from "ink";
 import {
   loadConfig,
   saveConfig,
-  configExists,
-  getCwdConfigPath,
   getHomeConfigPath,
   getConfigValue,
   setConfigValue,
@@ -43,12 +41,7 @@ export function ConfigApp({ options, onComplete }: ConfigAppProps) {
       try {
         const currentConfig = await loadConfig();
         setConfig(currentConfig);
-
-        if (await configExists("cwd")) {
-          setConfigPath(getCwdConfigPath());
-        } else if (await configExists("home")) {
-          setConfigPath(getHomeConfigPath());
-        }
+        setConfigPath(getHomeConfigPath());
 
         if (options.get) {
           const value = getConfigValue(currentConfig, options.get);
@@ -73,11 +66,11 @@ export function ConfigApp({ options, onComplete }: ConfigAppProps) {
           }
 
           const newConfig = setConfigValue(currentConfig, options.set, parsedValue);
-          const location = options.location || "cwd";
+          const location = options.location || "global";
           await saveConfig(newConfig, location);
           
           setConfig(newConfig);
-          setConfigPath(location === "cwd" ? getCwdConfigPath() : getHomeConfigPath());
+          setConfigPath(getHomeConfigPath());
           setMessage(`Set ${options.set} = ${options.value}`);
           setIsDone(true);
           return;
@@ -144,6 +137,7 @@ export function ConfigApp({ options, onComplete }: ConfigAppProps) {
         <ConfigValue label="github.host" value={config.github?.host} />
         <ConfigValue label="github.apiUrl" value={config.github?.apiUrl} />
         <ConfigValue label="org" value={config.org} />
+        <ConfigValue label="codeDir" value={config.codeDir} />
         <ConfigValue label="daysThreshold" value={config.daysThreshold} />
         <ConfigValue label="parallel" value={config.parallel} />
         <ConfigValue label="timeout" value={config.timeout} />
@@ -189,4 +183,3 @@ export async function runConfig(options: ConfigOptions): Promise<void> {
   const { waitUntilExit } = render(<ConfigApp options={options} />);
   await waitUntilExit();
 }
-

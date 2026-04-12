@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { render, Box, Text, useInput, useStdout } from "ink";
 import Spinner from "ink-spinner";
-import { loadConfig } from "../lib/config.js";
+import { loadConfig, resolveCodeDir } from "../lib/config.js";
 import {
   listRepos,
   filterActiveRepos,
@@ -15,6 +15,7 @@ import { ResultList, OperationStats } from "../components/RepoList.js";
 import { Confirm } from "../components/Confirm.js";
 import { Divider } from "../components/Divider.js";
 import type { CloneOptions, GitHubRepo, RepoOperationResult } from "../types.js";
+import { join } from "path";
 
 interface CloneAppProps {
   options: CloneOptions;
@@ -44,8 +45,12 @@ export function CloneApp({ options, onComplete }: CloneAppProps) {
     [],
   );
 
-  const discoverExistingRepoPaths = useCallback(async (): Promise<Map<string, string>> => {
-    const discoveredRepos = await findReposRecursive(process.cwd());
+  const discoverExistingRepoPaths = useCallback(async (): Promise<{
+    existingPaths: Map<string, string>;
+    codeDir: string;
+  }> => {
+    const codeDir = await resolveCodeDir(options.basePath);
+    const discoveredRepos = await findReposRecursive(codeDir);
     const existingPaths = new Map<string, string>();
 
     for (const repoPath of discoveredRepos) {
@@ -60,8 +65,8 @@ export function CloneApp({ options, onComplete }: CloneAppProps) {
       }
     }
 
-    return existingPaths;
-  }, []);
+    return { existingPaths, codeDir };
+  }, [options.basePath]);
 
   useEffect(() => {
     if (!options.interactive && onComplete && (phase === "done" || phase === "cancelled")) {
@@ -73,6 +78,7 @@ export function CloneApp({ options, onComplete }: CloneAppProps) {
   const runCloneOperations = useCallback(async (
     reposToClone: GitHubRepo[],
     existingPaths: Map<string, string>,
+    codeDir: string,
   ) => {
     const config = await loadConfig();
     const resultsMap = new Map<number, RepoOperationResult>();
@@ -86,7 +92,7 @@ export function CloneApp({ options, onComplete }: CloneAppProps) {
         setActiveReposSet(new Set(currentlyActive));
         
         const existingPath = getExistingRepoPath(repo, existingPaths);
-        const targetPath = existingPath ?? repo.name;
+        const targetPath = existingPath ?? join(codeDir, repo.name);
         const exists = !!existingPath;
 
         let result: RepoOperationResult;
@@ -169,7 +175,7 @@ export function CloneApp({ options, onComplete }: CloneAppProps) {
         setRepos(activeRepos);
         setProgress({ completed: 0, total: activeRepos.length });
 
-        const existingPaths = await discoverExistingRepoPaths();
+        const { existingPaths, codeDir } = await discoverExistingRepoPaths();
 
         if (isDryRun) {
           const dryRunResults: RepoOperationResult[] = [];
@@ -195,7 +201,7 @@ export function CloneApp({ options, onComplete }: CloneAppProps) {
         }
 
         setPhase("cloning");
-        await runCloneOperations(activeRepos, existingPaths);
+        await runCloneOperations(activeRepos, existingPaths, codeDir);
       } catch (err) {
         setError(err instanceof Error ? err.message : String(err));
         setPhase("done");

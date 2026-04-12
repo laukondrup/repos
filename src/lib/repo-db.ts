@@ -1,6 +1,6 @@
 import { dirname, join, relative, resolve } from "path";
-import { readFile } from "fs/promises";
-import { loadConfig, getCwdConfigPath, getHomeConfigPath } from "./config.js";
+import { mkdir, readFile } from "fs/promises";
+import { loadConfig, getCwdConfigPath, getHomeConfigPath, resolveCodeDir } from "./config.js";
 import { findReposRecursive, getRepoName } from "./repos.js";
 import { getOriginRepoFullName } from "./git.js";
 import type { RepoDb, RepoDbRepoRecord, ReposConfig } from "../types.js";
@@ -9,10 +9,12 @@ const DEFAULT_DB_FILENAME = ".reposdb.json";
 
 export interface SyncRepoDbOptions {
   basePath?: string;
+  configBasePath?: string;
 }
 
 export interface RepoLabelUpdateOptions {
   basePath?: string;
+  configBasePath?: string;
   action: "add" | "remove";
   label: string;
   targets: string[];
@@ -21,6 +23,7 @@ export interface RepoLabelUpdateOptions {
 
 export interface RepoLabelListOptions {
   basePath?: string;
+  configBasePath?: string;
 }
 
 export interface SyncRepoDbResult {
@@ -47,18 +50,35 @@ function normalizeConfigForWrite(config: ReposConfig): ReposConfig {
   return normalized;
 }
 
-async function getConfigContext(basePath?: string): Promise<ConfigContext> {
-  const config = await loadConfig(basePath);
-  const cwdConfigPath = getCwdConfigPath(basePath);
-  const homeConfigPath = getHomeConfigPath();
+async function getConfigContext(configBasePath?: string): Promise<ConfigContext> {
+  if (configBasePath) {
+    const scopedPath = getCwdConfigPath(configBasePath);
+    const config = await loadConfig(configBasePath);
+    return { config, configPath: scopedPath };
+  }
 
-  if (await Bun.file(cwdConfigPath).exists()) {
-    return { config, configPath: cwdConfigPath };
+  const homeConfigPath = getHomeConfigPath();
+  const config = await loadConfig();
+  return { config, configPath: homeConfigPath };
+}
+
+async function resolveConfigBasePath(
+  basePath?: string,
+  configBasePath?: string,
+): Promise<string | undefined> {
+  if (configBasePath) {
+    return configBasePath;
   }
-  if (await Bun.file(homeConfigPath).exists()) {
-    return { config, configPath: homeConfigPath };
+  if (!basePath) {
+    return undefined;
   }
-  return { config, configPath: cwdConfigPath };
+
+  const scopedPath = getCwdConfigPath(basePath);
+  if (await Bun.file(scopedPath).exists()) {
+    return basePath;
+  }
+
+  return undefined;
 }
 
 export function resolveRepoDbPath(configPath: string, repoDbPath?: string): string {
@@ -143,14 +163,18 @@ function nextRecordId(originFullName: string | null, name: string, path: string)
   return `local:${name.toLowerCase()}:${path}`;
 }
 
-async function ensureDbContext(basePath?: string): Promise<{
+async function ensureDbContext(basePath?: string, configBasePath?: string): Promise<{
   basePath: string;
   configPath: string;
   dbPath: string;
   config: ReposConfig;
 }> {
-  const resolvedBasePath = basePath ?? process.cwd();
-  const { config, configPath } = await getConfigContext(resolvedBasePath);
+  const resolvedBasePath = await resolveCodeDir(basePath);
+  const resolvedConfigBasePath = await resolveConfigBasePath(
+    resolvedBasePath,
+    configBasePath,
+  );
+  const { config, configPath } = await getConfigContext(resolvedConfigBasePath);
   const dbPath = resolveRepoDbPath(configPath, config.repoDbPath || DEFAULT_DB_FILENAME);
   return { basePath: resolvedBasePath, configPath, dbPath, config };
 }
@@ -160,20 +184,25 @@ export async function getRepoDb(options: SyncRepoDbOptions = {}): Promise<{
   dbPath: string;
   basePath: string;
 }> {
-  await syncRepoDb({ basePath: options.basePath });
-  const { dbPath, basePath } = await ensureDbContext(options.basePath);
+  await syncRepoDb({ basePath: options.basePath, configBasePath: options.configBasePath });
+  const { dbPath, basePath } = await ensureDbContext(options.basePath, options.configBasePath);
   const db = await loadRepoDb(dbPath);
   return { db, dbPath, basePath };
 }
 
 export async function syncRepoDb(options: SyncRepoDbOptions = {}): Promise<SyncRepoDbResult> {
-  const basePath = options.basePath ?? process.cwd();
-  const { config, configPath } = await getConfigContext(basePath);
+  const basePath = await resolveCodeDir(options.basePath);
+  const configBasePath = await resolveConfigBasePath(
+    basePath,
+    options.configBasePath,
+  );
+  const { config, configPath } = await getConfigContext(configBasePath);
   const globs = config.exclusionGlobs ?? [];
 
   const ensuredConfig: ReposConfig = { ...config };
   if (!ensuredConfig.repoDbPath) {
     ensuredConfig.repoDbPath = DEFAULT_DB_FILENAME;
+    await mkdir(dirname(configPath), { recursive: true });
     await Bun.write(configPath, JSON.stringify(normalizeConfigForWrite(ensuredConfig), null, 2) + "\n");
   }
 
@@ -300,8 +329,14 @@ export async function updateRepoLabels(
     throw new Error("Label is required");
   }
 
-  const syncResult = await syncRepoDb({ basePath: options.basePath });
-  const { basePath, dbPath } = await ensureDbContext(options.basePath);
+  const syncResult = await syncRepoDb({
+    basePath: options.basePath,
+    configBasePath: options.configBasePath,
+  });
+  const { basePath, dbPath } = await ensureDbContext(
+    options.basePath,
+    options.configBasePath,
+  );
   const db = await loadRepoDb(dbPath);
   if (syncResult.total !== db.repos.length) {
     // defensive re-sync guard if db changed during write
@@ -345,7 +380,10 @@ export async function updateRepoLabels(
 export async function listRepoLabels(
   options: RepoLabelListOptions = {},
 ): Promise<Array<{ name: string; path: string; labels: string[] }>> {
-  const { db } = await getRepoDb({ basePath: options.basePath });
+  const { db } = await getRepoDb({
+    basePath: options.basePath,
+    configBasePath: options.configBasePath,
+  });
 
   return db.repos
     .map((repo) => ({

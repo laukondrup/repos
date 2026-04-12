@@ -6,6 +6,7 @@ export interface GitHubConfig {
 export interface ReposConfig {
   github?: GitHubConfig;
   org?: string;
+  codeDir?: string;
   daysThreshold?: number;
   parallel?: number;
   timeout?: number;
@@ -20,6 +21,7 @@ export const DEFAULT_CONFIG: Required<ReposConfig> = {
     apiUrl: "https://api.github.com",
   },
   org: "",
+  codeDir: "",
   daysThreshold: 90,
   parallel: 10,
   timeout: 30000,
@@ -68,6 +70,7 @@ export interface CloneOptions {
   parallel?: number;
   shallow?: boolean;
   interactive?: boolean;
+  basePath?: string;
 }
 
 export interface StatusOptions {
@@ -165,7 +168,7 @@ export interface ConfigOptions {
   set?: string;
   value?: string;
   list?: boolean;
-  location?: "cwd" | "home";
+  location?: "cwd" | "home" | "global";
 }
 
 export interface GhCliHost {

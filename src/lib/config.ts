@@ -1,6 +1,7 @@
 import { $ } from "bun";
 import { homedir } from "os";
-import { join } from "path";
+import { dirname, join, resolve } from "path";
+import { mkdir } from "fs/promises";
 import type { ReposConfig, GhCliConfig, GhCliHost } from "../types.js";
 import { DEFAULT_CONFIG } from "../types.js";
 
@@ -24,15 +25,21 @@ export function getCwdConfigPath(basePath?: string): string {
 }
 
 export function getHomeConfigPath(): string {
+  const xdgConfigHome = process.env.XDG_CONFIG_HOME;
+  if (xdgConfigHome && xdgConfigHome.trim()) {
+    return join(xdgConfigHome, "repos", CONFIG_FILENAME);
+  }
   return join(homedir(), CONFIG_FILENAME);
 }
 
 export async function loadConfig(basePath?: string): Promise<ReposConfig> {
-  const cwdConfig = await loadConfigFile(getCwdConfigPath(basePath));
-  if (cwdConfig) return mergeConfig(DEFAULT_CONFIG, cwdConfig);
+  if (basePath) {
+    const scopedConfig = await loadConfigFile(getCwdConfigPath(basePath));
+    if (scopedConfig) return mergeConfig(DEFAULT_CONFIG, scopedConfig);
+  }
 
-  const homeConfig = await loadConfigFile(getHomeConfigPath());
-  if (homeConfig) return mergeConfig(DEFAULT_CONFIG, homeConfig);
+  const globalConfig = await loadConfigFile(getHomeConfigPath());
+  if (globalConfig) return mergeConfig(DEFAULT_CONFIG, globalConfig);
 
   return { ...DEFAULT_CONFIG };
 }
@@ -47,6 +54,7 @@ function mergeConfig(
       ...user.github,
     },
     org: user.org ?? defaults.org,
+    codeDir: user.codeDir ?? defaults.codeDir,
     daysThreshold: user.daysThreshold ?? defaults.daysThreshold,
     parallel: user.parallel ?? defaults.parallel,
     timeout: user.timeout ?? defaults.timeout,
@@ -58,28 +66,43 @@ function mergeConfig(
 
 export async function saveConfig(
   config: ReposConfig,
-  location: "cwd" | "home" = "cwd",
+  location: "cwd" | "home" | "global" = "global",
   basePath?: string
 ): Promise<void> {
-  const path = location === "cwd" ? getCwdConfigPath(basePath) : getHomeConfigPath();
+  const path =
+    location === "cwd" ? getCwdConfigPath(basePath) : getHomeConfigPath();
+  await mkdir(dirname(path), { recursive: true });
   await Bun.write(path, JSON.stringify(config, null, 2) + "\n");
 }
 
 export async function configExists(
-  location: "cwd" | "home" | "any" = "any",
+  location: "cwd" | "home" | "global" | "any" = "any",
   basePath?: string
 ): Promise<boolean> {
-  if (location === "cwd" || location === "any") {
+  if (basePath && (location === "cwd" || location === "any")) {
     const cwdExists = await Bun.file(getCwdConfigPath(basePath)).exists();
     if (cwdExists) return true;
   }
 
-  if (location === "home" || location === "any") {
+  if (location === "home" || location === "global" || location === "any") {
     const homeExists = await Bun.file(getHomeConfigPath()).exists();
     if (homeExists) return true;
   }
 
   return false;
+}
+
+export async function resolveCodeDir(basePath?: string): Promise<string> {
+  if (basePath) {
+    return resolve(basePath);
+  }
+
+  const config = await loadConfig();
+  if (config.codeDir && config.codeDir.trim()) {
+    return resolve(config.codeDir);
+  }
+
+  return process.cwd();
 }
 
 function parseGhHostsYaml(content: string): GhCliConfig {
