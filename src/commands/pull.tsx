@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { render, Box, Text, useInput } from "ink";
 import Spinner from "ink-spinner";
-import { findRepos, filterRepos } from "../lib/repos.js";
+import { selectLocalRepos } from "../lib/repo-selection.js";
 import { pullRepo, fetchRepo, getRepoStatus } from "../lib/git.js";
 import { loadConfig } from "../lib/config.js";
 import { ProgressBar } from "../components/ProgressBar.js";
@@ -191,21 +191,20 @@ export function PullApp({ options, onComplete }: PullAppProps) {
         const parallelCount = options.parallel ?? config.parallel ?? 10;
         setParallel(parallelCount);
 
-        let repoPaths = await findRepos(options.basePath);
+        let repoPaths = await selectLocalRepos({
+          basePath: options.basePath,
+          filter: options.filter,
+          noExclude: options.noExclude,
+        });
 
         if (repoPaths.length === 0) {
-          setError("No repositories found in current directory");
+          setError(
+            options.filter
+              ? `No repositories match pattern: ${options.filter}`
+              : "No repositories found in current directory"
+          );
           setPhase("done");
           return;
-        }
-
-        if (options.filter) {
-          repoPaths = filterRepos(repoPaths, options.filter);
-          if (repoPaths.length === 0) {
-            setError(`No repositories match pattern: ${options.filter}`);
-            setPhase("done");
-            return;
-          }
         }
 
         setRepos(repoPaths);

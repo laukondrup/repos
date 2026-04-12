@@ -155,6 +155,17 @@ async function ensureDbContext(basePath?: string): Promise<{
   return { basePath: resolvedBasePath, configPath, dbPath, config };
 }
 
+export async function getRepoDb(options: SyncRepoDbOptions = {}): Promise<{
+  db: RepoDb;
+  dbPath: string;
+  basePath: string;
+}> {
+  await syncRepoDb({ basePath: options.basePath });
+  const { dbPath, basePath } = await ensureDbContext(options.basePath);
+  const db = await loadRepoDb(dbPath);
+  return { db, dbPath, basePath };
+}
+
 export async function syncRepoDb(options: SyncRepoDbOptions = {}): Promise<SyncRepoDbResult> {
   const basePath = options.basePath ?? process.cwd();
   const { config, configPath } = await getConfigContext(basePath);
@@ -334,9 +345,7 @@ export async function updateRepoLabels(
 export async function listRepoLabels(
   options: RepoLabelListOptions = {},
 ): Promise<Array<{ name: string; path: string; labels: string[] }>> {
-  await syncRepoDb({ basePath: options.basePath });
-  const { dbPath } = await ensureDbContext(options.basePath);
-  const db = await loadRepoDb(dbPath);
+  const { db } = await getRepoDb({ basePath: options.basePath });
 
   return db.repos
     .map((repo) => ({

@@ -76,6 +76,7 @@ export interface StatusOptions {
   filter?: string;
   fetch?: boolean;
   basePath?: string;
+  noExclude?: boolean;
 }
 
 export interface UpdateOptions {
@@ -85,6 +86,7 @@ export interface UpdateOptions {
   quiet?: boolean;
   interactive?: boolean;
   basePath?: string;
+  noExclude?: boolean;
 }
 
 export interface CleanupOptions {
@@ -94,6 +96,7 @@ export interface CleanupOptions {
   filter?: string;
   interactive?: boolean;
   basePath?: string;
+  noExclude?: boolean;
 }
 
 export interface FetchOptions {
@@ -105,6 +108,7 @@ export interface FetchOptions {
   quiet?: boolean;
   interactive?: boolean;
   basePath?: string;
+  noExclude?: boolean;
 }
 
 export interface DiffOptions {
@@ -115,6 +119,7 @@ export interface DiffOptions {
   interactive?: boolean;
   basePath?: string;
   maxLines?: number;
+  noExclude?: boolean;
 }
 
 export interface CheckoutOptions {
@@ -125,6 +130,7 @@ export interface CheckoutOptions {
   parallel?: number;
   interactive?: boolean;
   basePath?: string;
+  noExclude?: boolean;
 }
 
 export interface ExecOptions {

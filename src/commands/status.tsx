@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { render, Box, Text, useInput } from "ink";
 import Spinner from "ink-spinner";
-import { findRepos, filterRepos, runParallel } from "../lib/repos.js";
+import { runParallel } from "../lib/repos.js";
+import { selectLocalRepos } from "../lib/repo-selection.js";
 import { fetchRepo, getRepoStatus } from "../lib/git.js";
 import { loadConfig } from "../lib/config.js";
 import { StatusTable, StatusSummary } from "../components/StatusTable.js";
@@ -74,21 +75,20 @@ export function StatusApp({ options, onComplete }: StatusAppProps) {
       try {
         setStartTime(Date.now());
 
-        let repoPaths = await findRepos(options.basePath);
+        let repoPaths = await selectLocalRepos({
+          basePath: options.basePath,
+          filter: options.filter,
+          noExclude: options.noExclude,
+        });
 
         if (repoPaths.length === 0) {
-          setError("No repositories found in current directory");
+          setError(
+            options.filter
+              ? `No repositories match pattern: ${options.filter}`
+              : "No repositories found in current directory"
+          );
           setPhase("done");
           return;
-        }
-
-        if (options.filter) {
-          repoPaths = filterRepos(repoPaths, options.filter);
-          if (repoPaths.length === 0) {
-            setError(`No repositories match pattern: ${options.filter}`);
-            setPhase("done");
-            return;
-          }
         }
 
         const config = await loadConfig();
@@ -417,4 +417,3 @@ export async function runStatus(options: StatusOptions): Promise<void> {
   const { waitUntilExit } = render(<StatusApp options={options} />);
   await waitUntilExit();
 }
-

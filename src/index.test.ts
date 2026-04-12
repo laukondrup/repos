@@ -30,6 +30,27 @@ describe("CLI dry-run aliases", () => {
   });
 });
 
+describe("CLI exclusion flags", () => {
+  test("supports --no-exclude on local repo commands", () => {
+    const commands = [
+      "status",
+      "fetch",
+      "pull",
+      "update",
+      "clean",
+      "cleanup",
+      "diff",
+      "checkout <branch>",
+      "exec <command>",
+    ];
+
+    for (const command of commands) {
+      const block = commandBlock(command);
+      expect(block).toContain('--no-exclude');
+    }
+  });
+});
+
 describe("CLI command registry", () => {
   test("includes sync command", () => {
     expect(source).toContain('.command("sync")');

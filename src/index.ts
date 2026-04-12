@@ -56,12 +56,14 @@ program
   .option("-q, --quiet", "Minimal output, only show repos with changes")
   .option("-f, --filter <pattern>", "Filter repos by pattern (e.g., 'api-*')")
   .option("--fetch", "Fetch from remotes before checking status")
+  .option("--no-exclude", "Include repos excluded by config/DB")
   .action(async (options) => {
     await runStatus({
       summary: options.summary,
       quiet: options.quiet,
       filter: options.filter,
       fetch: options.fetch,
+      noExclude: options.exclude,
     });
   });
 
@@ -74,6 +76,7 @@ program
   .option("-p, --parallel <number>", "Number of parallel operations", parseInt)
   .option("--prune", "Remove remote-tracking references that no longer exist")
   .option("-a, --all", "Fetch from all remotes")
+  .option("--no-exclude", "Include repos excluded by config/DB")
   .action(async (options) => {
     await runFetch({
       dryRun: options.dryRun,
@@ -82,6 +85,7 @@ program
       parallel: options.parallel,
       prune: options.prune,
       all: options.all,
+      noExclude: options.exclude,
     });
   });
 
@@ -92,12 +96,14 @@ program
   .option("-q, --quiet", "Minimal output")
   .option("-f, --filter <pattern>", "Filter repos by pattern (e.g., 'api-*')")
   .option("-p, --parallel <number>", "Number of parallel operations", parseInt)
+  .option("--no-exclude", "Include repos excluded by config/DB")
   .action(async (options) => {
     await runPull({
       dryRun: options.dryRun,
       quiet: options.quiet,
       filter: options.filter,
       parallel: options.parallel,
+      noExclude: options.exclude,
     });
   });
 
@@ -108,6 +114,7 @@ program
   .option("-q, --quiet", "Minimal output")
   .option("-f, --filter <pattern>", "Filter repos by pattern (e.g., 'api-*')")
   .option("-p, --parallel <number>", "Number of parallel operations", parseInt)
+  .option("--no-exclude", "Include repos excluded by config/DB")
   .action(async (options) => {
     showDeprecationWarning("update", "pull");
     await runPull({
@@ -115,6 +122,7 @@ program
       quiet: options.quiet,
       filter: options.filter,
       parallel: options.parallel,
+      noExclude: options.exclude,
     });
   });
 
@@ -145,12 +153,14 @@ program
   .option("--force", "Skip confirmation prompt")
   .option("-a, --all", "Also remove untracked files")
   .option("-f, --filter <pattern>", "Filter repos by pattern (e.g., 'api-*')")
+  .option("--no-exclude", "Include repos excluded by config/DB")
   .action(async (options) => {
     await runClean({
       dryRun: options.dryRun,
       force: options.force,
       all: options.all,
       filter: options.filter,
+      noExclude: options.exclude,
     });
   });
 
@@ -161,6 +171,7 @@ program
   .option("-f, --force", "Skip confirmation prompt")
   .option("-a, --all", "Also remove untracked files")
   .option("--filter <pattern>", "Filter repos by pattern (e.g., 'api-*')")
+  .option("--no-exclude", "Include repos excluded by config/DB")
   .action(async (options) => {
     showDeprecationWarning("cleanup", "clean");
     await runClean({
@@ -168,6 +179,7 @@ program
       force: options.force,
       all: options.all,
       filter: options.filter,
+      noExclude: options.exclude,
     });
   });
 
@@ -179,6 +191,7 @@ program
   .option("-f, --filter <pattern>", "Filter repos by pattern (e.g., 'api-*')")
   .option("-p, --parallel <number>", "Number of parallel operations", parseInt)
   .option("-m, --max-lines <number>", "Max lines per diff (default: 500, 0 for unlimited)", parseInt)
+  .option("--no-exclude", "Include repos excluded by config/DB")
   .action(async (options) => {
     await runDiff({
       quiet: options.quiet,
@@ -186,6 +199,7 @@ program
       filter: options.filter,
       parallel: options.parallel,
       maxLines: options.maxLines,
+      noExclude: options.exclude,
     });
   });
 
@@ -196,6 +210,7 @@ program
   .option("--force", "Skip repos with uncommitted changes")
   .option("-f, --filter <pattern>", "Filter repos by pattern (e.g., 'api-*')")
   .option("-p, --parallel <number>", "Number of parallel operations", parseInt)
+  .option("--no-exclude", "Include repos excluded by config/DB")
   .action(async (branch, options) => {
     await runCheckout({
       branch,
@@ -203,6 +218,7 @@ program
       force: options.force,
       filter: options.filter,
       parallel: options.parallel,
+      noExclude: options.exclude,
     });
   });
 
@@ -212,12 +228,14 @@ program
   .option("-q, --quiet", "Only show output for repos with non-empty results")
   .option("-p, --parallel <number>", "Number of parallel operations", parseInt)
   .option("-f, --filter <pattern>", "Filter repos by pattern (e.g., 'api-*')")
+  .option("--no-exclude", "Include repos excluded by config/DB")
   .action(async (command, options) => {
     await runExec({
       command,
       quiet: options.quiet,
       parallel: options.parallel,
       filter: options.filter,
+      noExclude: options.exclude,
     });
   });
 
