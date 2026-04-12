@@ -1,8 +1,8 @@
 {
   "name": "repos",
   "version": "1.0.1",
-  "description": "A CLI tool for managing multiple git repositories",
   "type": "module",
+  "description": "A CLI tool for managing multiple git repositories",
   "bin": {
     "repos": "./bin/repos"
   },
@@ -14,6 +14,7 @@
     "build:macos-x64": "bun build ./src/index.ts --compile --target=bun-darwin-x64 --outfile dist/repos-macos-x64",
     "build:linux-x64": "bun build ./src/index.ts --compile --target=bun-linux-x64 --outfile dist/repos-linux-x64",
     "build:windows-x64": "bun build ./src/index.ts --compile --target=bun-windows-x64 --outfile dist/repos-windows-x64.exe",
+    "format": "prettier --write .",
     "typecheck": "tsc --noEmit",
     "test": "bun test",
     "test:unit": "bun test src/lib",
@@ -34,6 +35,7 @@
     "@types/bun": "latest",
     "@types/react": "^18.3.3",
     "ink-testing-library": "^4.0.0",
+    "prettier": "^3.8.2",
     "react-devtools-core": "7.0.1",
     "typescript": "^5.5.0"
   },
