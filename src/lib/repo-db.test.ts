@@ -47,7 +47,7 @@ describe("repo-db sync", () => {
     );
 
     try {
-      const result = await syncRepoDb({ basePath });
+      const result = await syncRepoDb({ basePath, configBasePath: basePath });
       expect(result.total).toBe(2);
 
       const config = JSON.parse(
@@ -120,7 +120,7 @@ describe("repo-db sync", () => {
     );
 
     try {
-      const result = await syncRepoDb({ basePath });
+      const result = await syncRepoDb({ basePath, configBasePath: basePath });
       expect(result.total).toBe(1);
       expect(result.updated).toBe(1);
 
@@ -224,7 +224,7 @@ describe("repo-db sync", () => {
     await $`git -C ${alphaPath} remote set-url origin https://github.com/other/alpha.git`.quiet();
 
     try {
-      const result = await syncRepoDb({ basePath });
+      const result = await syncRepoDb({ basePath, configBasePath: basePath });
       expect(result.total).toBe(1);
 
       const db = JSON.parse(
@@ -266,10 +266,11 @@ describe("repo-db labels", () => {
     );
 
     try {
-      await syncRepoDb({ basePath });
+      await syncRepoDb({ basePath, configBasePath: basePath });
 
       const added = await updateRepoLabels({
         basePath,
+        configBasePath: basePath,
         action: "add",
         label: "common",
         targets: ["web"],
@@ -277,13 +278,14 @@ describe("repo-db labels", () => {
       });
       expect(added.matched).toBe(3);
 
-      const labels = await listRepoLabels({ basePath });
+      const labels = await listRepoLabels({ basePath, configBasePath: basePath });
       expect(labels.find((item) => item.name === "api-one")?.labels).toContain("common");
       expect(labels.find((item) => item.name === "api-two")?.labels).toContain("common");
       expect(labels.find((item) => item.name === "web")?.labels).toContain("common");
 
       const removed = await updateRepoLabels({
         basePath,
+        configBasePath: basePath,
         action: "remove",
         label: "common",
         targets: ["api-one"],
@@ -291,7 +293,7 @@ describe("repo-db labels", () => {
       });
       expect(removed.matched).toBe(1);
 
-      const afterRemove = await listRepoLabels({ basePath });
+      const afterRemove = await listRepoLabels({ basePath, configBasePath: basePath });
       expect(afterRemove.find((item) => item.name === "api-one")?.labels).toEqual([]);
       expect(afterRemove.find((item) => item.name === "api-two")?.labels).toContain("common");
     } finally {
@@ -315,26 +317,28 @@ describe("repo-db labels", () => {
     await createGitRepo(join(basePath, "beta"), "https://github.com/other/beta.git");
 
     try {
-      await syncRepoDb({ basePath });
+      await syncRepoDb({ basePath, configBasePath: basePath });
 
-      const scopedList = await listRepoLabels({ basePath });
+      const scopedList = await listRepoLabels({ basePath, configBasePath: basePath });
       expect(scopedList).toHaveLength(1);
       expect(scopedList[0].name).toBe("alpha");
 
       await updateRepoLabels({
         basePath,
+        configBasePath: basePath,
         action: "add",
         label: "scoped",
         targets: [],
         globs: ["*"],
       });
 
-      const afterScoped = await listRepoLabels({ basePath, bypassOrg: true });
+      const afterScoped = await listRepoLabels({ basePath, configBasePath: basePath, bypassOrg: true });
       expect(afterScoped.find((item) => item.name === "alpha")?.labels).toContain("scoped");
       expect(afterScoped.find((item) => item.name === "beta")?.labels).toEqual([]);
 
       await updateRepoLabels({
         basePath,
+        configBasePath: basePath,
         action: "add",
         label: "all",
         targets: [],
@@ -342,7 +346,7 @@ describe("repo-db labels", () => {
         bypassOrg: true,
       });
 
-      const afterBypass = await listRepoLabels({ basePath, bypassOrg: true });
+      const afterBypass = await listRepoLabels({ basePath, configBasePath: basePath, bypassOrg: true });
       expect(afterBypass.find((item) => item.name === "alpha")?.labels).toContain("all");
       expect(afterBypass.find((item) => item.name === "beta")?.labels).toContain("all");
     } finally {

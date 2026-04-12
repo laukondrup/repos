@@ -10,6 +10,7 @@
 
 - Sidecar repo database (`.reposdb.json`) linked from config for labels/exclusion state
 - Global config supports XDG (`$XDG_CONFIG_HOME/repos/.reposrc.json`), with repo DB stored beside it
+- Repo DB location no longer implicitly switches to `codeDir`; it stays beside the selected config file (global by default, local only when explicitly scoped)
 - `repos sync` command to reconcile local path/name changes and refresh exclusion state
 - `repos sync` reconciles local repo DB state without rewriting exclusion patterns
 - Label workflow for subsets (`repos label add|rm|list`) with repo args and glob targeting

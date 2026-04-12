@@ -36,7 +36,7 @@ describe("repo selection", () => {
 
     await createGitRepo(join(basePath, "alpha"));
     await createGitRepo(join(basePath, "clones", "beta"));
-    await syncRepoDb({ basePath });
+    await syncRepoDb({ basePath, configBasePath: basePath });
 
     try {
       const defaultSelection = await selectLocalRepos({ basePath });
@@ -65,7 +65,7 @@ describe("repo selection", () => {
 
     await createGitRepo(join(basePath, "alpha"));
     await createGitRepo(join(basePath, "beta"));
-    await syncRepoDb({ basePath });
+    await syncRepoDb({ basePath, configBasePath: basePath });
 
     try {
       const selection = await selectLocalRepos({ basePath });
@@ -90,7 +90,7 @@ describe("repo selection", () => {
 
     await createGitRepo(join(basePath, "alpha"));
     await createGitRepo(join(basePath, "beta"));
-    await syncRepoDb({ basePath });
+    await syncRepoDb({ basePath, configBasePath: basePath });
 
     const dbPath = join(basePath, ".reposdb.json");
     const db = JSON.parse(await readFile(dbPath, "utf-8"));

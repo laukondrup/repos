@@ -75,21 +75,11 @@ async function getConfigContext(configBasePath?: string): Promise<ConfigContext>
 }
 
 async function resolveConfigBasePath(
-  basePath?: string,
   configBasePath?: string,
 ): Promise<string | undefined> {
   if (configBasePath) {
     return configBasePath;
   }
-  if (!basePath) {
-    return undefined;
-  }
-
-  const scopedPath = getCwdConfigPath(basePath);
-  if (await Bun.file(scopedPath).exists()) {
-    return basePath;
-  }
-
   return undefined;
 }
 
@@ -184,7 +174,6 @@ async function ensureDbContext(basePath?: string, configBasePath?: string): Prom
 }> {
   const resolvedBasePath = await resolveCodeDir(basePath);
   const resolvedConfigBasePath = await resolveConfigBasePath(
-    resolvedBasePath,
     configBasePath,
   );
   const { config, configPath } = await getConfigContext(resolvedConfigBasePath);
@@ -208,7 +197,6 @@ export async function getRepoDb(options: SyncRepoDbOptions = {}): Promise<{
 export async function syncRepoDb(options: SyncRepoDbOptions = {}): Promise<SyncRepoDbResult> {
   const basePath = await resolveCodeDir(options.basePath);
   const configBasePath = await resolveConfigBasePath(
-    basePath,
     options.configBasePath,
   );
   const { config, configPath } = await getConfigContext(configBasePath);

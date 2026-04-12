@@ -33,7 +33,7 @@ describe("exclude command", () => {
 
     await createGitRepo(join(basePath, "alpha"));
     await createGitRepo(join(basePath, "beta"));
-    await syncRepoDb({ basePath });
+    await syncRepoDb({ basePath, configBasePath: basePath });
 
     try {
       const result = await applyExclusions({
