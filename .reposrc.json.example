@@ -6,6 +6,6 @@
   "org": "my-org",
   "daysThreshold": 90,
   "parallel": 10,
-  "timeout": 10000
+  "timeout": 10000,
+  "exclusions": ["archive/*", "legacy-service"]
 }
-

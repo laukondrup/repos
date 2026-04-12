@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { mkdir, readFile, rm, writeFile } from "fs/promises";
+import { mkdir, rm, writeFile } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
 import { randomUUID } from "crypto";
@@ -19,7 +19,7 @@ async function createGitRepo(path: string): Promise<void> {
 }
 
 describe("repo selection", () => {
-  test("applies exclusion globs by default and bypasses with noExclude", async () => {
+  test("applies exclusions by default and bypasses with noExclude", async () => {
     const basePath = join(tmpdir(), `repo-select-${randomUUID().slice(0, 8)}`);
     await mkdir(basePath, { recursive: true });
 
@@ -27,7 +27,7 @@ describe("repo selection", () => {
       join(basePath, ".reposrc.json"),
       JSON.stringify({
         repoDbPath: ".reposdb.json",
-        exclusionGlobs: ["clones/*"],
+        exclusions: ["clones/*"],
       }),
     );
 
@@ -48,29 +48,21 @@ describe("repo selection", () => {
     }
   });
 
-  test("respects manual exclusion from repo DB", async () => {
-    const basePath = join(tmpdir(), `repo-select-manual-${randomUUID().slice(0, 8)}`);
+  test("respects explicit path exclusions from config", async () => {
+    const basePath = join(tmpdir(), `repo-select-path-${randomUUID().slice(0, 8)}`);
     await mkdir(basePath, { recursive: true });
 
     await writeFile(
       join(basePath, ".reposrc.json"),
       JSON.stringify({
         repoDbPath: ".reposdb.json",
-        exclusionGlobs: [],
+        exclusions: ["alpha"],
       }),
     );
 
     await createGitRepo(join(basePath, "alpha"));
     await createGitRepo(join(basePath, "beta"));
     await syncRepoDb({ basePath });
-
-    const dbPath = join(basePath, ".reposdb.json");
-    const db = JSON.parse(await readFile(dbPath, "utf-8"));
-    const alpha = db.repos.find((repo: { name: string }) => repo.name === "alpha");
-    alpha.manuallyExcluded = true;
-    alpha.excluded = true;
-    alpha.excludedReasons = ["manual"];
-    await writeFile(dbPath, JSON.stringify(db, null, 2) + "\n");
 
     try {
       const selection = await selectLocalRepos({ basePath });

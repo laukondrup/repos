@@ -48,6 +48,7 @@ function mergeConfig(
   defaults: Required<ReposConfig>,
   user: ReposConfig
 ): ReposConfig {
+  const exclusions = user.exclusions ?? user.exclusionGlobs ?? defaults.exclusions;
   return {
     github: {
       ...defaults.github,
@@ -60,7 +61,8 @@ function mergeConfig(
     timeout: user.timeout ?? defaults.timeout,
     diffMaxLines: user.diffMaxLines ?? defaults.diffMaxLines,
     repoDbPath: user.repoDbPath ?? undefined,
-    exclusionGlobs: user.exclusionGlobs ?? defaults.exclusionGlobs,
+    exclusions,
+    exclusionGlobs: exclusions,
   };
 }
 

@@ -33,7 +33,7 @@ describe("repo-db sync", () => {
       join(basePath, ".reposrc.json"),
       JSON.stringify({
         org: "test-org",
-        exclusionGlobs: ["clones/*"],
+        exclusions: ["clones/*"],
       }),
     );
 
@@ -65,7 +65,11 @@ describe("repo-db sync", () => {
       const beta = db.repos.find((repo: { name: string }) => repo.name === "beta");
       expect(alpha.excluded).toBe(false);
       expect(beta.excluded).toBe(true);
-      expect(beta.excludedReasons).toContain("glob");
+
+      const persistedConfig = JSON.parse(
+        await readFile(join(basePath, ".reposrc.json"), "utf-8"),
+      );
+      expect(persistedConfig.exclusions).toContain("clones/beta");
     } finally {
       await rm(basePath, { recursive: true, force: true });
     }
@@ -79,7 +83,7 @@ describe("repo-db sync", () => {
       join(basePath, ".reposrc.json"),
       JSON.stringify({
         repoDbPath: ".reposdb.json",
-        exclusionGlobs: [],
+        exclusions: [],
       }),
     );
 
@@ -100,9 +104,7 @@ describe("repo-db sync", () => {
               path: join(basePath, "before-name"),
               originFullName: "acme/move-me",
               labels: ["common"],
-              manuallyExcluded: true,
               excluded: true,
-              excludedReasons: ["manual"],
             },
           ],
         },
@@ -129,8 +131,7 @@ describe("repo-db sync", () => {
       expect(db.repos[0].path).toBe(join(basePath, "after-name"));
       expect(db.repos[0].name).toBe("after-name");
       expect(db.repos[0].labels).toEqual(["common"]);
-      expect(db.repos[0].manuallyExcluded).toBe(true);
-      expect(db.repos[0].excluded).toBe(true);
+      expect(db.repos[0].excluded).toBe(false);
     } finally {
       await rm(basePath, { recursive: true, force: true });
     }
@@ -145,7 +146,7 @@ describe("repo-db labels", () => {
     await writeFile(
       join(basePath, ".reposrc.json"),
       JSON.stringify({
-        exclusionGlobs: [],
+        exclusions: [],
       }),
     );
 

@@ -12,6 +12,7 @@ export interface ReposConfig {
   timeout?: number;
   diffMaxLines?: number;
   repoDbPath?: string;
+  exclusions?: string[];
   exclusionGlobs?: string[];
 }
 
@@ -27,6 +28,7 @@ export const DEFAULT_CONFIG: Required<ReposConfig> = {
   timeout: 30000,
   diffMaxLines: 500,
   repoDbPath: "",
+  exclusions: [],
   exclusionGlobs: [],
 };
 
@@ -160,9 +162,7 @@ export interface RepoDbRepoRecord {
   path: string;
   originFullName: string | null;
   labels: string[];
-  manuallyExcluded: boolean;
   excluded: boolean;
-  excludedReasons: Array<"manual" | "glob">;
 }
 
 export interface RepoDb {

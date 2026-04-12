@@ -40,9 +40,11 @@ interface ConfigContext {
 }
 
 function normalizeConfigForWrite(config: ReposConfig): ReposConfig {
+  const normalizedExclusions = config.exclusions ?? config.exclusionGlobs ?? [];
   const normalized: ReposConfig = {
     ...config,
-    exclusionGlobs: config.exclusionGlobs ?? [],
+    exclusions: normalizedExclusions,
+    exclusionGlobs: normalizedExclusions,
   };
   if (!normalized.repoDbPath) {
     delete normalized.repoDbPath;
@@ -116,18 +118,30 @@ function globToRegex(glob: string): RegExp {
   return new RegExp(`^${escaped}$`, "i");
 }
 
+function isGlobPattern(value: string): boolean {
+  return /[*?\[\]]/.test(value);
+}
+
 function matchesExclusion(
   recordPath: string,
   repoName: string,
   basePath: string,
-  globs: string[],
+  exclusions: string[],
 ): boolean {
-  if (globs.length === 0) return false;
+  if (exclusions.length === 0) return false;
   const relPath = relative(basePath, recordPath).replace(/\\/g, "/");
 
-  return globs.some((glob) => {
-    const regex = globToRegex(glob);
-    return regex.test(relPath) || regex.test(repoName);
+  return exclusions.some((item) => {
+    if (isGlobPattern(item)) {
+      const regex = globToRegex(item);
+      return regex.test(relPath) || regex.test(repoName);
+    }
+
+    if (item.startsWith("/")) {
+      return resolve(item) === resolve(recordPath);
+    }
+
+    return item === relPath || item === repoName;
   });
 }
 
@@ -145,16 +159,13 @@ function matchesPattern(
 function ensureComputedExclusion(
   record: RepoDbRepoRecord,
   basePath: string,
-  globs: string[],
+  exclusions: string[],
 ): RepoDbRepoRecord {
-  const reasons: Array<"manual" | "glob"> = [];
-  if (record.manuallyExcluded) reasons.push("manual");
-  if (matchesExclusion(record.path, record.name, basePath, globs)) reasons.push("glob");
+  const excluded = matchesExclusion(record.path, record.name, basePath, exclusions);
 
   return {
     ...record,
-    excluded: reasons.length > 0,
-    excludedReasons: reasons,
+    excluded,
   };
 }
 
@@ -197,7 +208,7 @@ export async function syncRepoDb(options: SyncRepoDbOptions = {}): Promise<SyncR
     options.configBasePath,
   );
   const { config, configPath } = await getConfigContext(configBasePath);
-  const globs = config.exclusionGlobs ?? [];
+  const exclusions = config.exclusions ?? config.exclusionGlobs ?? [];
 
   const ensuredConfig: ReposConfig = { ...config };
   if (!ensuredConfig.repoDbPath) {
@@ -251,12 +262,10 @@ export async function syncRepoDb(options: SyncRepoDbOptions = {}): Promise<SyncR
           path: repoPath,
           originFullName,
           labels: [],
-          manuallyExcluded: false,
           excluded: false,
-          excludedReasons: [],
         };
 
-    const computed = ensureComputedExclusion(baseRecord, basePath, globs);
+    const computed = ensureComputedExclusion(baseRecord, basePath, exclusions);
     if (existing) {
       updated++;
     } else {
@@ -269,6 +278,36 @@ export async function syncRepoDb(options: SyncRepoDbOptions = {}): Promise<SyncR
     version: 1,
     repos: nextRepos,
   };
+
+  const expandedExclusions = new Set(exclusions);
+  const globExclusions = exclusions.filter(isGlobPattern);
+  if (globExclusions.length > 0) {
+    for (const record of nextRepos) {
+      const relPath = relative(basePath, record.path).replace(/\\/g, "/");
+      for (const pattern of globExclusions) {
+        const regex = globToRegex(pattern);
+        if (regex.test(relPath) || regex.test(record.name)) {
+          expandedExclusions.add(relPath);
+          break;
+        }
+      }
+    }
+  }
+
+  const expandedList = Array.from(expandedExclusions).sort();
+  const configList = [...exclusions].sort();
+  if (expandedList.join("\n") !== configList.join("\n")) {
+    const nextConfig: ReposConfig = {
+      ...ensuredConfig,
+      exclusions: expandedList,
+      exclusionGlobs: expandedList,
+    };
+    await mkdir(dirname(configPath), { recursive: true });
+    await Bun.write(
+      configPath,
+      JSON.stringify(normalizeConfigForWrite(nextConfig), null, 2) + "\n",
+    );
+  }
 
   await saveRepoDb(dbPath, nextDb);
 

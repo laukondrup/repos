@@ -10,8 +10,9 @@
 
 - Sidecar repo database (`.reposdb.json`) linked from config for labels/exclusion state
 - `repos sync` command to reconcile local path/name changes and refresh exclusion state
+- `repos sync` expands exclusion globs into concrete repo directories in config
 - Label workflow for subsets (`repos label add|rm|list`) with repo args and glob targeting
-- Default repo exclusion rules with per-command bypass (`--no-exclude`)
+- Simplified exclusion model: single repo `excluded` state from config `exclusions` (dirs or globs)
 - `repos list` / `repos ls` preview command (supports `--days`, filters, exclusion bypass)
 - Local activity filtering for exec (`repos exec --days <n>`)
 
@@ -281,7 +282,8 @@ Create `.reposrc.json` in your project directory or home folder:
   "daysThreshold": 90,
   "parallel": 10,
   "timeout": 30000,
-  "diffMaxLines": 500
+  "diffMaxLines": 500,
+  "exclusions": ["archive/*", "legacy-service"]
 }
 ```
 
@@ -294,6 +296,7 @@ Create `.reposrc.json` in your project directory or home folder:
 | `parallel`      | `10`                     | Number of concurrent operations       |
 | `timeout`       | `30000`                  | Network timeout in milliseconds       |
 | `diffMaxLines`  | `500`                    | Max lines per diff (0 for unlimited)  |
+| `exclusions`    | `[]`                     | Excluded repo dirs/globs (use `--no-exclude` to bypass) |
 
 <details>
 <summary><strong>GitHub Enterprise Configuration</strong></summary>

@@ -69,7 +69,7 @@ describe("config.ts", () => {
         // Should merge with defaults
         expect(config.timeout).toBe(DEFAULT_CONFIG.timeout);
         expect(config.repoDbPath).toBeUndefined();
-        expect(config.exclusionGlobs).toEqual([]);
+        expect(config.exclusions).toEqual([]);
       } finally {
         await rm(tempDir, { recursive: true, force: true });
       }
@@ -92,7 +92,7 @@ describe("config.ts", () => {
       try {
         const config = await loadConfig(tempDir);
         expect(config.repoDbPath).toBe(".reposdb.json");
-        expect(config.exclusionGlobs).toEqual(["clones/*", "archive-*"]);
+        expect(config.exclusions).toEqual(["clones/*", "archive-*"]);
       } finally {
         await rm(tempDir, { recursive: true, force: true });
       }
