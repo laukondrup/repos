@@ -6,6 +6,14 @@
   <strong>An interactive CLI tool for managing multiple git repositories.</strong>
 </p>
 
+## 🆕 Fork Additions
+
+- Sidecar repo database (`.reposdb.json`) linked from config for labels/exclusion state
+- `repos sync` command to reconcile local path/name changes and refresh exclusion state
+- Label workflow for subsets (`repos label add|rm|list`) with repo args and glob targeting
+- Default repo exclusion rules with per-command bypass (`--no-exclude`)
+- Local activity filtering for exec (`repos exec --days <n>`)
+
 ![demo](https://github.com/user-attachments/assets/00fdfece-06bc-4cb6-a4e1-1086bdc8432c)
 
 ## ❓ Why?
