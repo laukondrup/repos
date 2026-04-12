@@ -51,6 +51,8 @@ function mergeConfig(
     parallel: user.parallel ?? defaults.parallel,
     timeout: user.timeout ?? defaults.timeout,
     diffMaxLines: user.diffMaxLines ?? defaults.diffMaxLines,
+    repoDbPath: user.repoDbPath ?? undefined,
+    exclusionGlobs: user.exclusionGlobs ?? defaults.exclusionGlobs,
   };
 }
 
@@ -215,4 +217,3 @@ export function setConfigValue(
 
   return result;
 }
-

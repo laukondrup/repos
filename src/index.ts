@@ -13,6 +13,7 @@ import { runFetch } from "./commands/fetch.js";
 import { runDiff } from "./commands/diff.js";
 import { runCheckout } from "./commands/checkout.js";
 import { runExec } from "./commands/exec.js";
+import { runSync } from "./commands/sync.js";
 import packageJson from "../package.json";
 
 const VERSION = packageJson.version;
@@ -215,6 +216,13 @@ program
   });
 
 program
+  .command("sync")
+  .description("Sync local repository database (paths, labels, exclusions)")
+  .action(async () => {
+    await runSync();
+  });
+
+program
   .command("config")
   .description("View or modify configuration")
   .option("-g, --get <key>", "Get a specific config value")
@@ -233,4 +241,3 @@ program
   });
 
 program.parse();
-

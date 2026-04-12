@@ -10,6 +10,8 @@ export interface ReposConfig {
   parallel?: number;
   timeout?: number;
   diffMaxLines?: number;
+  repoDbPath?: string;
+  exclusionGlobs?: string[];
 }
 
 export const DEFAULT_CONFIG: Required<ReposConfig> = {
@@ -22,6 +24,8 @@ export const DEFAULT_CONFIG: Required<ReposConfig> = {
   parallel: 10,
   timeout: 30000,
   diffMaxLines: 500,
+  repoDbPath: "",
+  exclusionGlobs: [],
 };
 
 export interface RepoStatus {
@@ -130,6 +134,24 @@ export interface ExecOptions {
   quiet?: boolean;
   interactive?: boolean;
   basePath?: string;
+  noExclude?: boolean;
+  days?: number;
+}
+
+export interface RepoDbRepoRecord {
+  id: string;
+  name: string;
+  path: string;
+  originFullName: string | null;
+  labels: string[];
+  manuallyExcluded: boolean;
+  excluded: boolean;
+  excludedReasons: Array<"manual" | "glob">;
+}
+
+export interface RepoDb {
+  version: number;
+  repos: RepoDbRepoRecord[];
 }
 
 export interface ConfigOptions {
@@ -157,4 +179,3 @@ export interface OperationStats {
   failed: number;
   skipped: number;
 }
-

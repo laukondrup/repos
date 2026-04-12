@@ -29,3 +29,9 @@ describe("CLI dry-run aliases", () => {
     }
   });
 });
+
+describe("CLI command registry", () => {
+  test("includes sync command", () => {
+    expect(source).toContain('.command("sync")');
+  });
+});

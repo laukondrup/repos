@@ -68,6 +68,31 @@ describe("config.ts", () => {
         expect(config.parallel).toBe(5);
         // Should merge with defaults
         expect(config.timeout).toBe(DEFAULT_CONFIG.timeout);
+        expect(config.repoDbPath).toBeUndefined();
+        expect(config.exclusionGlobs).toEqual([]);
+      } finally {
+        await rm(tempDir, { recursive: true, force: true });
+      }
+    });
+
+    test("loads repo DB settings from config", async () => {
+      const tempDir = join(tmpdir(), `repodb-config-${Date.now()}`);
+      await mkdir(tempDir, { recursive: true });
+
+      const customConfig = {
+        repoDbPath: ".reposdb.json",
+        exclusionGlobs: ["clones/*", "archive-*"],
+      };
+
+      await writeFile(
+        join(tempDir, ".reposrc.json"),
+        JSON.stringify(customConfig)
+      );
+
+      try {
+        const config = await loadConfig(tempDir);
+        expect(config.repoDbPath).toBe(".reposdb.json");
+        expect(config.exclusionGlobs).toEqual(["clones/*", "archive-*"]);
       } finally {
         await rm(tempDir, { recursive: true, force: true });
       }
