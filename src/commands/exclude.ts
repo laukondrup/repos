@@ -22,9 +22,7 @@ function uniqueSorted(values: string[]): string[] {
   );
 }
 
-export async function applyExclusions(
-  options: ExcludeOptions,
-): Promise<{
+export async function applyExclusions(options: ExcludeOptions): Promise<{
   addedConfigExclusions: string[];
   repoMatched: number;
   repoUpdated: number;
@@ -40,19 +38,9 @@ export async function applyExclusions(
   const existing = config.exclusions ?? [];
 
   const repoDirs = options.repos.map((value) => toRelativePath(codeDir, value));
-  const globPatterns = options.globs.map((value) => toRelativePath(codeDir, value));
-
-  const nextExclusions = uniqueSorted([...existing, ...globPatterns]);
-  const before = new Set(existing);
-  const addedConfigExclusions = nextExclusions.filter((value) => !before.has(value));
-
-  const nextConfig = {
-    ...config,
-    exclusions: nextExclusions,
-  };
-
-  const scoped = Boolean(options.configBasePath);
-  await saveConfig(nextConfig, scoped ? "cwd" : "global", options.configBasePath);
+  const globPatterns = options.globs.map((value) =>
+    toRelativePath(codeDir, value),
+  );
 
   let repoMatched = 0;
   let repoUpdated = 0;
@@ -67,6 +55,30 @@ export async function applyExclusions(
     repoMatched = result.matched;
     repoUpdated = result.updated;
   }
+
+  const fallbackRepoDirs =
+    repoDirs.length > 0 && repoMatched === 0 ? repoDirs : [];
+  const nextExclusions = uniqueSorted([
+    ...existing,
+    ...globPatterns,
+    ...fallbackRepoDirs,
+  ]);
+  const before = new Set(existing);
+  const addedConfigExclusions = nextExclusions.filter(
+    (value) => !before.has(value),
+  );
+
+  const nextConfig = {
+    ...config,
+    exclusions: nextExclusions,
+  };
+
+  const scoped = Boolean(options.configBasePath);
+  await saveConfig(
+    nextConfig,
+    scoped ? "cwd" : "global",
+    options.configBasePath,
+  );
 
   await syncRepoDb({
     basePath: codeDir,
@@ -84,7 +96,12 @@ export async function applyExclusions(
 
 export async function runExclude(
   repos: string[],
-  options: { globs?: string[]; basePath?: string; configBasePath?: string; bypassOrg?: boolean } = {},
+  options: {
+    globs?: string[];
+    basePath?: string;
+    configBasePath?: string;
+    bypassOrg?: boolean;
+  } = {},
 ): Promise<void> {
   const result = await applyExclusions({
     repos,

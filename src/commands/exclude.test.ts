@@ -45,11 +45,17 @@ describe("exclude command", () => {
       expect(result.repoMatched).toBe(1);
       expect(result.repoUpdated).toBe(1);
 
-      const config = JSON.parse(await readFile(join(basePath, ".reposrc.json"), "utf-8"));
+      const config = JSON.parse(
+        await readFile(join(basePath, ".reposrc.json"), "utf-8"),
+      );
       expect(config.exclusions).toEqual([]);
 
-      const db = JSON.parse(await readFile(join(basePath, ".reposdb.json"), "utf-8"));
-      const alpha = db.repos.find((repo: { name: string }) => repo.name === "alpha");
+      const db = JSON.parse(
+        await readFile(join(basePath, ".reposdb.json"), "utf-8"),
+      );
+      const alpha = db.repos.find(
+        (repo: { name: string }) => repo.name === "alpha",
+      );
       expect(alpha.excluded).toBe(true);
     } finally {
       await rm(basePath, { recursive: true, force: true });
@@ -82,15 +88,25 @@ describe("exclude command", () => {
 
       expect(result.addedConfigExclusions).toContain("apps/*");
 
-      const config = JSON.parse(await readFile(join(basePath, ".reposrc.json"), "utf-8"));
+      const config = JSON.parse(
+        await readFile(join(basePath, ".reposrc.json"), "utf-8"),
+      );
       expect(config.exclusions).toContain("apps/*");
       expect(config.exclusions).not.toContain("apps/web");
       expect(config.exclusions).not.toContain("apps/api");
 
-      const db = JSON.parse(await readFile(join(basePath, ".reposdb.json"), "utf-8"));
-      const web = db.repos.find((repo: { name: string }) => repo.name === "web");
-      const api = db.repos.find((repo: { name: string }) => repo.name === "api");
-      const tools = db.repos.find((repo: { name: string }) => repo.name === "tools");
+      const db = JSON.parse(
+        await readFile(join(basePath, ".reposdb.json"), "utf-8"),
+      );
+      const web = db.repos.find(
+        (repo: { name: string }) => repo.name === "web",
+      );
+      const api = db.repos.find(
+        (repo: { name: string }) => repo.name === "api",
+      );
+      const tools = db.repos.find(
+        (repo: { name: string }) => repo.name === "tools",
+      );
       expect(web.excluded).toBe(false);
       expect(api.excluded).toBe(false);
       expect(tools.excluded).toBe(false);
@@ -124,9 +140,50 @@ describe("exclude command", () => {
 
       expect(result.addedConfigExclusions).toContain("clones/*");
 
-      const config = JSON.parse(await readFile(join(basePath, ".reposrc.json"), "utf-8"));
+      const config = JSON.parse(
+        await readFile(join(basePath, ".reposrc.json"), "utf-8"),
+      );
       expect(config.exclusions).toContain("clones/*");
       expect(config.exclusions).not.toContain(resolve(basePath, "clones/*"));
+    } finally {
+      await rm(basePath, { recursive: true, force: true });
+    }
+  });
+
+  test("stores direct repo exclusion in config when no repo matches locally", async () => {
+    const basePath = join(
+      tmpdir(),
+      `exclude-missing-${randomUUID().slice(0, 8)}`,
+    );
+    await mkdir(basePath, { recursive: true });
+
+    await writeFile(
+      join(basePath, ".reposrc.json"),
+      JSON.stringify({
+        repoDbPath: ".reposdb.json",
+        exclusions: [],
+      }),
+    );
+
+    await createGitRepo(join(basePath, "alpha"));
+    await syncRepoDb({ basePath, configBasePath: basePath });
+
+    try {
+      const result = await applyExclusions({
+        repos: ["obsidian-notes"],
+        globs: [],
+        basePath,
+        configBasePath: basePath,
+      });
+
+      expect(result.repoMatched).toBe(0);
+      expect(result.repoUpdated).toBe(0);
+      expect(result.addedConfigExclusions).toContain("obsidian-notes");
+
+      const config = JSON.parse(
+        await readFile(join(basePath, ".reposrc.json"), "utf-8"),
+      );
+      expect(config.exclusions).toContain("obsidian-notes");
     } finally {
       await rm(basePath, { recursive: true, force: true });
     }

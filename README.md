@@ -18,6 +18,7 @@
 - Simplified exclusion model: single repo `excluded` state from config `exclusions` (dirs or globs)
 - `repos list` / `repos ls` preview command (supports `--days`, filters, exclusion bypass)
 - Top-level `repos exclude` command for dirs/globs, with sync-backed exclusion updates
+- `repos exclude <repo>` now persists unmatched repo names to config exclusions (blocks future clones)
 - Local activity filtering for exec (`repos exec --days <n>`)
 - Label-based filtering (`--label`) and exclusion bypass (`--no-exclude`) across local repo commands
 - Local repo commands are scoped to configured `org` by default (owner inferred from repo DB `id`/origin), with `--bypass-org` to include everything
@@ -293,6 +294,7 @@ repos exclude legacy-service --glob 'apps/*'  # Mix dirs + globs
 ```
 
 `repos exclude` updates config exclusions and/or per-repo DB exclusion flags, then runs sync. Patterns are normalized relative to `codeDir` and use gitignore-like matching semantics (`clones`, `apps/*`, etc.).
+If a direct repo argument does not match any local repo yet, it is still stored in config exclusions so `repos clone` and `repos clone --dry-run` skip it.
 
 ### Config Command
 
