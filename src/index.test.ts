@@ -67,6 +67,13 @@ describe("CLI list options", () => {
   });
 });
 
+describe("CLI exclude options", () => {
+  test("supports repo args and --glob for exclusions", () => {
+    const block = commandBlock("exclude [repos...]");
+    expect(block).toContain('--glob <pattern>');
+  });
+});
+
 describe("CLI command registry", () => {
   test("includes sync command", () => {
     expect(source).toContain('.command("sync")');

@@ -14,6 +14,7 @@
 - Label workflow for subsets (`repos label add|rm|list`) with repo args and glob targeting
 - Simplified exclusion model: single repo `excluded` state from config `exclusions` (dirs or globs)
 - `repos list` / `repos ls` preview command (supports `--days`, filters, exclusion bypass)
+- Top-level `repos exclude` command for dirs/globs, with sync-backed exclusion updates
 - Local activity filtering for exec (`repos exec --days <n>`)
 
 ![demo](https://github.com/user-attachments/assets/00fdfece-06bc-4cb6-a4e1-1086bdc8432c)
@@ -121,7 +122,7 @@ repos
 | `↑↓` / `jk` | Navigate menu |
 | `Enter` | Select command |
 | `s,f,p,d,c` | Jump to git commands (Status, Fetch, Pull, Diff, Checkout) |
-| `o,x,e,t` | Jump to repo commands (Clone, Clean, Exec, List) |
+| `o,x,e,t,u` | Jump to repo commands (Clone, Clean, Exec, List, Exclude) |
 | `g,i` | Jump to settings (Config, Init) |
 | `q` | Quit |
 
@@ -140,6 +141,7 @@ repos
 | `repos clean`             | Revert changes in repositories         |
 | `repos exec "<command>"`  | Run arbitrary command across all repos |
 | `repos list` / `repos ls` | List repos selected by filters/excludes |
+| `repos exclude [repos...]`| Exclude repos by dir/glob and sync DB  |
 | `repos config`            | View or modify configuration           |
 
 ### Status Command
@@ -257,6 +259,16 @@ repos list --days 7            # Only repos locally active in last 7 days
 repos list --filter 'api-*'    # Only matching repos
 repos list --no-exclude        # Bypass exclusion rules
 ```
+
+### Exclude Command
+
+```sh
+repos exclude legacy-service apps/web         # Exclude specific repo dirs
+repos exclude --glob 'apps/*'                 # Exclude repos matched by glob
+repos exclude legacy-service --glob 'apps/*'  # Mix dirs + globs
+```
+
+`repos exclude` updates config exclusions and runs sync. When using `--glob`, matched repos are persisted as individual repo directories in config.
 
 ### Config Command
 

@@ -14,6 +14,7 @@ import { runDiff } from "./commands/diff.js";
 import { runCheckout } from "./commands/checkout.js";
 import { runExec } from "./commands/exec.js";
 import { runList } from "./commands/list.js";
+import { runExclude } from "./commands/exclude.js";
 import { runSync } from "./commands/sync.js";
 import { runLabelAdd, runLabelList, runLabelRemove } from "./commands/label.js";
 import {
@@ -263,6 +264,16 @@ program
       filter: options.filter,
       days: options.days,
       noExclude: options.exclude,
+    });
+  });
+
+program
+  .command("exclude [repos...]")
+  .description(commandDescription("exclude"))
+  .option("-g, --glob <pattern>", "Exclude repositories by glob pattern", collectOption, [])
+  .action(async (repos, options) => {
+    await runExclude(repos ?? [], {
+      globs: options.glob,
     });
   });
 

@@ -156,6 +156,13 @@ export interface ListOptions {
   noExclude?: boolean;
 }
 
+export interface ExcludeOptions {
+  repos: string[];
+  globs: string[];
+  basePath?: string;
+  configBasePath?: string;
+}
+
 export interface RepoDbRepoRecord {
   id: string;
   name: string;

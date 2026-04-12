@@ -126,6 +126,16 @@ export const TOP_LEVEL_COMMANDS: TopLevelCommandDefinition[] = [
     },
   },
   {
+    id: "exclude",
+    description: "Exclude repositories by directory or glob, then sync exclusion state",
+    overview: {
+      category: "repo",
+      label: "Exclude",
+      key: "u",
+      description: "Add exclusions by dir/glob and sync",
+    },
+  },
+  {
     id: "sync",
     description: "Sync local repository database (paths, labels, exclusions)",
     overview: {

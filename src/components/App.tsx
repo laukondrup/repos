@@ -12,6 +12,7 @@ import { DiffApp } from "../commands/diff.js";
 import { CheckoutApp } from "../commands/checkout.js";
 import { ExecApp } from "../commands/exec.js";
 import { ListApp } from "../commands/list.js";
+import { ExcludeMenuApp } from "../commands/exclude-menu.js";
 import { SyncApp } from "../commands/sync.js";
 import { LabelMenuApp } from "../commands/label-menu.js";
 import { loadConfig } from "../lib/config.js";
@@ -45,6 +46,7 @@ type Command =
   | "clean"
   | "exec"
   | "list"
+  | "exclude"
   | "sync"
   | "label"
   | "config"
@@ -311,6 +313,24 @@ function getCommandFields(
         },
       ];
 
+    case "exclude":
+      return [
+        {
+          name: "repos",
+          label: "Repo dirs",
+          type: "text",
+          placeholder: "space-separated dirs (optional)",
+          hint: "Directories to exclude (relative to code dir)",
+        },
+        {
+          name: "globs",
+          label: "Globs",
+          type: "text",
+          placeholder: "space-separated globs (optional)",
+          hint: "Glob patterns to match and exclude",
+        },
+      ];
+
     case "status":
       return [
         {
@@ -381,6 +401,7 @@ const commandTitles: Partial<Record<Command, string>> = {
   checkout: "Checkout Options",
   exec: "Exec Options",
   list: "List Options",
+  exclude: "Exclude Options",
   status: "Status Options",
   clean: "Clean Options",
 };
@@ -393,6 +414,7 @@ const commandsWithOptions: Command[] = [
   "checkout",
   "exec",
   "list",
+  "exclude",
   "status",
   "clean",
 ];
@@ -407,6 +429,7 @@ type CommandOptions =
   | { command: "checkout"; options: CheckoutOptions }
   | { command: "exec"; options: ExecOptions }
   | { command: "list"; options: ListOptions }
+  | { command: "exclude"; options: { repos: string[]; globs: string[] } }
   | { command: "clone"; options: CloneOptions }
   | { command: "clean"; options: CleanupOptions }
   | { command: "sync" }
@@ -563,6 +586,23 @@ export function App() {
           },
         });
         break;
+      case "exclude":
+        setRunningCommand({
+          command: "exclude",
+          options: {
+            repos:
+              ((values.repos as string | undefined) ?? "")
+                .trim()
+                .split(/\s+/)
+                .filter(Boolean),
+            globs:
+              ((values.globs as string | undefined) ?? "")
+                .trim()
+                .split(/\s+/)
+                .filter(Boolean),
+          },
+        });
+        break;
       case "clone":
         setRunningCommand({
           command: "clone",
@@ -647,6 +687,14 @@ export function App() {
             onComplete={handleCommandComplete}
           />
         );
+      case "exclude":
+        return (
+          <ExcludeMenuApp
+            repos={runningCommand.options.repos}
+            globs={runningCommand.options.globs}
+            onComplete={handleCommandComplete}
+          />
+        );
       case "clone":
         return (
           <CloneApp
@@ -713,6 +761,7 @@ export function App() {
         checkout: "Checkout",
         exec: "Exec",
         list: "List",
+        exclude: "Exclude",
         clean: "Clean",
         status: "Check",
       };
