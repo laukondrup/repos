@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { mkdir, rm, writeFile } from "fs/promises";
+import { mkdir, readFile, rm, writeFile } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
 import { randomUUID } from "crypto";
@@ -63,6 +63,37 @@ describe("repo selection", () => {
     await createGitRepo(join(basePath, "alpha"));
     await createGitRepo(join(basePath, "beta"));
     await syncRepoDb({ basePath });
+
+    try {
+      const selection = await selectLocalRepos({ basePath });
+      expect(selection).toHaveLength(1);
+      expect(selection[0]).toContain("beta");
+    } finally {
+      await rm(basePath, { recursive: true, force: true });
+    }
+  });
+
+  test("respects per-repo exclusion flag in repo DB", async () => {
+    const basePath = join(tmpdir(), `repo-select-db-${randomUUID().slice(0, 8)}`);
+    await mkdir(basePath, { recursive: true });
+
+    await writeFile(
+      join(basePath, ".reposrc.json"),
+      JSON.stringify({
+        repoDbPath: ".reposdb.json",
+        exclusions: [],
+      }),
+    );
+
+    await createGitRepo(join(basePath, "alpha"));
+    await createGitRepo(join(basePath, "beta"));
+    await syncRepoDb({ basePath });
+
+    const dbPath = join(basePath, ".reposdb.json");
+    const db = JSON.parse(await readFile(dbPath, "utf-8"));
+    const alpha = db.repos.find((repo: { name: string }) => repo.name === "alpha");
+    alpha.excluded = true;
+    await writeFile(dbPath, JSON.stringify(db, null, 2) + "\n");
 
     try {
       const selection = await selectLocalRepos({ basePath });

@@ -81,7 +81,7 @@ describe("config.ts", () => {
 
       const customConfig = {
         repoDbPath: ".reposdb.json",
-        exclusionGlobs: ["clones/*", "archive-*"],
+        exclusions: ["clones/*", "archive-*"],
       };
 
       await writeFile(

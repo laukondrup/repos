@@ -13,7 +13,6 @@ export interface ReposConfig {
   diffMaxLines?: number;
   repoDbPath?: string;
   exclusions?: string[];
-  exclusionGlobs?: string[];
 }
 
 export const DEFAULT_CONFIG: Required<ReposConfig> = {
@@ -29,7 +28,6 @@ export const DEFAULT_CONFIG: Required<ReposConfig> = {
   diffMaxLines: 500,
   repoDbPath: "",
   exclusions: [],
-  exclusionGlobs: [],
 };
 
 export interface RepoStatus {

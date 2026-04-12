@@ -7,7 +7,7 @@ import {
 } from "./command-registry.js";
 
 describe("command registry coverage", () => {
-  test("requires overview coverage for all non-deprecated top-level commands", () => {
+  test("requires overview coverage for all top-level commands", () => {
     expect(() => assertOverviewCoverage()).not.toThrow();
   });
 

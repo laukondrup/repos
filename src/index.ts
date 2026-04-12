@@ -30,12 +30,6 @@ function commandDescription(id: string): string {
   return getCommandDefinition(id).description;
 }
 
-function showDeprecationWarning(oldName: string, newName: string) {
-  console.warn(
-    `\x1b[33mWarning: 'repos ${oldName}' is deprecated. Use 'repos ${newName}' instead.\x1b[0m\n`
-  );
-}
-
 function collectOption(value: string, previous: string[] = []): string[] {
   previous.push(value);
   return previous;
@@ -119,25 +113,6 @@ program
   });
 
 program
-  .command("update")
-  .description(commandDescription("update"))
-  .option("-n, --dry-run", "Show what would be updated without pulling")
-  .option("-q, --quiet", "Minimal output")
-  .option("-f, --filter <pattern>", "Filter repos by pattern (e.g., 'api-*')")
-  .option("-p, --parallel <number>", "Number of parallel operations", parseInt)
-  .option("--no-exclude", "Include repos excluded by config/DB")
-  .action(async (options) => {
-    showDeprecationWarning("update", "pull");
-    await runPull({
-      dryRun: options.dryRun,
-      quiet: options.quiet,
-      filter: options.filter,
-      parallel: options.parallel,
-      noExclude: options.exclude,
-    });
-  });
-
-program
   .command("clone")
   .description(commandDescription("clone"))
   .option("-n, --dry-run", "Show what would be cloned without cloning")
@@ -166,25 +141,6 @@ program
   .option("-f, --filter <pattern>", "Filter repos by pattern (e.g., 'api-*')")
   .option("--no-exclude", "Include repos excluded by config/DB")
   .action(async (options) => {
-    await runClean({
-      dryRun: options.dryRun,
-      force: options.force,
-      all: options.all,
-      filter: options.filter,
-      noExclude: options.exclude,
-    });
-  });
-
-program
-  .command("cleanup")
-  .description(commandDescription("cleanup"))
-  .option("-n, --dry-run", "Show what would be cleaned without cleaning")
-  .option("-f, --force", "Skip confirmation prompt")
-  .option("-a, --all", "Also remove untracked files")
-  .option("--filter <pattern>", "Filter repos by pattern (e.g., 'api-*')")
-  .option("--no-exclude", "Include repos excluded by config/DB")
-  .action(async (options) => {
-    showDeprecationWarning("cleanup", "clean");
     await runClean({
       dryRun: options.dryRun,
       force: options.force,

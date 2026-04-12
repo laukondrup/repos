@@ -26,6 +26,13 @@ export interface RepoLabelListOptions {
   configBasePath?: string;
 }
 
+export interface RepoExcludeUpdateOptions {
+  basePath?: string;
+  configBasePath?: string;
+  excluded: boolean;
+  targets: string[];
+}
+
 export interface SyncRepoDbResult {
   total: number;
   created: number;
@@ -40,11 +47,10 @@ interface ConfigContext {
 }
 
 function normalizeConfigForWrite(config: ReposConfig): ReposConfig {
-  const normalizedExclusions = config.exclusions ?? config.exclusionGlobs ?? [];
+  const normalizedExclusions = config.exclusions ?? [];
   const normalized: ReposConfig = {
     ...config,
     exclusions: normalizedExclusions,
-    exclusionGlobs: normalizedExclusions,
   };
   if (!normalized.repoDbPath) {
     delete normalized.repoDbPath;
@@ -118,33 +124,6 @@ function globToRegex(glob: string): RegExp {
   return new RegExp(`^${escaped}$`, "i");
 }
 
-function isGlobPattern(value: string): boolean {
-  return /[*?\[\]]/.test(value);
-}
-
-function matchesExclusion(
-  recordPath: string,
-  repoName: string,
-  basePath: string,
-  exclusions: string[],
-): boolean {
-  if (exclusions.length === 0) return false;
-  const relPath = relative(basePath, recordPath).replace(/\\/g, "/");
-
-  return exclusions.some((item) => {
-    if (isGlobPattern(item)) {
-      const regex = globToRegex(item);
-      return regex.test(relPath) || regex.test(repoName);
-    }
-
-    if (item.startsWith("/")) {
-      return resolve(item) === resolve(recordPath);
-    }
-
-    return item === relPath || item === repoName;
-  });
-}
-
 function matchesPattern(
   recordPath: string,
   repoName: string,
@@ -154,19 +133,6 @@ function matchesPattern(
   const relPath = relative(basePath, recordPath).replace(/\\/g, "/");
   const regex = globToRegex(pattern);
   return regex.test(relPath) || regex.test(repoName);
-}
-
-function ensureComputedExclusion(
-  record: RepoDbRepoRecord,
-  basePath: string,
-  exclusions: string[],
-): RepoDbRepoRecord {
-  const excluded = matchesExclusion(record.path, record.name, basePath, exclusions);
-
-  return {
-    ...record,
-    excluded,
-  };
 }
 
 function nextRecordId(originFullName: string | null, name: string, path: string): string {
@@ -208,7 +174,6 @@ export async function syncRepoDb(options: SyncRepoDbOptions = {}): Promise<SyncR
     options.configBasePath,
   );
   const { config, configPath } = await getConfigContext(configBasePath);
-  const exclusions = config.exclusions ?? config.exclusionGlobs ?? [];
 
   const ensuredConfig: ReposConfig = { ...config };
   if (!ensuredConfig.repoDbPath) {
@@ -265,49 +230,18 @@ export async function syncRepoDb(options: SyncRepoDbOptions = {}): Promise<SyncR
           excluded: false,
         };
 
-    const computed = ensureComputedExclusion(baseRecord, basePath, exclusions);
     if (existing) {
       updated++;
     } else {
       created++;
     }
-    nextRepos.push(computed);
+    nextRepos.push(baseRecord);
   }
 
   const nextDb: RepoDb = {
     version: 1,
     repos: nextRepos,
   };
-
-  const expandedExclusions = new Set(exclusions);
-  const globExclusions = exclusions.filter(isGlobPattern);
-  if (globExclusions.length > 0) {
-    for (const record of nextRepos) {
-      const relPath = relative(basePath, record.path).replace(/\\/g, "/");
-      for (const pattern of globExclusions) {
-        const regex = globToRegex(pattern);
-        if (regex.test(relPath) || regex.test(record.name)) {
-          expandedExclusions.add(relPath);
-          break;
-        }
-      }
-    }
-  }
-
-  const expandedList = Array.from(expandedExclusions).sort();
-  const configList = [...exclusions].sort();
-  if (expandedList.join("\n") !== configList.join("\n")) {
-    const nextConfig: ReposConfig = {
-      ...ensuredConfig,
-      exclusions: expandedList,
-      exclusionGlobs: expandedList,
-    };
-    await mkdir(dirname(configPath), { recursive: true });
-    await Bun.write(
-      configPath,
-      JSON.stringify(normalizeConfigForWrite(nextConfig), null, 2) + "\n",
-    );
-  }
 
   await saveRepoDb(dbPath, nextDb);
 
@@ -409,6 +343,41 @@ export async function updateRepoLabels(
     return {
       ...repo,
       labels: Array.from(current).sort(),
+    };
+  });
+
+  await saveRepoDb(dbPath, db);
+  return { matched: matches.length, updated };
+}
+
+export async function updateRepoExclusions(
+  options: RepoExcludeUpdateOptions,
+): Promise<{ matched: number; updated: number }> {
+  const syncResult = await syncRepoDb({
+    basePath: options.basePath,
+    configBasePath: options.configBasePath,
+  });
+  const { basePath, dbPath } = await ensureDbContext(
+    options.basePath,
+    options.configBasePath,
+  );
+  const db = await loadRepoDb(dbPath);
+  if (syncResult.total !== db.repos.length) {
+    const refreshed = await loadRepoDb(dbPath);
+    db.repos = refreshed.repos;
+  }
+
+  const matches = resolveTargetMatches(db.repos, options.targets, [], basePath);
+  const targetIds = new Set(matches.map((repo) => repo.id));
+
+  let updated = 0;
+  db.repos = db.repos.map((repo) => {
+    if (!targetIds.has(repo.id)) return repo;
+    if (repo.excluded === options.excluded) return repo;
+    updated++;
+    return {
+      ...repo,
+      excluded: options.excluded,
     };
   });
 

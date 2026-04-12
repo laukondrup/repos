@@ -1,6 +1,7 @@
-import { filterRepos, findReposRecursive } from "./repos.js";
+import { filterRepos, findReposRecursive, getRepoName } from "./repos.js";
 import { getRepoDb } from "./repo-db.js";
-import { resolveCodeDir } from "./config.js";
+import { loadConfig, resolveCodeDir } from "./config.js";
+import { matchesConfigExclusion } from "./exclusions.js";
 
 export interface SelectLocalReposOptions {
   basePath?: string;
@@ -15,6 +16,18 @@ export async function selectLocalRepos(
   let repoPaths = await findReposRecursive(codeDir);
 
   if (!options.noExclude) {
+    const config = await loadConfig(options.basePath ? codeDir : undefined);
+    const configExclusions = config.exclusions ?? [];
+    repoPaths = repoPaths.filter(
+      (repoPath) =>
+        !matchesConfigExclusion(
+          repoPath,
+          getRepoName(repoPath),
+          codeDir,
+          configExclusions,
+        ),
+    );
+
     const { db } = await getRepoDb({
       basePath: codeDir,
       configBasePath: options.basePath ? codeDir : undefined,

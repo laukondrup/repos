@@ -15,8 +15,9 @@ export function ExcludeMenuApp({ repos, globs, onComplete }: ExcludeMenuAppProps
   const [phase, setPhase] = useState<Phase>("running");
   const [error, setError] = useState<string | null>(null);
   const [summary, setSummary] = useState<{
-    added: string[];
-    matchedFromGlobs: string[];
+    addedConfigExclusions: string[];
+    repoMatched: number;
+    repoUpdated: number;
   } | null>(null);
 
   useEffect(() => {
@@ -24,8 +25,9 @@ export function ExcludeMenuApp({ repos, globs, onComplete }: ExcludeMenuAppProps
       try {
         const result = await applyExclusions({ repos, globs });
         setSummary({
-          added: result.added,
-          matchedFromGlobs: result.matchedFromGlobs,
+          addedConfigExclusions: result.addedConfigExclusions,
+          repoMatched: result.repoMatched,
+          repoUpdated: result.repoUpdated,
         });
         setPhase("done");
       } catch (err) {
@@ -67,9 +69,9 @@ export function ExcludeMenuApp({ repos, globs, onComplete }: ExcludeMenuAppProps
   return (
     <Box flexDirection="column" padding={1}>
       <Text bold color="green">✓ Exclusions updated</Text>
-      <Text>Added exclusions: {summary?.added.length ?? 0}</Text>
-      <Text>Matched from globs: {summary?.matchedFromGlobs.length ?? 0}</Text>
-      <Text dimColor>Ran `repos sync` to refresh local exclusion state.</Text>
+      <Text>Added config exclusions: {summary?.addedConfigExclusions.length ?? 0}</Text>
+      <Text>Repo targets matched: {summary?.repoMatched ?? 0}</Text>
+      <Text>Repo flags updated: {summary?.repoUpdated ?? 0}</Text>
     </Box>
   );
 }

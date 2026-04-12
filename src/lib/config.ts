@@ -48,7 +48,7 @@ function mergeConfig(
   defaults: Required<ReposConfig>,
   user: ReposConfig
 ): ReposConfig {
-  const exclusions = user.exclusions ?? user.exclusionGlobs ?? defaults.exclusions;
+  const exclusions = user.exclusions ?? defaults.exclusions;
   return {
     github: {
       ...defaults.github,
@@ -62,7 +62,6 @@ function mergeConfig(
     diffMaxLines: user.diffMaxLines ?? defaults.diffMaxLines,
     repoDbPath: user.repoDbPath ?? undefined,
     exclusions,
-    exclusionGlobs: exclusions,
   };
 }
 

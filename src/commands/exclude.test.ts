@@ -42,10 +42,11 @@ describe("exclude command", () => {
         basePath,
         configBasePath: basePath,
       });
-      expect(result.added).toContain("alpha");
+      expect(result.repoMatched).toBe(1);
+      expect(result.repoUpdated).toBe(1);
 
       const config = JSON.parse(await readFile(join(basePath, ".reposrc.json"), "utf-8"));
-      expect(config.exclusions).toContain("alpha");
+      expect(config.exclusions).toEqual([]);
 
       const db = JSON.parse(await readFile(join(basePath, ".reposdb.json"), "utf-8"));
       const alpha = db.repos.find((repo: { name: string }) => repo.name === "alpha");
@@ -55,7 +56,7 @@ describe("exclude command", () => {
     }
   });
 
-  test("expands glob exclusions into concrete repo dirs", async () => {
+  test("stores glob exclusions in config without expanding to concrete repo dirs", async () => {
     const basePath = join(tmpdir(), `exclude-glob-${randomUUID().slice(0, 8)}`);
     await mkdir(basePath, { recursive: true });
 
@@ -79,19 +80,19 @@ describe("exclude command", () => {
         configBasePath: basePath,
       });
 
-      expect(result.matchedFromGlobs).toContain("apps/web");
-      expect(result.matchedFromGlobs).toContain("apps/api");
+      expect(result.addedConfigExclusions).toContain("apps/*");
 
       const config = JSON.parse(await readFile(join(basePath, ".reposrc.json"), "utf-8"));
-      expect(config.exclusions).toContain("apps/web");
-      expect(config.exclusions).toContain("apps/api");
+      expect(config.exclusions).toContain("apps/*");
+      expect(config.exclusions).not.toContain("apps/web");
+      expect(config.exclusions).not.toContain("apps/api");
 
       const db = JSON.parse(await readFile(join(basePath, ".reposdb.json"), "utf-8"));
       const web = db.repos.find((repo: { name: string }) => repo.name === "web");
       const api = db.repos.find((repo: { name: string }) => repo.name === "api");
       const tools = db.repos.find((repo: { name: string }) => repo.name === "tools");
-      expect(web.excluded).toBe(true);
-      expect(api.excluded).toBe(true);
+      expect(web.excluded).toBe(false);
+      expect(api.excluded).toBe(false);
       expect(tools.excluded).toBe(false);
     } finally {
       await rm(basePath, { recursive: true, force: true });

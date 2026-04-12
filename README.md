@@ -10,7 +10,7 @@
 
 - Sidecar repo database (`.reposdb.json`) linked from config for labels/exclusion state
 - `repos sync` command to reconcile local path/name changes and refresh exclusion state
-- `repos sync` expands exclusion globs into concrete repo directories in config
+- `repos sync` reconciles local repo DB state without rewriting exclusion patterns
 - Label workflow for subsets (`repos label add|rm|list`) with repo args and glob targeting
 - Simplified exclusion model: single repo `excluded` state from config `exclusions` (dirs or globs)
 - `repos list` / `repos ls` preview command (supports `--days`, filters, exclusion bypass)
@@ -268,7 +268,7 @@ repos exclude --glob 'apps/*'                 # Exclude repos matched by glob
 repos exclude legacy-service --glob 'apps/*'  # Mix dirs + globs
 ```
 
-`repos exclude` updates config exclusions and runs sync. When using `--glob`, matched repos are persisted as individual repo directories in config.
+`repos exclude` updates config exclusions and/or per-repo DB exclusion flags, then runs sync. `--glob` values are stored as-is in config patterns.
 
 ### Config Command
 

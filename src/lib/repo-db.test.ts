@@ -64,12 +64,12 @@ describe("repo-db sync", () => {
       const alpha = db.repos.find((repo: { name: string }) => repo.name === "alpha");
       const beta = db.repos.find((repo: { name: string }) => repo.name === "beta");
       expect(alpha.excluded).toBe(false);
-      expect(beta.excluded).toBe(true);
+      expect(beta.excluded).toBe(false);
 
       const persistedConfig = JSON.parse(
         await readFile(join(basePath, ".reposrc.json"), "utf-8"),
       );
-      expect(persistedConfig.exclusions).toContain("clones/beta");
+      expect(persistedConfig.exclusions).toContain("clones/*");
     } finally {
       await rm(basePath, { recursive: true, force: true });
     }
@@ -131,7 +131,7 @@ describe("repo-db sync", () => {
       expect(db.repos[0].path).toBe(join(basePath, "after-name"));
       expect(db.repos[0].name).toBe("after-name");
       expect(db.repos[0].labels).toEqual(["common"]);
-      expect(db.repos[0].excluded).toBe(false);
+      expect(db.repos[0].excluded).toBe(true);
     } finally {
       await rm(basePath, { recursive: true, force: true });
     }

@@ -17,10 +17,8 @@ describe("CLI dry-run aliases", () => {
     const commandsWithDryRun = [
       "fetch",
       "pull",
-      "update",
       "clone",
       "clean",
-      "cleanup",
     ];
 
     for (const command of commandsWithDryRun) {
@@ -36,9 +34,7 @@ describe("CLI exclusion flags", () => {
       "status",
       "fetch",
       "pull",
-      "update",
       "clean",
-      "cleanup",
       "diff",
       "checkout <branch>",
       "exec <command>",

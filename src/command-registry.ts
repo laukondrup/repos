@@ -10,7 +10,6 @@ export interface CommandOverviewDefinition {
 export interface TopLevelCommandDefinition {
   id: string;
   description: string;
-  deprecated?: boolean;
   overview?: CommandOverviewDefinition;
 }
 
@@ -56,11 +55,6 @@ export const TOP_LEVEL_COMMANDS: TopLevelCommandDefinition[] = [
     },
   },
   {
-    id: "update",
-    description: "(Deprecated: use 'pull') Pull latest changes for all repositories",
-    deprecated: true,
-  },
-  {
     id: "clone",
     description: "Clone active repositories from GitHub organization",
     overview: {
@@ -79,11 +73,6 @@ export const TOP_LEVEL_COMMANDS: TopLevelCommandDefinition[] = [
       key: "x",
       description: "Remove untracked and ignored files",
     },
-  },
-  {
-    id: "cleanup",
-    description: "(Deprecated: use 'clean') Clean repositories by reverting changes",
-    deprecated: true,
   },
   {
     id: "diff",
@@ -181,9 +170,7 @@ export function getTopLevelCommandIds(): string[] {
 }
 
 export function getRequiredOverviewCommandIds(): string[] {
-  return TOP_LEVEL_COMMANDS
-    .filter((command) => !command.deprecated)
-    .map((command) => command.id);
+  return TOP_LEVEL_COMMANDS.map((command) => command.id);
 }
 
 export function getOverviewCommandIds(): string[] {
