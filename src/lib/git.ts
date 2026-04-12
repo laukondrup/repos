@@ -1,4 +1,6 @@
 import { $ } from "bun";
+import { readFile } from "fs/promises";
+import { join, resolve } from "path";
 import type { RepoStatus, RepoOperationResult } from "../types.js";
 import { DEFAULT_CONFIG } from "../types.js";
 import { loadConfig } from "./config.js";
@@ -108,7 +110,56 @@ function parseRemoteRepoFullName(remoteUrl: string): string | null {
   return null;
 }
 
+function parseOriginUrlFromGitConfig(content: string): string | null {
+  const lines = content.split("\n");
+  let inOriginRemote = false;
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    const sectionMatch = trimmed.match(/^\[(.+)\]$/);
+    if (sectionMatch) {
+      inOriginRemote = sectionMatch[1] === 'remote "origin"';
+      continue;
+    }
+    if (!inOriginRemote) continue;
+    const urlMatch = trimmed.match(/^url\s*=\s*(.+)$/);
+    if (urlMatch) {
+      return urlMatch[1].trim();
+    }
+  }
+
+  return null;
+}
+
+async function readOriginUrlFromGitConfig(repoPath: string): Promise<string | null> {
+  try {
+    const gitPath = join(repoPath, ".git");
+    let configPath = join(gitPath, "config");
+    const dotGit = await readFile(gitPath, "utf-8").catch(() => null);
+    if (dotGit) {
+      const match = dotGit.match(/gitdir:\s*(.+)\s*/i);
+      if (match) {
+        const gitDir = match[1].trim();
+        const resolvedGitDir = gitDir.startsWith("/")
+          ? gitDir
+          : resolve(repoPath, gitDir);
+        configPath = join(resolvedGitDir, "config");
+      }
+    }
+    const content = await readFile(configPath, "utf-8");
+    return parseOriginUrlFromGitConfig(content);
+  } catch {
+    return null;
+  }
+}
+
 export async function getOriginRepoFullName(repoPath: string): Promise<string | null> {
+  const originFromConfig = await readOriginUrlFromGitConfig(repoPath);
+  if (originFromConfig) {
+    const parsed = parseRemoteRepoFullName(originFromConfig);
+    if (parsed) return parsed;
+  }
+
   try {
     const result = await $`git -C ${repoPath} remote get-url origin`.quiet();
     if (result.exitCode !== 0) {

@@ -4,7 +4,6 @@ import { getRepoStatus } from "./git.js";
 import type { RepoStatus } from "../types.js";
 
 const DEFAULT_DISCOVERY_MAX_DEPTH = 10;
-const decoder = new TextDecoder();
 
 async function hasGitMetadata(path: string): Promise<boolean> {
   try {
@@ -53,7 +52,7 @@ export async function findReposRecursive(
   basePath: string = process.cwd(),
   maxDepth: number = DEFAULT_DISCOVERY_MAX_DEPTH,
 ): Promise<string[]> {
-  const result = Bun.spawnSync({
+  const process = Bun.spawn({
     cmd: [
       "fd",
       "--hidden",
@@ -69,16 +68,25 @@ export async function findReposRecursive(
     stdout: "pipe",
     stderr: "pipe",
   });
+  const [stdout, stderr, exitCode] = await Promise.all([
+    new Response(process.stdout).text(),
+    new Response(process.stderr).text(),
+    process.exited,
+  ]);
 
-  if (result.exitCode !== 0) {
-    const stderr = decoder.decode(result.stderr).trim();
-    if (stderr.toLowerCase().includes("command not found")) {
+  if (exitCode !== 0) {
+    const stderrText = stderr.trim();
+    const lower = stderrText.toLowerCase();
+    if (
+      lower.includes("command not found")
+      || lower.includes("no such file or directory")
+    ) {
       throw new Error("`fd` is required for repository discovery. Install it and retry.");
     }
-    throw new Error(stderr || "Failed to discover repositories with fd.");
+    throw new Error(stderrText || "Failed to discover repositories with fd.");
   }
 
-  const output = decoder.decode(result.stdout).trim();
+  const output = stdout.trim();
   if (!output) return [];
 
   const repos = new Set<string>();

@@ -1,7 +1,7 @@
 import { dirname, join, relative, resolve } from "path";
 import { mkdir, readFile } from "fs/promises";
 import { loadConfig, getCwdConfigPath, getHomeConfigPath, resolveCodeDir } from "./config.js";
-import { findReposRecursive, getRepoName } from "./repos.js";
+import { findReposRecursive, getRepoName, runParallel } from "./repos.js";
 import { getOriginRepoFullName } from "./git.js";
 import type { RepoDb, RepoDbRepoRecord, ReposConfig } from "../types.js";
 
@@ -240,6 +240,24 @@ export async function syncRepoDb(options: SyncRepoDbOptions = {}): Promise<SyncR
   let updated = 0;
   const nextRepos: RepoDbRepoRecord[] = [];
   const discovered = await findReposRecursive(basePath);
+  const missing = discovered
+    .filter((repoPath) => !byPath.has(repoPath))
+    .map((repoPath) => ({
+      repoPath,
+      name: getRepoName(repoPath),
+    }));
+  const { results: missingOrigins } = await runParallel(
+    missing,
+    async (item) => ({
+      repoPath: item.repoPath,
+      name: item.name,
+      originFullName: await getOriginRepoFullName(item.repoPath),
+    }),
+    16,
+  );
+  const missingByPath = new Map(
+    missingOrigins.map((item) => [item.repoPath, item]),
+  );
 
   for (const repoPath of discovered) {
     const name = getRepoName(repoPath);
@@ -248,7 +266,7 @@ export async function syncRepoDb(options: SyncRepoDbOptions = {}): Promise<SyncR
 
     // Only resolve remote identity for repos not already mapped in DB.
     if (!existing) {
-      originFullName = await getOriginRepoFullName(repoPath);
+      originFullName = missingByPath.get(repoPath)?.originFullName ?? null;
       const originKey = originFullName?.toLowerCase() ?? null;
       if (originKey) {
         existing = byOrigin.get(originKey);
