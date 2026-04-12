@@ -6,9 +6,9 @@ import Spinner from "ink-spinner";
 import {
   saveConfig,
   configExists,
-  getCwdConfigPath,
   getHomeConfigPath,
 } from "../lib/config.js";
+import { syncRepoDb } from "../lib/repo-db.js";
 import {
   checkGhCli,
   detectGitHubHost,
@@ -23,7 +23,7 @@ type Step =
   | "host-custom"
   | "org-input"
   | "days-input"
-  | "location-select"
+  | "code-dir-input"
   | "saving"
   | "done";
 
@@ -45,7 +45,7 @@ export function InitApp({ force, basePath, onComplete }: InitAppProps) {
   const [customHost, setCustomHost] = useState<string>("");
   const [org, setOrg] = useState<string>("");
   const [days, setDays] = useState<string>("90");
-  const [saveLocation, setSaveLocation] = useState<"cwd" | "home">("cwd");
+  const [codeDir, setCodeDir] = useState<string>(basePath ?? process.cwd());
   const [error, setError] = useState<string | null>(null);
 
   useInput(
@@ -96,25 +96,32 @@ export function InitApp({ force, basePath, onComplete }: InitAppProps) {
     if (step !== "saving") return;
 
     async function save() {
-      const host = selectedHost === "custom" ? customHost : selectedHost;
-      const github: GitHubConfig = {
-        host,
-        apiUrl: getApiUrl(host),
-      };
+      try {
+        const host = selectedHost === "custom" ? customHost : selectedHost;
+        const github: GitHubConfig = {
+          host,
+          apiUrl: getApiUrl(host),
+        };
 
-      const config: ReposConfig = {
-        github,
-        org,
-        daysThreshold: parseInt(days) || 90,
-        parallel: 10,
-      };
+        const config: ReposConfig = {
+          github,
+          org,
+          codeDir: codeDir.trim() || process.cwd(),
+          daysThreshold: parseInt(days) || 90,
+          parallel: 10,
+        };
 
-      await saveConfig(config, saveLocation, basePath);
-      setStep("done");
+        await saveConfig(config, "global");
+        await syncRepoDb({ basePath: config.codeDir });
+        setStep("done");
+      } catch (err) {
+        setError(err instanceof Error ? err.message : String(err));
+        setStep("done");
+      }
     }
 
     save();
-  }, [step, selectedHost, customHost, org, days, saveLocation, basePath]);
+  }, [step, selectedHost, customHost, org, days, codeDir]);
 
   if (error && step === "done") {
     return (
@@ -315,7 +322,7 @@ export function InitApp({ force, basePath, onComplete }: InitAppProps) {
               value={days}
               onChange={setDays}
               onSubmit={() => {
-                setStep("location-select");
+                setStep("code-dir-input");
               }}
             />
           </Box>
@@ -329,18 +336,7 @@ export function InitApp({ force, basePath, onComplete }: InitAppProps) {
     );
   }
 
-  if (step === "location-select") {
-    const items = [
-      {
-        label: `Current directory (${getCwdConfigPath(basePath)})`,
-        value: "cwd" as const,
-      },
-      {
-        label: `Home directory (${getHomeConfigPath()})`,
-        value: "home" as const,
-      },
-    ];
-
+  if (step === "code-dir-input") {
     return (
       <Box flexDirection="column" padding={1}>
         <Text bold color="cyan">
@@ -358,20 +354,23 @@ export function InitApp({ force, basePath, onComplete }: InitAppProps) {
           <Text dimColor>Days: {days}</Text>
         </Box>
         <Box marginTop={1} flexDirection="column">
-          <Text>Save configuration to:</Text>
+          <Text>Code directory (commands run against repos in this directory):</Text>
           <Box marginTop={1}>
-            <SelectInput
-              items={items}
-              onSelect={(item) => {
-                setSaveLocation(item.value);
-                setStep("saving");
+            <Text color="cyan">{">"} </Text>
+            <TextInput
+              value={codeDir}
+              onChange={setCodeDir}
+              onSubmit={() => {
+                if (codeDir.trim()) {
+                  setStep("saving");
+                }
               }}
             />
           </Box>
         </Box>
         {onComplete && (
           <Box marginTop={1}>
-            <Text dimColor>↑↓ Navigate • Enter Select • ⌫/Esc Back</Text>
+            <Text dimColor>Enter Continue • ⌫/Esc Back</Text>
           </Box>
         )}
       </Box>
@@ -391,8 +390,7 @@ export function InitApp({ force, basePath, onComplete }: InitAppProps) {
     );
   }
 
-  const configPath =
-    saveLocation === "cwd" ? getCwdConfigPath(basePath) : getHomeConfigPath();
+  const configPath = getHomeConfigPath();
 
   return (
     <Box flexDirection="column" padding={1}>
@@ -407,6 +405,7 @@ export function InitApp({ force, basePath, onComplete }: InitAppProps) {
           </Text>
           <Text>Org: {org}</Text>
           <Text>Activity threshold: {days} days</Text>
+          <Text>Code directory: {codeDir}</Text>
         </Box>
       </Box>
       <Box marginTop={1} flexDirection="column">
@@ -428,4 +427,3 @@ export async function runInit(force?: boolean): Promise<void> {
   const { waitUntilExit } = render(<InitApp force={force} />);
   await waitUntilExit();
 }
-
