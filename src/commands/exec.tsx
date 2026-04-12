@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { render, Box, Text, useInput } from "ink";
 import Spinner from "ink-spinner";
 import { selectLocalRepos } from "../lib/repo-selection.js";
-import { execInRepo, type ExecResult } from "../lib/git.js";
+import { execInRepo, isRepoLocallyActiveWithinDays, type ExecResult } from "../lib/git.js";
 import { loadConfig } from "../lib/config.js";
 import { ProgressBar } from "../components/ProgressBar.js";
 import { Divider } from "../components/Divider.js";
@@ -76,9 +76,21 @@ export function ExecApp({ options, onComplete }: ExecAppProps) {
           noExclude: options.noExclude,
         });
 
+        if (options.days !== undefined) {
+          const activeRepoPaths: string[] = [];
+          for (const repoPath of repoPaths) {
+            if (await isRepoLocallyActiveWithinDays(repoPath, options.days)) {
+              activeRepoPaths.push(repoPath);
+            }
+          }
+          repoPaths = activeRepoPaths;
+        }
+
         if (repoPaths.length === 0) {
           setError(
-            options.filter
+            options.days !== undefined
+              ? `No repositories active within ${options.days} days`
+              : options.filter
               ? `No repositories match pattern: ${options.filter}`
               : "No repositories found in current directory"
           );

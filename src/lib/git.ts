@@ -187,6 +187,36 @@ export async function getRepoStatus(repoPath: string): Promise<RepoStatus> {
   };
 }
 
+export async function isRepoLocallyActiveWithinDays(
+  repoPath: string,
+  days: number,
+): Promise<boolean> {
+  const status = await getRepoStatus(repoPath);
+  if (!status.isClean) {
+    return true;
+  }
+
+  try {
+    const result =
+      await $`git -C ${repoPath} log -1 --format=%ct --all`.quiet().nothrow();
+    if (result.exitCode !== 0) {
+      return false;
+    }
+
+    const raw = result.text().trim();
+    const commitEpochSeconds = Number.parseInt(raw, 10);
+    if (!Number.isFinite(commitEpochSeconds)) {
+      return false;
+    }
+
+    const thresholdEpochSeconds =
+      Math.floor(Date.now() / 1000) - Math.floor(days * 24 * 60 * 60);
+    return commitEpochSeconds >= thresholdEpochSeconds;
+  } catch {
+    return false;
+  }
+}
+
 export async function pullRepo(repoPath: string): Promise<RepoOperationResult> {
   const name = repoPath.split("/").pop() || repoPath;
   const timeout = await getTimeout();

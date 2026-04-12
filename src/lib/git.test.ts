@@ -6,6 +6,7 @@ import {
   isGitRepo,
   getCurrentBranch,
   getOriginRepoFullName,
+  isRepoLocallyActiveWithinDays,
   getRepoStatus,
   pullRepo,
   cleanRepo,
@@ -149,6 +150,45 @@ describe("git.ts", () => {
         const status = await getRepoStatus(repo.path);
         expect(status.untracked).toBe(1);
         expect(status.isClean).toBe(false);
+      } finally {
+        await repo.cleanup();
+      }
+    });
+  });
+
+  describe("isRepoLocallyActiveWithinDays", () => {
+    test("returns true for recent commit activity", async () => {
+      const repo = await createTempRepo();
+      try {
+        const active = await isRepoLocallyActiveWithinDays(repo.path, 7);
+        expect(active).toBe(true);
+      } finally {
+        await repo.cleanup();
+      }
+    });
+
+    test("returns false for old clean repos", async () => {
+      const repo = await createTempRepo();
+      try {
+        const { $ } = await import("bun");
+        await $`env GIT_COMMITTER_DATE=2020-01-01T00:00:00Z git -C ${repo.path} commit --amend --no-edit --date=2020-01-01T00:00:00Z`.quiet();
+
+        const active = await isRepoLocallyActiveWithinDays(repo.path, 7);
+        expect(active).toBe(false);
+      } finally {
+        await repo.cleanup();
+      }
+    });
+
+    test("returns true for dirty repos even with old commits", async () => {
+      const repo = await createTempRepo();
+      try {
+        const { $ } = await import("bun");
+        await $`env GIT_COMMITTER_DATE=2020-01-01T00:00:00Z git -C ${repo.path} commit --amend --no-edit --date=2020-01-01T00:00:00Z`.quiet();
+        await writeFile(join(repo.path, "README.md"), "dirty change");
+
+        const active = await isRepoLocallyActiveWithinDays(repo.path, 7);
+        expect(active).toBe(true);
       } finally {
         await repo.cleanup();
       }

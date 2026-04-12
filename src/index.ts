@@ -228,6 +228,7 @@ program
   .option("-q, --quiet", "Only show output for repos with non-empty results")
   .option("-p, --parallel <number>", "Number of parallel operations", parseInt)
   .option("-f, --filter <pattern>", "Filter repos by pattern (e.g., 'api-*')")
+  .option("-d, --days <number>", "Only include repos locally active in the last N days", parseInt)
   .option("--no-exclude", "Include repos excluded by config/DB")
   .action(async (command, options) => {
     await runExec({
@@ -235,6 +236,7 @@ program
       quiet: options.quiet,
       parallel: options.parallel,
       filter: options.filter,
+      days: options.days,
       noExclude: options.exclude,
     });
   });

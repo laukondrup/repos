@@ -51,6 +51,13 @@ describe("CLI exclusion flags", () => {
   });
 });
 
+describe("CLI exec options", () => {
+  test("supports --days for local activity filtering", () => {
+    const block = commandBlock("exec <command>");
+    expect(block).toContain('--days <number>');
+  });
+});
+
 describe("CLI command registry", () => {
   test("includes sync command", () => {
     expect(source).toContain('.command("sync")');
