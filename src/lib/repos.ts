@@ -1,9 +1,16 @@
-import { readdir, stat } from "fs/promises";
-import { dirname, join, relative } from "path";
+import { readdir, readFile, stat } from "fs/promises";
+import { join } from "path";
 import { getRepoStatus } from "./git.js";
 import type { RepoStatus } from "../types.js";
 
 const DEFAULT_DISCOVERY_MAX_DEPTH = 10;
+
+interface GitIgnoreRule {
+  baseRelPath: string;
+  regex: RegExp;
+  negated: boolean;
+  onlyDirectory: boolean;
+}
 
 async function hasGitMetadata(path: string): Promise<boolean> {
   try {
@@ -15,14 +22,120 @@ async function hasGitMetadata(path: string): Promise<boolean> {
   }
 }
 
-function shouldIgnoreDiscoveredRepo(basePath: string, repoPath: string): boolean {
-  const rel = relative(basePath, repoPath).replace(/\\/g, "/");
-  const parts = rel.split("/").filter(Boolean);
-  return parts.some(
-    (part) =>
-      ((part.startsWith(".") && part !== "." && part !== "..")
-        || part === "node_modules"),
-  );
+function normalizePath(path: string): string {
+  return path.replace(/\\/g, "/").replace(/^\.\/+/, "").replace(/\/+$/, "");
+}
+
+function pathRelativeToBase(baseRelPath: string, targetRelPath: string): string | null {
+  if (!baseRelPath) return targetRelPath;
+  if (targetRelPath === baseRelPath) return "";
+  if (targetRelPath.startsWith(`${baseRelPath}/`)) {
+    return targetRelPath.slice(baseRelPath.length + 1);
+  }
+  return null;
+}
+
+function escapeRegexChar(char: string): string {
+  return /[.+^${}()|[\]\\]/.test(char) ? `\\${char}` : char;
+}
+
+function globToRegexSource(pattern: string): string {
+  let source = "";
+  for (let i = 0; i < pattern.length; i++) {
+    const char = pattern[i];
+    const next = pattern[i + 1];
+    if (char === "*" && next === "*") {
+      source += ".*";
+      i++;
+      continue;
+    }
+    if (char === "*") {
+      source += "[^/]*";
+      continue;
+    }
+    if (char === "?") {
+      source += "[^/]";
+      continue;
+    }
+    source += escapeRegexChar(char);
+  }
+  return source;
+}
+
+function parseGitignore(content: string, baseRelPath: string): GitIgnoreRule[] {
+  const rules: GitIgnoreRule[] = [];
+
+  for (const rawLine of content.split("\n")) {
+    const line = rawLine.trim();
+    if (!line) continue;
+    if (line === "#") continue;
+
+    let pattern = line;
+    if (pattern.startsWith("\\#") || pattern.startsWith("\\!")) {
+      pattern = pattern.slice(1);
+    } else if (pattern.startsWith("#")) {
+      continue;
+    }
+
+    let negated = false;
+    if (pattern.startsWith("!")) {
+      negated = true;
+      pattern = pattern.slice(1);
+    }
+    if (!pattern) continue;
+
+    let onlyDirectory = false;
+    if (pattern.endsWith("/")) {
+      onlyDirectory = true;
+      pattern = pattern.slice(0, -1);
+    }
+    if (!pattern) continue;
+
+    const anchored = pattern.startsWith("/");
+    if (anchored) {
+      pattern = pattern.slice(1);
+    }
+
+    const basenameOnly = !pattern.includes("/");
+    const core = globToRegexSource(pattern);
+    const source = basenameOnly
+      ? `(^|/)${core}$`
+      : anchored
+        ? `^${core}$`
+        : `(^|/)${core}$`;
+    rules.push({
+      baseRelPath,
+      regex: new RegExp(source),
+      negated,
+      onlyDirectory,
+    });
+  }
+
+  return rules;
+}
+
+function isIgnoredByGitignore(
+  targetRelPath: string,
+  isDirectory: boolean,
+  rules: GitIgnoreRule[],
+): boolean {
+  const normalizedTarget = normalizePath(targetRelPath);
+  let ignored = false;
+
+  for (const rule of rules) {
+    if (rule.onlyDirectory && !isDirectory) {
+      continue;
+    }
+    const relativeTarget = pathRelativeToBase(rule.baseRelPath, normalizedTarget);
+    if (relativeTarget === null) {
+      continue;
+    }
+    if (rule.regex.test(relativeTarget)) {
+      ignored = !rule.negated;
+    }
+  }
+
+  return ignored;
 }
 
 export async function findRepos(
@@ -52,56 +165,67 @@ export async function findReposRecursive(
   basePath: string = process.cwd(),
   maxDepth: number = DEFAULT_DISCOVERY_MAX_DEPTH,
 ): Promise<string[]> {
-  const process = Bun.spawn({
-    cmd: [
-      "fd",
-      "--hidden",
-      "--no-ignore",
-      "--exclude",
-      "node_modules",
-      "--glob",
-      "--max-depth",
-      String(maxDepth + 1),
-      ".git",
-      basePath,
-    ],
-    stdout: "pipe",
-    stderr: "pipe",
-  });
-  const [stdout, stderr, exitCode] = await Promise.all([
-    new Response(process.stdout).text(),
-    new Response(process.stderr).text(),
-    process.exited,
-  ]);
-
-  if (exitCode !== 0) {
-    const stderrText = stderr.trim();
-    const lower = stderrText.toLowerCase();
-    if (
-      lower.includes("command not found")
-      || lower.includes("no such file or directory")
-    ) {
-      throw new Error("`fd` is required for repository discovery. Install it and retry.");
-    }
-    throw new Error(stderrText || "Failed to discover repositories with fd.");
-  }
-
-  const output = stdout.trim();
-  if (!output) return [];
-
   const repos = new Set<string>();
-  for (const gitMetadataPath of output.split("\n")) {
-    const candidate = gitMetadataPath.trim();
-    const resolvedMetadataPath = candidate.startsWith("/")
-      ? candidate
-      : join(basePath, candidate);
-    const repoPath = dirname(resolvedMetadataPath);
-    if (!repoPath) continue;
-    if (shouldIgnoreDiscoveredRepo(basePath, repoPath)) continue;
-    repos.add(repoPath);
+  const normalizedBase = normalizePath(basePath);
+
+  async function walk(
+    currentPath: string,
+    currentRelPath: string,
+    depth: number,
+    inheritedRules: GitIgnoreRule[],
+  ): Promise<void> {
+    let entries;
+    try {
+      entries = await readdir(currentPath, { withFileTypes: true });
+    } catch {
+      return;
+    }
+
+    let rules = inheritedRules;
+    try {
+      const gitignore = await readFile(join(currentPath, ".gitignore"), "utf-8");
+      rules = [...inheritedRules, ...parseGitignore(gitignore, currentRelPath)];
+    } catch {
+      // no local gitignore
+    }
+
+    const hasGitMetadata = entries.some(
+      (entry) => entry.name === ".git" && (entry.isDirectory() || entry.isFile()),
+    );
+    if (hasGitMetadata) {
+      repos.add(currentPath);
+      return;
+    }
+
+    if (depth >= maxDepth) {
+      return;
+    }
+
+    for (const entry of entries) {
+      if (!entry.isDirectory()) continue;
+      if (entry.name === ".git") continue;
+
+      const childPath = join(currentPath, entry.name);
+      const childRelPath = currentRelPath
+        ? `${currentRelPath}/${entry.name}`
+        : entry.name;
+      const normalizedChildRelPath = normalizePath(childRelPath);
+      if (!normalizedChildRelPath || normalizedChildRelPath.startsWith("..")) {
+        continue;
+      }
+      const normalizedFull = normalizePath(childPath);
+      if (normalizedFull === normalizedBase || normalizedFull.startsWith(`${normalizedBase}/`)) {
+        if (isIgnoredByGitignore(normalizedChildRelPath, true, rules)) {
+          continue;
+        }
+        await walk(childPath, normalizedChildRelPath, depth + 1, rules);
+      }
+    }
   }
 
-  return Array.from(repos).sort();
+  await walk(basePath, "", 0, []);
+
+  return Array.from(repos).sort((a, b) => a.localeCompare(b));
 }
 
 export function filterRepos(repos: string[], pattern: string): string[] {
