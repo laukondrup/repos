@@ -113,6 +113,10 @@ export async function createTempRepoDir(
 ): Promise<{ basePath: string; repos: TempRepo[]; cleanup: () => Promise<void> }> {
   const basePath = join(tmpdir(), `repos-test-${randomUUID().slice(0, 8)}`);
   await mkdir(basePath, { recursive: true });
+  await writeFile(
+    join(basePath, ".reposrc.json"),
+    JSON.stringify({ org: "", exclusions: [] }, null, 2) + "\n",
+  );
 
   const createdRepos: TempRepo[] = [];
 

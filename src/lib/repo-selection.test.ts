@@ -192,4 +192,117 @@ describe("repo selection", () => {
       await rm(basePath, { recursive: true, force: true });
     }
   });
+
+  test("scopes selection to configured org by default and supports bypassOrg", async () => {
+    const basePath = join(tmpdir(), `repo-select-org-${randomUUID().slice(0, 8)}`);
+    await mkdir(basePath, { recursive: true });
+
+    const alphaPath = join(basePath, "alpha");
+    const betaPath = join(basePath, "beta");
+    const gammaPath = join(basePath, "gamma");
+    await createGitRepo(alphaPath);
+    await createGitRepo(betaPath);
+    await createGitRepo(gammaPath);
+
+    await writeFile(
+      join(basePath, ".reposrc.json"),
+      JSON.stringify({
+        org: "acme",
+        exclusions: [],
+      }),
+    );
+
+    await writeFile(
+      join(basePath, ".reposdb.json"),
+      JSON.stringify(
+        {
+          version: 1,
+          repos: [
+            {
+              id: "origin:acme/alpha",
+              name: "alpha",
+              path: alphaPath,
+              originFullName: "acme/alpha",
+              labels: [],
+              excluded: false,
+            },
+            {
+              id: "origin:other/beta",
+              name: "beta",
+              path: betaPath,
+              originFullName: "other/beta",
+              labels: [],
+              excluded: false,
+            },
+            {
+              id: `local:gamma:${gammaPath}`,
+              name: "gamma",
+              path: gammaPath,
+              originFullName: null,
+              labels: [],
+              excluded: false,
+            },
+          ],
+        },
+        null,
+        2,
+      ) + "\n",
+    );
+
+    try {
+      const scoped = await selectLocalRepos({ basePath });
+      expect(scoped).toHaveLength(1);
+      expect(scoped[0]).toContain("alpha");
+
+      const bypassed = await selectLocalRepos({ basePath, bypassOrg: true });
+      expect(bypassed).toHaveLength(3);
+    } finally {
+      await rm(basePath, { recursive: true, force: true });
+    }
+  });
+
+  test("uses originFullName owner when DB id does not include origin owner", async () => {
+    const basePath = join(tmpdir(), `repo-select-org-fallback-${randomUUID().slice(0, 8)}`);
+    await mkdir(basePath, { recursive: true });
+
+    const alphaPath = join(basePath, "alpha");
+    await createGitRepo(alphaPath);
+
+    await writeFile(
+      join(basePath, ".reposrc.json"),
+      JSON.stringify({
+        org: "acme",
+        exclusions: [],
+      }),
+    );
+
+    await writeFile(
+      join(basePath, ".reposdb.json"),
+      JSON.stringify(
+        {
+          version: 1,
+          repos: [
+            {
+              id: `local:alpha:${alphaPath}`,
+              name: "alpha",
+              path: alphaPath,
+              originFullName: "acme/alpha",
+              labels: [],
+              excluded: false,
+            },
+          ],
+        },
+        null,
+        2,
+      ) + "\n",
+    );
+
+    try {
+      const scoped = await selectLocalRepos({ basePath });
+      expect(scoped).toHaveLength(1);
+      expect(scoped[0]).toContain("alpha");
+    } finally {
+      await rm(basePath, { recursive: true, force: true });
+    }
+  });
 });

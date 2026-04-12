@@ -166,6 +166,13 @@ function getCommandFields(
           defaultValue: false,
           hint: "Bypass exclusion rules and include all discovered repos",
         },
+        {
+          name: "bypassOrg",
+          label: "Bypass org scope",
+          type: "toggle",
+          defaultValue: false,
+          hint: "Include repos outside configured org",
+        },
       ];
 
     case "pull":
@@ -213,6 +220,13 @@ function getCommandFields(
           defaultValue: false,
           hint: "Bypass exclusion rules and include all discovered repos",
         },
+        {
+          name: "bypassOrg",
+          label: "Bypass org scope",
+          type: "toggle",
+          defaultValue: false,
+          hint: "Include repos outside configured org",
+        },
       ];
 
     case "diff":
@@ -259,6 +273,13 @@ function getCommandFields(
           type: "toggle",
           defaultValue: false,
           hint: "Bypass exclusion rules and include all discovered repos",
+        },
+        {
+          name: "bypassOrg",
+          label: "Bypass org scope",
+          type: "toggle",
+          defaultValue: false,
+          hint: "Include repos outside configured org",
         },
       ];
 
@@ -314,6 +335,13 @@ function getCommandFields(
           defaultValue: false,
           hint: "Bypass exclusion rules and include all discovered repos",
         },
+        {
+          name: "bypassOrg",
+          label: "Bypass org scope",
+          type: "toggle",
+          defaultValue: false,
+          hint: "Include repos outside configured org",
+        },
       ];
 
     case "exec":
@@ -362,6 +390,13 @@ function getCommandFields(
           defaultValue: false,
           hint: "Bypass exclusion rules and include all discovered repos",
         },
+        {
+          name: "bypassOrg",
+          label: "Bypass org scope",
+          type: "toggle",
+          defaultValue: false,
+          hint: "Include repos outside configured org",
+        },
       ];
 
     case "list":
@@ -395,6 +430,13 @@ function getCommandFields(
           defaultValue: false,
           hint: "Bypass exclusion rules and include all discovered repos",
         },
+        {
+          name: "bypassOrg",
+          label: "Bypass org scope",
+          type: "toggle",
+          defaultValue: false,
+          hint: "Include repos outside configured org",
+        },
       ];
 
     case "exclude":
@@ -412,6 +454,13 @@ function getCommandFields(
           type: "text",
           placeholder: "space-separated globs (optional)",
           hint: "Glob patterns to match and exclude",
+        },
+        {
+          name: "bypassOrg",
+          label: "Bypass org scope",
+          type: "toggle",
+          defaultValue: false,
+          hint: "Include repos outside configured org",
         },
       ];
 
@@ -459,6 +508,13 @@ function getCommandFields(
           defaultValue: false,
           hint: "Bypass exclusion rules and include all discovered repos",
         },
+        {
+          name: "bypassOrg",
+          label: "Bypass org scope",
+          type: "toggle",
+          defaultValue: false,
+          hint: "Include repos outside configured org",
+        },
       ];
 
     case "clean":
@@ -497,6 +553,13 @@ function getCommandFields(
           type: "toggle",
           defaultValue: false,
           hint: "Bypass exclusion rules and include all discovered repos",
+        },
+        {
+          name: "bypassOrg",
+          label: "Bypass org scope",
+          type: "toggle",
+          defaultValue: false,
+          hint: "Include repos outside configured org",
         },
       ];
 
@@ -541,7 +604,7 @@ type CommandOptions =
   | { command: "checkout"; options: CheckoutOptions }
   | { command: "exec"; options: ExecOptions }
   | { command: "list"; options: ListOptions }
-  | { command: "exclude"; options: { repos: string[]; globs: string[] } }
+  | { command: "exclude"; options: { repos: string[]; globs: string[]; bypassOrg?: boolean } }
   | { command: "clone"; options: CloneOptions }
   | { command: "clean"; options: CleanupOptions }
   | { command: "sync" }
@@ -625,6 +688,7 @@ export function App() {
             labels: parseLabelsInput(values.labels as string | undefined),
             fetch: values.fetch as boolean | undefined,
             noExclude: values.noExclude as boolean | undefined,
+            bypassOrg: values.bypassOrg as boolean | undefined,
           },
         });
         break;
@@ -640,6 +704,7 @@ export function App() {
             parallel: values.parallel as number | undefined,
             interactive: true,
             noExclude: values.noExclude as boolean | undefined,
+            bypassOrg: values.bypassOrg as boolean | undefined,
           },
         });
         break;
@@ -654,6 +719,7 @@ export function App() {
             parallel: values.parallel as number | undefined,
             interactive: true,
             noExclude: values.noExclude as boolean | undefined,
+            bypassOrg: values.bypassOrg as boolean | undefined,
           },
         });
         break;
@@ -668,6 +734,7 @@ export function App() {
             parallel: values.parallel as number | undefined,
             interactive: true,
             noExclude: values.noExclude as boolean | undefined,
+            bypassOrg: values.bypassOrg as boolean | undefined,
           },
         });
         break;
@@ -683,6 +750,7 @@ export function App() {
             parallel: values.parallel as number | undefined,
             interactive: true,
             noExclude: values.noExclude as boolean | undefined,
+            bypassOrg: values.bypassOrg as boolean | undefined,
           },
         });
         break;
@@ -697,6 +765,7 @@ export function App() {
             parallel: values.parallel as number | undefined,
             interactive: true,
             noExclude: values.noExclude as boolean | undefined,
+            bypassOrg: values.bypassOrg as boolean | undefined,
           },
         });
         break;
@@ -708,6 +777,7 @@ export function App() {
             filter: values.filter as string | undefined,
             labels: parseLabelsInput(values.labels as string | undefined),
             noExclude: values.noExclude as boolean | undefined,
+            bypassOrg: values.bypassOrg as boolean | undefined,
           },
         });
         break;
@@ -725,6 +795,7 @@ export function App() {
                 .trim()
                 .split(/\s+/)
                 .filter(Boolean),
+            bypassOrg: values.bypassOrg as boolean | undefined,
           },
         });
         break;
@@ -751,6 +822,7 @@ export function App() {
             labels: parseLabelsInput(values.labels as string | undefined),
             interactive: true,
             noExclude: values.noExclude as boolean | undefined,
+            bypassOrg: values.bypassOrg as boolean | undefined,
           },
         });
         break;
@@ -819,6 +891,7 @@ export function App() {
           <ExcludeMenuApp
             repos={runningCommand.options.repos}
             globs={runningCommand.options.globs}
+            bypassOrg={runningCommand.options.bypassOrg}
             onComplete={handleCommandComplete}
           />
         );

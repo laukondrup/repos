@@ -63,6 +63,7 @@ export function DiffApp({ options, onComplete }: DiffAppProps) {
           filter: options.filter,
           labels: options.labels,
           noExclude: options.noExclude,
+          bypassOrg: options.bypassOrg,
         });
 
         if (repoPaths.length === 0) {

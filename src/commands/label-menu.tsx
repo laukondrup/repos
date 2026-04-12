@@ -9,7 +9,7 @@ interface LabelMenuAppProps {
 }
 
 type LabelAction = "list" | "add" | "remove";
-type Phase = "action" | "label" | "targets" | "globs" | "running" | "error";
+type Phase = "action" | "label" | "targets" | "globs" | "bypassOrg" | "running" | "error";
 
 const actionGroups = [
   {
@@ -36,6 +36,7 @@ export function LabelMenuApp({ onComplete }: LabelMenuAppProps) {
   const [label, setLabel] = useState("");
   const [targetsInput, setTargetsInput] = useState("");
   const [globsInput, setGlobsInput] = useState("");
+  const [bypassOrgInput, setBypassOrgInput] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -44,14 +45,16 @@ export function LabelMenuApp({ onComplete }: LabelMenuAppProps) {
     async function run() {
       try {
         if (action === "list") {
-          await runLabelList();
+          await runLabelList({ bypassOrg: bypassOrgInput.trim().toLowerCase() === "y" });
         } else if (action === "add") {
           await runLabelAdd(label.trim(), splitArgs(targetsInput), {
             globs: splitArgs(globsInput),
+            bypassOrg: bypassOrgInput.trim().toLowerCase() === "y",
           });
         } else {
           await runLabelRemove(label.trim(), splitArgs(targetsInput), {
             globs: splitArgs(globsInput),
+            bypassOrg: bypassOrgInput.trim().toLowerCase() === "y",
           });
         }
       } catch (err) {
@@ -71,11 +74,7 @@ export function LabelMenuApp({ onComplete }: LabelMenuAppProps) {
   const onSelectAction = (item: MenuItem) => {
     const nextAction = item.value as LabelAction;
     setAction(nextAction);
-    if (nextAction === "list") {
-      setPhase("running");
-      return;
-    }
-    setPhase("label");
+    setPhase(nextAction === "list" ? "bypassOrg" : "label");
   };
 
   if (phase === "action") {
@@ -146,6 +145,27 @@ export function LabelMenuApp({ onComplete }: LabelMenuAppProps) {
           <TextInput
             value={globsInput}
             onChange={setGlobsInput}
+            onSubmit={() => {
+              setPhase("bypassOrg");
+            }}
+          />
+        </Box>
+      </Box>
+    );
+  }
+
+  if (phase === "bypassOrg") {
+    return (
+      <Box flexDirection="column" padding={1}>
+        <Text bold color="cyan">labels {action}</Text>
+        <Box marginTop={1}>
+          <Text>Bypass org scope? (y/N):</Text>
+        </Box>
+        <Box>
+          <Text color="cyan">{">"} </Text>
+          <TextInput
+            value={bypassOrgInput}
+            onChange={setBypassOrgInput}
             onSubmit={() => {
               setPhase("running");
             }}

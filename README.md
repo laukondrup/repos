@@ -18,6 +18,7 @@
 - Top-level `repos exclude` command for dirs/globs, with sync-backed exclusion updates
 - Local activity filtering for exec (`repos exec --days <n>`)
 - Label-based filtering (`--label`) and exclusion bypass (`--no-exclude`) across local repo commands
+- Local repo commands are scoped to configured `org` by default (owner inferred from repo DB `id`/origin), with `--bypass-org` to include everything
 
 ![demo](https://github.com/user-attachments/assets/00fdfece-06bc-4cb6-a4e1-1086bdc8432c)
 

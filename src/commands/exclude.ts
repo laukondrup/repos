@@ -62,6 +62,7 @@ export async function applyExclusions(
       configBasePath: options.configBasePath,
       excluded: true,
       targets: repoDirs,
+      bypassOrg: options.bypassOrg,
     });
     repoMatched = result.matched;
     repoUpdated = result.updated;
@@ -83,13 +84,14 @@ export async function applyExclusions(
 
 export async function runExclude(
   repos: string[],
-  options: { globs?: string[]; basePath?: string; configBasePath?: string } = {},
+  options: { globs?: string[]; basePath?: string; configBasePath?: string; bypassOrg?: boolean } = {},
 ): Promise<void> {
   const result = await applyExclusions({
     repos,
     globs: options.globs?.filter(Boolean) ?? [],
     basePath: options.basePath,
     configBasePath: options.configBasePath,
+    bypassOrg: options.bypassOrg,
   });
 
   if (result.addedConfigExclusions.length > 0) {

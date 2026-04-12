@@ -241,4 +241,55 @@ describe("repo-db labels", () => {
       await rm(basePath, { recursive: true, force: true });
     }
   });
+
+  test("scopes label list/mutations to configured org unless bypassed", async () => {
+    const basePath = join(tmpdir(), `repos-db-labels-org-${randomUUID().slice(0, 8)}`);
+    await mkdir(basePath, { recursive: true });
+
+    await writeFile(
+      join(basePath, ".reposrc.json"),
+      JSON.stringify({
+        org: "acme",
+        exclusions: [],
+      }),
+    );
+
+    await createGitRepo(join(basePath, "alpha"), "https://github.com/acme/alpha.git");
+    await createGitRepo(join(basePath, "beta"), "https://github.com/other/beta.git");
+
+    try {
+      await syncRepoDb({ basePath });
+
+      const scopedList = await listRepoLabels({ basePath });
+      expect(scopedList).toHaveLength(1);
+      expect(scopedList[0].name).toBe("alpha");
+
+      await updateRepoLabels({
+        basePath,
+        action: "add",
+        label: "scoped",
+        targets: [],
+        globs: ["*"],
+      });
+
+      const afterScoped = await listRepoLabels({ basePath, bypassOrg: true });
+      expect(afterScoped.find((item) => item.name === "alpha")?.labels).toContain("scoped");
+      expect(afterScoped.find((item) => item.name === "beta")?.labels).toEqual([]);
+
+      await updateRepoLabels({
+        basePath,
+        action: "add",
+        label: "all",
+        targets: [],
+        globs: ["*"],
+        bypassOrg: true,
+      });
+
+      const afterBypass = await listRepoLabels({ basePath, bypassOrg: true });
+      expect(afterBypass.find((item) => item.name === "alpha")?.labels).toContain("all");
+      expect(afterBypass.find((item) => item.name === "beta")?.labels).toContain("all");
+    } finally {
+      await rm(basePath, { recursive: true, force: true });
+    }
+  });
 });

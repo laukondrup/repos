@@ -20,11 +20,13 @@ export interface RepoLabelUpdateOptions {
   label: string;
   targets: string[];
   globs: string[];
+  bypassOrg?: boolean;
 }
 
 export interface RepoLabelListOptions {
   basePath?: string;
   configBasePath?: string;
+  bypassOrg?: boolean;
 }
 
 export interface RepoExcludeUpdateOptions {
@@ -32,6 +34,7 @@ export interface RepoExcludeUpdateOptions {
   configBasePath?: string;
   excluded: boolean;
   targets: string[];
+  bypassOrg?: boolean;
 }
 
 export interface SyncRepoDbResult {
@@ -139,6 +142,38 @@ function matchesPattern(
 function nextRecordId(originFullName: string | null, name: string, path: string): string {
   if (originFullName) return `origin:${originFullName.toLowerCase()}`;
   return `local:${name.toLowerCase()}:${path}`;
+}
+
+export function getRepoOwnerFromRecord(record: RepoDbRepoRecord): string | null {
+  if (record.id.startsWith("origin:")) {
+    const fullName = record.id.slice("origin:".length);
+    const slashIndex = fullName.indexOf("/");
+    if (slashIndex > 0) {
+      return fullName.slice(0, slashIndex).toLowerCase();
+    }
+  }
+
+  if (record.originFullName) {
+    const slashIndex = record.originFullName.indexOf("/");
+    if (slashIndex > 0) {
+      return record.originFullName.slice(0, slashIndex).toLowerCase();
+    }
+  }
+
+  return null;
+}
+
+function applyOrgScope(
+  repos: RepoDbRepoRecord[],
+  org: string | undefined,
+  bypassOrg?: boolean,
+): RepoDbRepoRecord[] {
+  const configuredOrg = org?.trim().toLowerCase();
+  if (!configuredOrg || bypassOrg) {
+    return repos;
+  }
+
+  return repos.filter((repo) => getRepoOwnerFromRecord(repo) === configuredOrg);
 }
 
 async function ensureDbContext(basePath?: string, configBasePath?: string): Promise<{
@@ -309,7 +344,7 @@ export async function updateRepoLabels(
     basePath: options.basePath,
     configBasePath: options.configBasePath,
   });
-  const { basePath, dbPath } = await ensureDbContext(
+  const { basePath, dbPath, config } = await ensureDbContext(
     options.basePath,
     options.configBasePath,
   );
@@ -320,8 +355,9 @@ export async function updateRepoLabels(
     db.repos = refreshed.repos;
   }
 
+  const scopedRepos = applyOrgScope(db.repos, config.org, options.bypassOrg);
   const matches = resolveTargetMatches(
-    db.repos,
+    scopedRepos,
     options.targets,
     options.globs,
     basePath,
@@ -360,7 +396,7 @@ export async function updateRepoExclusions(
     basePath: options.basePath,
     configBasePath: options.configBasePath,
   });
-  const { basePath, dbPath } = await ensureDbContext(
+  const { basePath, dbPath, config } = await ensureDbContext(
     options.basePath,
     options.configBasePath,
   );
@@ -370,7 +406,8 @@ export async function updateRepoExclusions(
     db.repos = refreshed.repos;
   }
 
-  const matches = resolveTargetMatches(db.repos, options.targets, [], basePath);
+  const scopedRepos = applyOrgScope(db.repos, config.org, options.bypassOrg);
+  const matches = resolveTargetMatches(scopedRepos, options.targets, [], basePath);
   const targetIds = new Set(matches.map((repo) => repo.id));
 
   let updated = 0;
@@ -391,12 +428,15 @@ export async function updateRepoExclusions(
 export async function listRepoLabels(
   options: RepoLabelListOptions = {},
 ): Promise<Array<{ name: string; path: string; labels: string[] }>> {
-  const { db } = await getRepoDb({
+  const { db, basePath } = await getRepoDb({
     basePath: options.basePath,
     configBasePath: options.configBasePath,
   });
+  const configBasePath = options.configBasePath ?? basePath;
+  const config = await loadConfig(configBasePath);
+  const scopedRepos = applyOrgScope(db.repos, config.org, options.bypassOrg);
 
-  return db.repos
+  return scopedRepos
     .map((repo) => ({
       name: repo.name,
       path: repo.path,

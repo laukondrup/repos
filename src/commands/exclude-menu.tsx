@@ -6,12 +6,13 @@ import { applyExclusions } from "./exclude.js";
 interface ExcludeMenuAppProps {
   repos: string[];
   globs: string[];
+  bypassOrg?: boolean;
   onComplete?: () => void;
 }
 
 type Phase = "running" | "done" | "error";
 
-export function ExcludeMenuApp({ repos, globs, onComplete }: ExcludeMenuAppProps) {
+export function ExcludeMenuApp({ repos, globs, bypassOrg, onComplete }: ExcludeMenuAppProps) {
   const [phase, setPhase] = useState<Phase>("running");
   const [error, setError] = useState<string | null>(null);
   const [summary, setSummary] = useState<{
@@ -23,7 +24,7 @@ export function ExcludeMenuApp({ repos, globs, onComplete }: ExcludeMenuAppProps
   useEffect(() => {
     async function run() {
       try {
-        const result = await applyExclusions({ repos, globs });
+        const result = await applyExclusions({ repos, globs, bypassOrg });
         setSummary({
           addedConfigExclusions: result.addedConfigExclusions,
           repoMatched: result.repoMatched,
@@ -36,7 +37,7 @@ export function ExcludeMenuApp({ repos, globs, onComplete }: ExcludeMenuAppProps
       }
     }
     run();
-  }, [globs, repos]);
+  }, [bypassOrg, globs, repos]);
 
   useEffect(() => {
     if (!onComplete) return;

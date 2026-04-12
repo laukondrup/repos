@@ -1,5 +1,5 @@
 import { filterRepos, findReposRecursive, getRepoName } from "./repos.js";
-import { getRepoDb } from "./repo-db.js";
+import { getRepoDb, getRepoOwnerFromRecord } from "./repo-db.js";
 import { loadConfig, resolveCodeDir } from "./config.js";
 import { matchesConfigExclusion } from "./exclusions.js";
 
@@ -8,6 +8,7 @@ export interface SelectLocalReposOptions {
   filter?: string;
   labels?: string[];
   noExclude?: boolean;
+  bypassOrg?: boolean;
 }
 
 export async function selectLocalRepos(
@@ -16,9 +17,24 @@ export async function selectLocalRepos(
   const codeDir = await resolveCodeDir(options.basePath);
   let repoPaths = await findReposRecursive(codeDir);
   const configBasePath = options.basePath ? codeDir : undefined;
+  const config = await loadConfig(configBasePath);
+
+  const configuredOrg = config.org?.trim().toLowerCase();
+  if (configuredOrg && !options.bypassOrg) {
+    const { db } = await getRepoDb({
+      basePath: codeDir,
+      configBasePath,
+      sync: false,
+    });
+    const allowedPaths = new Set(
+      db.repos
+        .filter((repo) => getRepoOwnerFromRecord(repo) === configuredOrg)
+        .map((repo) => repo.path),
+    );
+    repoPaths = repoPaths.filter((repoPath) => allowedPaths.has(repoPath));
+  }
 
   if (!options.noExclude) {
-    const config = await loadConfig(configBasePath);
     const configExclusions = config.exclusions ?? [];
     repoPaths = repoPaths.filter(
       (repoPath) =>

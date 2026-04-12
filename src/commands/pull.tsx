@@ -196,6 +196,7 @@ export function PullApp({ options, onComplete }: PullAppProps) {
           filter: options.filter,
           labels: options.labels,
           noExclude: options.noExclude,
+          bypassOrg: options.bypassOrg,
         });
 
         if (repoPaths.length === 0) {

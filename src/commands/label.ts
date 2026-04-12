@@ -2,10 +2,11 @@ import { listRepoLabels, updateRepoLabels } from "../lib/repo-db.js";
 
 export interface LabelMutationOptions {
   globs?: string[];
+  bypassOrg?: boolean;
 }
 
 export interface LabelListOptions {
-  globs?: string[];
+  bypassOrg?: boolean;
 }
 
 function normalizeGlobs(globs?: string[]): string[] {
@@ -22,6 +23,7 @@ export async function runLabelAdd(
     label,
     targets: repos ?? [],
     globs: normalizeGlobs(options.globs),
+    bypassOrg: options.bypassOrg,
   });
 
   console.log(`Label '${label}' added to ${result.updated} repositories (${result.matched} matched).`);
@@ -37,13 +39,14 @@ export async function runLabelRemove(
     label,
     targets: repos ?? [],
     globs: normalizeGlobs(options.globs),
+    bypassOrg: options.bypassOrg,
   });
 
   console.log(`Label '${label}' removed from ${result.updated} repositories (${result.matched} matched).`);
 }
 
-export async function runLabelList(): Promise<void> {
-  const rows = await listRepoLabels();
+export async function runLabelList(options: LabelListOptions = {}): Promise<void> {
+  const rows = await listRepoLabels({ bypassOrg: options.bypassOrg });
   for (const row of rows) {
     const labels = row.labels.length > 0 ? row.labels.join(", ") : "-";
     console.log(`${row.name}\t${labels}\t${row.path}`);

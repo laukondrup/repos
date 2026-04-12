@@ -10,17 +10,18 @@ function caseBlock(command: string): string {
 }
 
 describe("interactive local repo filtering", () => {
-  test("exposes labels and include-excluded toggles for local repo commands", () => {
+  test("exposes labels, include-excluded, and bypass-org toggles for local repo commands", () => {
     const commands = ["status", "fetch", "pull", "diff", "checkout", "exec", "list", "clean"];
 
     for (const command of commands) {
       const block = caseBlock(command);
       expect(block).toContain('name: "labels"');
       expect(block).toContain('name: "noExclude"');
+      expect(block).toContain('name: "bypassOrg"');
     }
   });
 
-  test("passes labels and noExclude to command runners", () => {
+  test("passes labels, noExclude, and bypassOrg to command runners", () => {
     const snippets = [
       'command: "status",',
       'command: "fetch",',
@@ -38,6 +39,7 @@ describe("interactive local repo filtering", () => {
       const tail = source.slice(idx, idx + 700);
       expect(tail).toContain("labels: parseLabelsInput");
       expect(tail).toContain("noExclude: values.noExclude");
+      expect(tail).toContain("bypassOrg: values.bypassOrg");
     }
   });
 });

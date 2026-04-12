@@ -81,6 +81,7 @@ export interface StatusOptions {
   fetch?: boolean;
   basePath?: string;
   noExclude?: boolean;
+  bypassOrg?: boolean;
 }
 
 export interface UpdateOptions {
@@ -92,6 +93,7 @@ export interface UpdateOptions {
   interactive?: boolean;
   basePath?: string;
   noExclude?: boolean;
+  bypassOrg?: boolean;
 }
 
 export interface CleanupOptions {
@@ -103,6 +105,7 @@ export interface CleanupOptions {
   interactive?: boolean;
   basePath?: string;
   noExclude?: boolean;
+  bypassOrg?: boolean;
 }
 
 export interface FetchOptions {
@@ -116,6 +119,7 @@ export interface FetchOptions {
   interactive?: boolean;
   basePath?: string;
   noExclude?: boolean;
+  bypassOrg?: boolean;
 }
 
 export interface DiffOptions {
@@ -128,6 +132,7 @@ export interface DiffOptions {
   basePath?: string;
   maxLines?: number;
   noExclude?: boolean;
+  bypassOrg?: boolean;
 }
 
 export interface CheckoutOptions {
@@ -140,6 +145,7 @@ export interface CheckoutOptions {
   interactive?: boolean;
   basePath?: string;
   noExclude?: boolean;
+  bypassOrg?: boolean;
 }
 
 export interface ExecOptions {
@@ -152,6 +158,7 @@ export interface ExecOptions {
   basePath?: string;
   noExclude?: boolean;
   days?: number;
+  bypassOrg?: boolean;
 }
 
 export interface ListOptions {
@@ -160,6 +167,7 @@ export interface ListOptions {
   days?: number;
   basePath?: string;
   noExclude?: boolean;
+  bypassOrg?: boolean;
 }
 
 export interface ExcludeOptions {
@@ -167,6 +175,7 @@ export interface ExcludeOptions {
   globs: string[];
   basePath?: string;
   configBasePath?: string;
+  bypassOrg?: boolean;
 }
 
 export interface RepoDbRepoRecord {

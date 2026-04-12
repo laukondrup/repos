@@ -45,6 +45,7 @@ export function ListApp({ options, onComplete }: ListAppProps) {
           filter: options.filter,
           labels: options.labels,
           noExclude: options.noExclude,
+          bypassOrg: options.bypassOrg,
         });
 
         if (options.days !== undefined) {
