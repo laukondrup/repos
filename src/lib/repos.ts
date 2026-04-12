@@ -16,19 +16,6 @@ async function hasGitMetadata(path: string): Promise<boolean> {
   }
 }
 
-export function assertFdInstalled(): void {
-  const result = Bun.spawnSync({
-    cmd: ["fd", "--version"],
-    stdout: "ignore",
-    stderr: "pipe",
-  });
-  if (result.exitCode !== 0) {
-    throw new Error(
-      "`fd` is required for repository discovery. Install it and retry.",
-    );
-  }
-}
-
 function shouldIgnoreDiscoveredRepo(basePath: string, repoPath: string): boolean {
   const rel = relative(basePath, repoPath).replace(/\\/g, "/");
   const parts = rel.split("/").filter(Boolean);
@@ -66,12 +53,13 @@ export async function findReposRecursive(
   basePath: string = process.cwd(),
   maxDepth: number = DEFAULT_DISCOVERY_MAX_DEPTH,
 ): Promise<string[]> {
-  assertFdInstalled();
   const result = Bun.spawnSync({
     cmd: [
       "fd",
       "--hidden",
       "--no-ignore",
+      "--exclude",
+      "node_modules",
       "--glob",
       "--max-depth",
       String(maxDepth + 1),
@@ -84,6 +72,9 @@ export async function findReposRecursive(
 
   if (result.exitCode !== 0) {
     const stderr = decoder.decode(result.stderr).trim();
+    if (stderr.toLowerCase().includes("command not found")) {
+      throw new Error("`fd` is required for repository discovery. Install it and retry.");
+    }
     throw new Error(stderr || "Failed to discover repositories with fd.");
   }
 
