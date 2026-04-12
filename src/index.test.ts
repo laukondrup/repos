@@ -34,4 +34,11 @@ describe("CLI command registry", () => {
   test("includes sync command", () => {
     expect(source).toContain('.command("sync")');
   });
+
+  test("includes label command family", () => {
+    expect(source).toContain('.command("label")');
+    expect(source).toContain('.command("add <label> [repos...]")');
+    expect(source).toContain('.command("rm <label> [repos...]")');
+    expect(source).toContain('.command("list [repos...]")');
+  });
 });

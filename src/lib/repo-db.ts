@@ -11,6 +11,18 @@ export interface SyncRepoDbOptions {
   basePath?: string;
 }
 
+export interface RepoLabelUpdateOptions {
+  basePath?: string;
+  action: "add" | "remove";
+  label: string;
+  targets: string[];
+  globs: string[];
+}
+
+export interface RepoLabelListOptions {
+  basePath?: string;
+}
+
 export interface SyncRepoDbResult {
   total: number;
   created: number;
@@ -99,6 +111,17 @@ function matchesExclusion(
   });
 }
 
+function matchesPattern(
+  recordPath: string,
+  repoName: string,
+  basePath: string,
+  pattern: string,
+): boolean {
+  const relPath = relative(basePath, recordPath).replace(/\\/g, "/");
+  const regex = globToRegex(pattern);
+  return regex.test(relPath) || regex.test(repoName);
+}
+
 function ensureComputedExclusion(
   record: RepoDbRepoRecord,
   basePath: string,
@@ -118,6 +141,18 @@ function ensureComputedExclusion(
 function nextRecordId(originFullName: string | null, name: string, path: string): string {
   if (originFullName) return `origin:${originFullName.toLowerCase()}`;
   return `local:${name.toLowerCase()}:${path}`;
+}
+
+async function ensureDbContext(basePath?: string): Promise<{
+  basePath: string;
+  configPath: string;
+  dbPath: string;
+  config: ReposConfig;
+}> {
+  const resolvedBasePath = basePath ?? process.cwd();
+  const { config, configPath } = await getConfigContext(resolvedBasePath);
+  const dbPath = resolveRepoDbPath(configPath, config.repoDbPath || DEFAULT_DB_FILENAME);
+  return { basePath: resolvedBasePath, configPath, dbPath, config };
 }
 
 export async function syncRepoDb(options: SyncRepoDbOptions = {}): Promise<SyncRepoDbResult> {
@@ -204,4 +239,110 @@ export async function syncRepoDb(options: SyncRepoDbOptions = {}): Promise<SyncR
     removed: Math.max(0, existingDb.repos.length - nextRepos.length),
     dbPath,
   };
+}
+
+function resolveTargetMatches(
+  repos: RepoDbRepoRecord[],
+  targets: string[],
+  globs: string[],
+  basePath: string,
+): RepoDbRepoRecord[] {
+  const matched = new Set<RepoDbRepoRecord>();
+
+  for (const target of targets) {
+    const hasPathSeparator = target.includes("/");
+    if (hasPathSeparator) {
+      const targetPath = target.startsWith("/") ? target : resolve(basePath, target);
+      const pathMatch = repos.find((repo) => repo.path === targetPath);
+      if (pathMatch) {
+        matched.add(pathMatch);
+      }
+      continue;
+    }
+
+    const sameName = repos.filter((repo) => repo.name === target);
+    if (sameName.length > 1) {
+      throw new Error(
+        `Ambiguous repo target '${target}'. Use a path instead.`,
+      );
+    }
+    if (sameName.length === 1) {
+      matched.add(sameName[0]);
+    }
+  }
+
+  for (const glob of globs) {
+    for (const repo of repos) {
+      if (matchesPattern(repo.path, repo.name, basePath, glob)) {
+        matched.add(repo);
+      }
+    }
+  }
+
+  return Array.from(matched);
+}
+
+export async function updateRepoLabels(
+  options: RepoLabelUpdateOptions,
+): Promise<{ matched: number; updated: number }> {
+  if (!options.label.trim()) {
+    throw new Error("Label is required");
+  }
+
+  const syncResult = await syncRepoDb({ basePath: options.basePath });
+  const { basePath, dbPath } = await ensureDbContext(options.basePath);
+  const db = await loadRepoDb(dbPath);
+  if (syncResult.total !== db.repos.length) {
+    // defensive re-sync guard if db changed during write
+    const refreshed = await loadRepoDb(dbPath);
+    db.repos = refreshed.repos;
+  }
+
+  const matches = resolveTargetMatches(
+    db.repos,
+    options.targets,
+    options.globs,
+    basePath,
+  );
+
+  let updated = 0;
+  const targetIds = new Set(matches.map((repo) => repo.id));
+  db.repos = db.repos.map((repo) => {
+    if (!targetIds.has(repo.id)) return repo;
+
+    const current = new Set(repo.labels);
+    const sizeBefore = current.size;
+    if (options.action === "add") {
+      current.add(options.label);
+    } else {
+      current.delete(options.label);
+    }
+    if (current.size !== sizeBefore) {
+      updated++;
+    }
+
+    return {
+      ...repo,
+      labels: Array.from(current).sort(),
+    };
+  });
+
+  await saveRepoDb(dbPath, db);
+  return { matched: matches.length, updated };
+}
+
+export async function listRepoLabels(
+  options: RepoLabelListOptions = {},
+): Promise<Array<{ name: string; path: string; labels: string[] }>> {
+  await syncRepoDb({ basePath: options.basePath });
+  const { dbPath } = await ensureDbContext(options.basePath);
+  const db = await loadRepoDb(dbPath);
+
+  return db.repos
+    .map((repo) => ({
+      name: repo.name,
+      path: repo.path,
+      labels: [...repo.labels],
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
 }

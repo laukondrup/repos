@@ -14,6 +14,7 @@ import { runDiff } from "./commands/diff.js";
 import { runCheckout } from "./commands/checkout.js";
 import { runExec } from "./commands/exec.js";
 import { runSync } from "./commands/sync.js";
+import { runLabelAdd, runLabelList, runLabelRemove } from "./commands/label.js";
 import packageJson from "../package.json";
 
 const VERSION = packageJson.version;
@@ -22,6 +23,11 @@ function showDeprecationWarning(oldName: string, newName: string) {
   console.warn(
     `\x1b[33mWarning: 'repos ${oldName}' is deprecated. Use 'repos ${newName}' instead.\x1b[0m\n`
   );
+}
+
+function collectOption(value: string, previous: string[] = []): string[] {
+  previous.push(value);
+  return previous;
 }
 
 program
@@ -220,6 +226,37 @@ program
   .description("Sync local repository database (paths, labels, exclusions)")
   .action(async () => {
     await runSync();
+  });
+
+const labelCommand = program
+  .command("label")
+  .description("Manage repository labels");
+
+labelCommand
+  .command("add <label> [repos...]")
+  .description("Add a label to matching repositories")
+  .option("-g, --glob <pattern>", "Add repositories by glob pattern", collectOption, [])
+  .action(async (label, repos, options) => {
+    await runLabelAdd(label, repos ?? [], {
+      globs: options.glob,
+    });
+  });
+
+labelCommand
+  .command("rm <label> [repos...]")
+  .description("Remove a label from matching repositories")
+  .option("-g, --glob <pattern>", "Remove repositories by glob pattern", collectOption, [])
+  .action(async (label, repos, options) => {
+    await runLabelRemove(label, repos ?? [], {
+      globs: options.glob,
+    });
+  });
+
+labelCommand
+  .command("list [repos...]")
+  .description("List repository labels")
+  .action(async () => {
+    await runLabelList();
   });
 
 program

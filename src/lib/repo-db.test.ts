@@ -4,7 +4,11 @@ import { join } from "path";
 import { tmpdir } from "os";
 import { randomUUID } from "crypto";
 import { $ } from "bun";
-import { syncRepoDb } from "./repo-db.js";
+import {
+  syncRepoDb,
+  updateRepoLabels,
+  listRepoLabels,
+} from "./repo-db.js";
 
 async function createGitRepo(path: string, remoteUrl?: string): Promise<void> {
   await mkdir(path, { recursive: true });
@@ -127,6 +131,66 @@ describe("repo-db sync", () => {
       expect(db.repos[0].labels).toEqual(["common"]);
       expect(db.repos[0].manuallyExcluded).toBe(true);
       expect(db.repos[0].excluded).toBe(true);
+    } finally {
+      await rm(basePath, { recursive: true, force: true });
+    }
+  });
+});
+
+describe("repo-db labels", () => {
+  test("adds and removes labels via repo args and globs", async () => {
+    const basePath = join(tmpdir(), `repos-db-labels-${randomUUID().slice(0, 8)}`);
+    await mkdir(basePath, { recursive: true });
+
+    await writeFile(
+      join(basePath, ".reposrc.json"),
+      JSON.stringify({
+        exclusionGlobs: [],
+      }),
+    );
+
+    await createGitRepo(
+      join(basePath, "api-one"),
+      "https://github.com/acme/api-one.git",
+    );
+    await createGitRepo(
+      join(basePath, "api-two"),
+      "https://github.com/acme/api-two.git",
+    );
+    await createGitRepo(
+      join(basePath, "web"),
+      "https://github.com/acme/web.git",
+    );
+
+    try {
+      await syncRepoDb({ basePath });
+
+      const added = await updateRepoLabels({
+        basePath,
+        action: "add",
+        label: "common",
+        targets: ["web"],
+        globs: ["api-*"],
+      });
+      expect(added.matched).toBe(3);
+
+      const labels = await listRepoLabels({ basePath });
+      expect(labels.find((item) => item.name === "api-one")?.labels).toContain("common");
+      expect(labels.find((item) => item.name === "api-two")?.labels).toContain("common");
+      expect(labels.find((item) => item.name === "web")?.labels).toContain("common");
+
+      const removed = await updateRepoLabels({
+        basePath,
+        action: "remove",
+        label: "common",
+        targets: ["api-one"],
+        globs: [],
+      });
+      expect(removed.matched).toBe(1);
+
+      const afterRemove = await listRepoLabels({ basePath });
+      expect(afterRemove.find((item) => item.name === "api-one")?.labels).toEqual([]);
+      expect(afterRemove.find((item) => item.name === "api-two")?.labels).toContain("common");
     } finally {
       await rm(basePath, { recursive: true, force: true });
     }
