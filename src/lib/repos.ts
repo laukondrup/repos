@@ -194,7 +194,6 @@ export async function findReposRecursive(
     );
     if (hasGitMetadata) {
       repos.add(currentPath);
-      return;
     }
 
     if (depth >= maxDepth) {
