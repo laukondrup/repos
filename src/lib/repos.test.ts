@@ -128,6 +128,36 @@ describe("repos.ts", () => {
       }
     });
 
+    test("finds subrepos inside a parent repo", async () => {
+      const tempDir = join("/tmp", `subrepo-test-${Date.now()}`);
+      await mkdir(tempDir, { recursive: true });
+
+      const { $ } = await import("bun");
+      // parent repo: tempDir/parent
+      const parentRepo = join(tempDir, "parent");
+      await mkdir(parentRepo, { recursive: true });
+      await $`git init ${parentRepo}`.quiet();
+
+      // subrepo nested inside parent: tempDir/parent/nested/child
+      const subrepo = join(parentRepo, "nested", "child");
+      await mkdir(subrepo, { recursive: true });
+      await $`git init ${subrepo}`.quiet();
+
+      // deeply nested inside subrepo — should NOT be found
+      const deepRepo = join(subrepo, "deep");
+      await mkdir(deepRepo, { recursive: true });
+      await $`git init ${deepRepo}`.quiet();
+
+      try {
+        const found = await findReposRecursive(tempDir);
+        expect(found).toContain(parentRepo);
+        expect(found).toContain(subrepo);
+        expect(found).not.toContain(deepRepo);
+      } finally {
+        await rm(tempDir, { recursive: true, force: true });
+      }
+    });
+
     test("respects max depth", async () => {
       const tempDir = join("/tmp", `deep-repos-${Date.now()}`);
       await mkdir(tempDir, { recursive: true });

@@ -15,6 +15,7 @@ import { runCheckout } from "./commands/checkout.js";
 import { runExec } from "./commands/exec.js";
 import { runList } from "./commands/list.js";
 import { runExclude } from "./commands/exclude.js";
+import { runExcludeInteractive } from "./commands/exclude-menu.js";
 import { runSync } from "./commands/sync.js";
 import { runLabelAdd, runLabelList, runLabelRemove } from "./commands/label.js";
 import {
@@ -261,10 +262,14 @@ program
   .option("-g, --glob <pattern>", "Exclude repositories by glob pattern", collectOption, [])
   .option("--bypass-org", "Include repos outside configured org scope")
   .action(async (repos, options) => {
-    await runExclude(repos ?? [], {
-      globs: options.glob,
-      bypassOrg: options.bypassOrg,
-    });
+    if ((repos ?? []).length === 0 && (options.glob ?? []).length === 0) {
+      await runExcludeInteractive({ bypassOrg: options.bypassOrg });
+    } else {
+      await runExclude(repos ?? [], {
+        globs: options.glob,
+        bypassOrg: options.bypassOrg,
+      });
+    }
   });
 
 program

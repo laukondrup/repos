@@ -474,6 +474,18 @@ export async function updateRepoExclusions(
   return { matched: matches.length, updated };
 }
 
+export async function setRepoExclusionFlags(
+  flags: Record<string, boolean>,
+  options: { basePath?: string; configBasePath?: string } = {},
+): Promise<void> {
+  const { dbPath } = await ensureDbContext(options.basePath, options.configBasePath);
+  const db = await loadRepoDb(dbPath);
+  db.repos = db.repos.map((repo) =>
+    repo.id in flags ? { ...repo, excluded: flags[repo.id] } : repo,
+  );
+  await saveRepoDb(dbPath, db);
+}
+
 export async function listRepoLabels(
   options: RepoLabelListOptions = {},
 ): Promise<Array<{ name: string; path: string; labels: string[] }>> {

@@ -4,6 +4,7 @@ import { getRepoStatus } from "./git.js";
 import type { RepoStatus } from "../types.js";
 
 const DEFAULT_DISCOVERY_MAX_DEPTH = 10;
+const MAX_SUBREPO_SCAN_DEPTH = 5;
 
 interface GitIgnoreRule {
   baseRelPath: string;
@@ -173,6 +174,8 @@ export async function findReposRecursive(
     currentRelPath: string,
     depth: number,
     inheritedRules: GitIgnoreRule[],
+    insideRepo: boolean,
+    repoLocalDepth: number,
   ): Promise<void> {
     let entries;
     try {
@@ -189,16 +192,17 @@ export async function findReposRecursive(
       // no local gitignore
     }
 
-    const hasGitMetadata = entries.some(
+    const isRepo = entries.some(
       (entry) => entry.name === ".git" && (entry.isDirectory() || entry.isFile()),
     );
-    if (hasGitMetadata) {
+    if (isRepo) {
       repos.add(currentPath);
+      // Don't recurse into subrepos — only one level of nesting allowed.
+      if (insideRepo) return;
     }
 
-    if (depth >= maxDepth) {
-      return;
-    }
+    if (!isRepo && depth >= maxDepth) return;
+    if (isRepo && repoLocalDepth >= MAX_SUBREPO_SCAN_DEPTH) return;
 
     for (const entry of entries) {
       if (!entry.isDirectory()) continue;
@@ -217,12 +221,19 @@ export async function findReposRecursive(
         if (isIgnoredByGitignore(normalizedChildRelPath, true, rules)) {
           continue;
         }
-        await walk(childPath, normalizedChildRelPath, depth + 1, rules);
+        await walk(
+          childPath,
+          normalizedChildRelPath,
+          isRepo ? depth : depth + 1,
+          rules,
+          isRepo ? true : insideRepo,
+          isRepo ? repoLocalDepth + 1 : repoLocalDepth,
+        );
       }
     }
   }
 
-  await walk(basePath, "", 0, []);
+  await walk(basePath, "", 0, [], false, 0);
 
   return Array.from(repos).sort((a, b) => a.localeCompare(b));
 }
