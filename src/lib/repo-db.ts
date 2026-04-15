@@ -147,6 +147,44 @@ function nextRecordId(
   return `local:${name.toLowerCase()}:${path}`;
 }
 
+interface DiscoveredRepoResolutionContext {
+  byPath: Map<string, RepoDbRepoRecord>;
+  byOrigin: Map<string, RepoDbRepoRecord>;
+  byNameWithoutOrigin: Map<string, RepoDbRepoRecord[]>;
+  missingByPath: Map<
+    string,
+    { repoPath: string; name: string; originFullName: string | null }
+  >;
+}
+
+function resolveExistingRecordForDiscoveredPath(
+  repoPath: string,
+  name: string,
+  context: DiscoveredRepoResolutionContext,
+): { existing: RepoDbRepoRecord | undefined; originFullName: string | null } {
+  let existing: RepoDbRepoRecord | undefined = context.byPath.get(repoPath);
+  let originFullName: string | null = existing?.originFullName ?? null;
+
+  // Only resolve remote identity for repos not already mapped in DB.
+  if (!existing) {
+    originFullName =
+      context.missingByPath.get(repoPath)?.originFullName ?? null;
+    const originKey = originFullName?.toLowerCase() ?? null;
+    if (originKey) {
+      existing = context.byOrigin.get(originKey);
+    }
+    if (!existing) {
+      const unnamed = context.byNameWithoutOrigin.get(name);
+      existing = unnamed?.[0];
+    }
+  }
+
+  return {
+    existing,
+    originFullName: existing?.originFullName ?? originFullName,
+  };
+}
+
 export function getRepoOwnerFromRecord(
   record: RepoDbRepoRecord,
 ): string | null {
@@ -255,7 +293,58 @@ export async function syncRepoDb(
   let created = 0;
   let updated = 0;
   const nextRepos: RepoDbRepoRecord[] = [];
-  const discovered = await findReposRecursive(basePath);
+  const discoveredRootRepos = await findReposRecursive(basePath);
+  const missingRoots = discoveredRootRepos
+    .filter((repoPath) => !byPath.has(repoPath))
+    .map((repoPath) => ({
+      repoPath,
+      name: getRepoName(repoPath),
+    }));
+  const { results: missingRootOrigins } = await runParallel(
+    missingRoots,
+    async (item) => ({
+      repoPath: item.repoPath,
+      name: item.name,
+      originFullName: await getOriginRepoFullName(item.repoPath),
+    }),
+    16,
+  );
+  const rootResolutionContext: DiscoveredRepoResolutionContext = {
+    byPath,
+    byOrigin,
+    byNameWithoutOrigin,
+    missingByPath: new Map(
+      missingRootOrigins.map((item) => [item.repoPath, item]),
+    ),
+  };
+
+  const rootsAllowingSubrepos = new Set<string>();
+  for (const repoPath of discoveredRootRepos) {
+    const name = getRepoName(repoPath);
+    const { existing } = resolveExistingRecordForDiscoveredPath(
+      repoPath,
+      name,
+      rootResolutionContext,
+    );
+    if (existing?.allowSubrepos === true) {
+      rootsAllowingSubrepos.add(repoPath);
+    }
+  }
+
+  const nestedRepos: string[] = [];
+  for (const rootPath of rootsAllowingSubrepos) {
+    const nestedDiscovered = await findReposRecursive(rootPath, undefined, {
+      includeSubreposIn: [rootPath],
+    });
+    for (const repoPath of nestedDiscovered) {
+      if (repoPath === rootPath) continue;
+      nestedRepos.push(repoPath);
+    }
+  }
+  const discovered = Array.from(
+    new Set([...discoveredRootRepos, ...nestedRepos]),
+  ).sort((a, b) => a.localeCompare(b));
+
   const missing = discovered
     .filter((repoPath) => !byPath.has(repoPath))
     .map((repoPath) => ({
@@ -271,27 +360,20 @@ export async function syncRepoDb(
     }),
     16,
   );
-  const missingByPath = new Map(
-    missingOrigins.map((item) => [item.repoPath, item]),
-  );
+  const resolutionContext: DiscoveredRepoResolutionContext = {
+    byPath,
+    byOrigin,
+    byNameWithoutOrigin,
+    missingByPath: new Map(missingOrigins.map((item) => [item.repoPath, item])),
+  };
 
   for (const repoPath of discovered) {
     const name = getRepoName(repoPath);
-    let existing: RepoDbRepoRecord | undefined = byPath.get(repoPath);
-    let originFullName: string | null = existing?.originFullName ?? null;
-
-    // Only resolve remote identity for repos not already mapped in DB.
-    if (!existing) {
-      originFullName = missingByPath.get(repoPath)?.originFullName ?? null;
-      const originKey = originFullName?.toLowerCase() ?? null;
-      if (originKey) {
-        existing = byOrigin.get(originKey);
-      }
-      if (!existing) {
-        const unnamed = byNameWithoutOrigin.get(name);
-        existing = unnamed?.[0];
-      }
-    }
+    const { existing, originFullName } = resolveExistingRecordForDiscoveredPath(
+      repoPath,
+      name,
+      resolutionContext,
+    );
 
     const pathChanged = Boolean(existing && existing.path !== repoPath);
     const baseRecord: RepoDbRepoRecord = existing
@@ -299,9 +381,10 @@ export async function syncRepoDb(
           ...existing,
           name,
           path: repoPath,
-          originFullName: existing.originFullName ?? originFullName,
+          originFullName,
           // Keep manual exclusions for stable paths, but clear stale exclusions after path moves.
           excluded: pathChanged ? false : existing.excluded,
+          allowSubrepos: existing.allowSubrepos === true,
         }
       : {
           id: nextRecordId(originFullName, name, repoPath),
@@ -310,6 +393,7 @@ export async function syncRepoDb(
           originFullName,
           labels: [],
           excluded: false,
+          allowSubrepos: false,
         };
 
     if (existing) {
@@ -478,7 +562,10 @@ export async function setRepoExclusionFlags(
   flags: Record<string, boolean>,
   options: { basePath?: string; configBasePath?: string } = {},
 ): Promise<void> {
-  const { dbPath } = await ensureDbContext(options.basePath, options.configBasePath);
+  const { dbPath } = await ensureDbContext(
+    options.basePath,
+    options.configBasePath,
+  );
   const db = await loadRepoDb(dbPath);
   db.repos = db.repos.map((repo) =>
     repo.id in flags ? { ...repo, excluded: flags[repo.id] } : repo,

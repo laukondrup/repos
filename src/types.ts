@@ -186,6 +186,7 @@ export interface RepoDbRepoRecord {
   originFullName: string | null;
   labels: string[];
   excluded: boolean;
+  allowSubrepos: boolean;
 }
 
 export interface RepoDb {

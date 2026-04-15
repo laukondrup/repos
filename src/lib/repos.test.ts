@@ -128,7 +128,7 @@ describe("repos.ts", () => {
       }
     });
 
-    test("finds subrepos inside a parent repo", async () => {
+    test("does not scan subrepos inside a parent repo by default", async () => {
       const tempDir = join("/tmp", `subrepo-test-${Date.now()}`);
       await mkdir(tempDir, { recursive: true });
 
@@ -151,8 +151,44 @@ describe("repos.ts", () => {
       try {
         const found = await findReposRecursive(tempDir);
         expect(found).toContain(parentRepo);
-        expect(found).toContain(subrepo);
+        expect(found).not.toContain(subrepo);
         expect(found).not.toContain(deepRepo);
+      } finally {
+        await rm(tempDir, { recursive: true, force: true });
+      }
+    });
+
+    test("scans subrepos only for explicitly allowed parent repos", async () => {
+      const tempDir = join("/tmp", `subrepo-allow-test-${Date.now()}`);
+      await mkdir(tempDir, { recursive: true });
+
+      const { $ } = await import("bun");
+
+      const allowedParentRepo = join(tempDir, "allowed-parent");
+      await mkdir(allowedParentRepo, { recursive: true });
+      await $`git init ${allowedParentRepo}`.quiet();
+
+      const blockedParentRepo = join(tempDir, "blocked-parent");
+      await mkdir(blockedParentRepo, { recursive: true });
+      await $`git init ${blockedParentRepo}`.quiet();
+
+      const allowedSubrepo = join(allowedParentRepo, "nested", "child");
+      await mkdir(allowedSubrepo, { recursive: true });
+      await $`git init ${allowedSubrepo}`.quiet();
+
+      const blockedSubrepo = join(blockedParentRepo, "nested", "child");
+      await mkdir(blockedSubrepo, { recursive: true });
+      await $`git init ${blockedSubrepo}`.quiet();
+
+      try {
+        const found = await findReposRecursive(tempDir, undefined, {
+          includeSubreposIn: [allowedParentRepo],
+        });
+
+        expect(found).toContain(allowedParentRepo);
+        expect(found).toContain(blockedParentRepo);
+        expect(found).toContain(allowedSubrepo);
+        expect(found).not.toContain(blockedSubrepo);
       } finally {
         await rm(tempDir, { recursive: true, force: true });
       }
@@ -231,8 +267,12 @@ describe("repos.ts", () => {
         const statuses = await getAllRepoStatuses(repoPaths);
 
         expect(statuses).toHaveLength(2);
-        expect(statuses.find((s) => s.name === "clean-repo")?.isClean).toBe(true);
-        expect(statuses.find((s) => s.name === "dirty-repo")?.isClean).toBe(false);
+        expect(statuses.find((s) => s.name === "clean-repo")?.isClean).toBe(
+          true,
+        );
+        expect(statuses.find((s) => s.name === "dirty-repo")?.isClean).toBe(
+          false,
+        );
       } finally {
         await cleanup();
       }
@@ -297,7 +337,7 @@ describe("repos.ts", () => {
           results.push(item);
           return item * 2;
         },
-        3
+        3,
       );
 
       expect(output).toEqual([2, 4, 6, 8, 10]);
@@ -318,7 +358,7 @@ describe("repos.ts", () => {
           currentConcurrent--;
           return item;
         },
-        2
+        2,
       );
 
       expect(maxConcurrent).toBeLessThanOrEqual(2);
@@ -334,7 +374,7 @@ describe("repos.ts", () => {
         2,
         (completed, total) => {
           progressCalls.push([completed, total]);
-        }
+        },
       );
 
       expect(progressCalls).toHaveLength(3);
@@ -358,7 +398,7 @@ describe("repos.ts", () => {
         },
         1, // Sequential to make cancellation predictable
         undefined,
-        () => shouldCancel
+        () => shouldCancel,
       );
 
       expect(cancelled).toBe(true);
@@ -366,11 +406,7 @@ describe("repos.ts", () => {
     });
 
     test("handles empty items array", async () => {
-      const { results } = await runParallel(
-        [],
-        async (item) => item,
-        3
-      );
+      const { results } = await runParallel([], async (item) => item, 3);
 
       expect(results).toEqual([]);
     });
@@ -384,7 +420,7 @@ describe("repos.ts", () => {
           await new Promise((resolve) => setTimeout(resolve, item / 10));
           return item;
         },
-        5
+        5,
       );
 
       // Results should be in original order, not completion order

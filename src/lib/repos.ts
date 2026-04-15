@@ -6,6 +6,11 @@ import type { RepoStatus } from "../types.js";
 const DEFAULT_DISCOVERY_MAX_DEPTH = 10;
 const MAX_SUBREPO_SCAN_DEPTH = 5;
 
+export interface FindReposRecursiveOptions {
+  includeSubreposIn?: string[];
+  maxSubrepoScanDepth?: number;
+}
+
 interface GitIgnoreRule {
   baseRelPath: string;
   regex: RegExp;
@@ -24,10 +29,16 @@ async function hasGitMetadata(path: string): Promise<boolean> {
 }
 
 function normalizePath(path: string): string {
-  return path.replace(/\\/g, "/").replace(/^\.\/+/, "").replace(/\/+$/, "");
+  return path
+    .replace(/\\/g, "/")
+    .replace(/^\.\/+/, "")
+    .replace(/\/+$/, "");
 }
 
-function pathRelativeToBase(baseRelPath: string, targetRelPath: string): string | null {
+function pathRelativeToBase(
+  baseRelPath: string,
+  targetRelPath: string,
+): string | null {
   if (!baseRelPath) return targetRelPath;
   if (targetRelPath === baseRelPath) return "";
   if (targetRelPath.startsWith(`${baseRelPath}/`)) {
@@ -127,7 +138,10 @@ function isIgnoredByGitignore(
     if (rule.onlyDirectory && !isDirectory) {
       continue;
     }
-    const relativeTarget = pathRelativeToBase(rule.baseRelPath, normalizedTarget);
+    const relativeTarget = pathRelativeToBase(
+      rule.baseRelPath,
+      normalizedTarget,
+    );
     if (relativeTarget === null) {
       continue;
     }
@@ -140,7 +154,7 @@ function isIgnoredByGitignore(
 }
 
 export async function findRepos(
-  basePath: string = process.cwd()
+  basePath: string = process.cwd(),
 ): Promise<string[]> {
   const repos: string[] = [];
 
@@ -156,8 +170,7 @@ export async function findRepos(
         repos.push(fullPath);
       }
     }
-  } catch {
-  }
+  } catch {}
 
   return repos.sort();
 }
@@ -165,9 +178,15 @@ export async function findRepos(
 export async function findReposRecursive(
   basePath: string = process.cwd(),
   maxDepth: number = DEFAULT_DISCOVERY_MAX_DEPTH,
+  options: FindReposRecursiveOptions = {},
 ): Promise<string[]> {
   const repos = new Set<string>();
   const normalizedBase = normalizePath(basePath);
+  const includeSubreposIn = new Set(
+    (options.includeSubreposIn ?? []).map((path) => normalizePath(path)),
+  );
+  const maxSubrepoScanDepth =
+    options.maxSubrepoScanDepth ?? MAX_SUBREPO_SCAN_DEPTH;
 
   async function walk(
     currentPath: string,
@@ -186,23 +205,28 @@ export async function findReposRecursive(
 
     let rules = inheritedRules;
     try {
-      const gitignore = await readFile(join(currentPath, ".gitignore"), "utf-8");
+      const gitignore = await readFile(
+        join(currentPath, ".gitignore"),
+        "utf-8",
+      );
       rules = [...inheritedRules, ...parseGitignore(gitignore, currentRelPath)];
     } catch {
       // no local gitignore
     }
 
     const isRepo = entries.some(
-      (entry) => entry.name === ".git" && (entry.isDirectory() || entry.isFile()),
+      (entry) =>
+        entry.name === ".git" && (entry.isDirectory() || entry.isFile()),
     );
     if (isRepo) {
       repos.add(currentPath);
       // Don't recurse into subrepos — only one level of nesting allowed.
       if (insideRepo) return;
+      if (!includeSubreposIn.has(normalizePath(currentPath))) return;
     }
 
     if (!isRepo && depth >= maxDepth) return;
-    if (isRepo && repoLocalDepth >= MAX_SUBREPO_SCAN_DEPTH) return;
+    if (insideRepo && repoLocalDepth >= maxSubrepoScanDepth) return;
 
     for (const entry of entries) {
       if (!entry.isDirectory()) continue;
@@ -217,7 +241,10 @@ export async function findReposRecursive(
         continue;
       }
       const normalizedFull = normalizePath(childPath);
-      if (normalizedFull === normalizedBase || normalizedFull.startsWith(`${normalizedBase}/`)) {
+      if (
+        normalizedFull === normalizedBase ||
+        normalizedFull.startsWith(`${normalizedBase}/`)
+      ) {
         if (isIgnoredByGitignore(normalizedChildRelPath, true, rules)) {
           continue;
         }
@@ -227,7 +254,7 @@ export async function findReposRecursive(
           isRepo ? depth : depth + 1,
           rules,
           isRepo ? true : insideRepo,
-          isRepo ? repoLocalDepth + 1 : repoLocalDepth,
+          isRepo || insideRepo ? repoLocalDepth + 1 : repoLocalDepth,
         );
       }
     }
@@ -239,9 +266,7 @@ export async function findReposRecursive(
 }
 
 export function filterRepos(repos: string[], pattern: string): string[] {
-  const regexPattern = pattern
-    .replace(/\*/g, ".*")
-    .replace(/\?/g, ".");
+  const regexPattern = pattern.replace(/\*/g, ".*").replace(/\?/g, ".");
 
   const regex = new RegExp(`^${regexPattern}$`, "i");
 
@@ -252,7 +277,7 @@ export function filterRepos(repos: string[], pattern: string): string[] {
 }
 
 export async function getAllRepoStatuses(
-  repos: string[]
+  repos: string[],
 ): Promise<RepoStatus[]> {
   const statuses = await Promise.all(repos.map(getRepoStatus));
   return statuses;
@@ -276,7 +301,7 @@ export async function runParallel<T, U>(
   operation: (item: U, index: number) => Promise<T>,
   concurrency: number = 10,
   onProgress?: (completed: number, total: number) => void,
-  shouldCancel?: () => boolean
+  shouldCancel?: () => boolean,
 ): Promise<{ results: T[]; cancelled: boolean }> {
   const results: T[] = [];
   let completed = 0;

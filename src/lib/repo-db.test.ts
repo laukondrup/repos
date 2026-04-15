@@ -64,7 +64,9 @@ describe("repo-db sync", () => {
         (repo: { name: string }) => repo.name === "beta",
       );
       expect(alpha.excluded).toBe(false);
+      expect(alpha.allowSubrepos).toBe(false);
       expect(beta.excluded).toBe(false);
+      expect(beta.allowSubrepos).toBe(false);
 
       const persistedConfig = JSON.parse(
         await readFile(join(basePath, ".reposrc.json"), "utf-8"),
@@ -108,6 +110,7 @@ describe("repo-db sync", () => {
               originFullName: "acme/move-me",
               labels: ["common"],
               excluded: true,
+              allowSubrepos: true,
             },
           ],
         },
@@ -135,6 +138,7 @@ describe("repo-db sync", () => {
       expect(db.repos[0].name).toBe("after-name");
       expect(db.repos[0].labels).toEqual(["common"]);
       expect(db.repos[0].excluded).toBe(false);
+      expect(db.repos[0].allowSubrepos).toBe(true);
     } finally {
       await rm(basePath, { recursive: true, force: true });
     }
@@ -222,6 +226,7 @@ describe("repo-db sync", () => {
               originFullName: "acme/alpha",
               labels: ["stable"],
               excluded: false,
+              allowSubrepos: false,
             },
           ],
         },
@@ -243,6 +248,137 @@ describe("repo-db sync", () => {
       expect(db.repos[0].originFullName).toBe("acme/alpha");
       expect(db.repos[0].id).toBe("origin:acme/alpha");
       expect(db.repos[0].labels).toEqual(["stable"]);
+      expect(db.repos[0].allowSubrepos).toBe(false);
+    } finally {
+      await rm(basePath, { recursive: true, force: true });
+    }
+  });
+
+  test("treats missing allowSubrepos in existing DB rows as false", async () => {
+    const basePath = join(
+      tmpdir(),
+      `repos-db-allow-default-${randomUUID().slice(0, 8)}`,
+    );
+    await mkdir(basePath, { recursive: true });
+
+    await writeFile(
+      join(basePath, ".reposrc.json"),
+      JSON.stringify({
+        repoDbPath: ".reposdb.json",
+        exclusions: [],
+      }),
+    );
+
+    const alphaPath = join(basePath, "alpha");
+    await createGitRepo(alphaPath, "https://github.com/acme/alpha.git");
+
+    await writeFile(
+      join(basePath, ".reposdb.json"),
+      JSON.stringify(
+        {
+          version: 1,
+          repos: [
+            {
+              id: "origin:acme/alpha",
+              name: "alpha",
+              path: alphaPath,
+              originFullName: "acme/alpha",
+              labels: [],
+              excluded: false,
+            },
+          ],
+        },
+        null,
+        2,
+      ),
+    );
+
+    try {
+      await syncRepoDb({ basePath, configBasePath: basePath });
+
+      const db = JSON.parse(
+        await readFile(join(basePath, ".reposdb.json"), "utf-8"),
+      );
+      expect(db.repos).toHaveLength(1);
+      expect(db.repos[0].allowSubrepos).toBe(false);
+    } finally {
+      await rm(basePath, { recursive: true, force: true });
+    }
+  });
+
+  test("discovers nested repos only for DB rows with allowSubrepos=true", async () => {
+    const basePath = join(
+      tmpdir(),
+      `repos-db-allow-subrepos-${randomUUID().slice(0, 8)}`,
+    );
+    await mkdir(basePath, { recursive: true });
+
+    await writeFile(
+      join(basePath, ".reposrc.json"),
+      JSON.stringify({
+        repoDbPath: ".reposdb.json",
+        exclusions: [],
+      }),
+    );
+
+    const allowedParent = join(basePath, "allowed-parent");
+    const blockedParent = join(basePath, "blocked-parent");
+    await createGitRepo(
+      allowedParent,
+      "https://github.com/acme/allowed-parent.git",
+    );
+    await createGitRepo(
+      blockedParent,
+      "https://github.com/acme/blocked-parent.git",
+    );
+
+    const allowedNested = join(allowedParent, "nested", "allowed-child");
+    const blockedNested = join(blockedParent, "nested", "blocked-child");
+    await createGitRepo(
+      allowedNested,
+      "https://github.com/acme/allowed-child.git",
+    );
+    await createGitRepo(
+      blockedNested,
+      "https://github.com/acme/blocked-child.git",
+    );
+
+    try {
+      await syncRepoDb({ basePath, configBasePath: basePath });
+
+      const firstDb = JSON.parse(
+        await readFile(join(basePath, ".reposdb.json"), "utf-8"),
+      );
+      const updatedRepos = firstDb.repos.map((repo: { id: string }) =>
+        repo.id === "origin:acme/allowed-parent"
+          ? { ...repo, allowSubrepos: true }
+          : repo,
+      );
+      await writeFile(
+        join(basePath, ".reposdb.json"),
+        JSON.stringify({ version: 1, repos: updatedRepos }, null, 2) + "\n",
+      );
+
+      await syncRepoDb({ basePath, configBasePath: basePath });
+
+      const db = JSON.parse(
+        await readFile(join(basePath, ".reposdb.json"), "utf-8"),
+      );
+      const names = db.repos.map((repo: { name: string }) => repo.name).sort();
+
+      expect(names).toContain("allowed-parent");
+      expect(names).toContain("blocked-parent");
+      expect(names).toContain("allowed-child");
+      expect(names).not.toContain("blocked-child");
+
+      const allowedParentRecord = db.repos.find(
+        (repo: { name: string }) => repo.name === "allowed-parent",
+      );
+      const blockedParentRecord = db.repos.find(
+        (repo: { name: string }) => repo.name === "blocked-parent",
+      );
+      expect(allowedParentRecord.allowSubrepos).toBe(true);
+      expect(blockedParentRecord.allowSubrepos).toBe(false);
     } finally {
       await rm(basePath, { recursive: true, force: true });
     }

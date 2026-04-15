@@ -22,7 +22,8 @@
 - Local activity filtering for exec (`repos exec --days <n>`)
 - Label-based filtering (`--label`) and exclusion bypass (`--no-exclude`) across local repo commands
 - Local repo commands are scoped to configured `org` by default (owner inferred from repo DB `id`/origin), with `--bypass-org` to include everything
-- Repository discovery now requires `fd` and runs via sync before local-repo command selection
+- Repository discovery is root-only by default during sync for fast selection/reconcile
+- Optional edge-case: enable nested repo/submodule discovery per repo via `.reposdb.json` row field `allowSubrepos`
 
 ![demo](https://github.com/user-attachments/assets/00fdfece-06bc-4cb6-a4e1-1086bdc8432c)
 
@@ -286,6 +287,9 @@ repos list --no-exclude        # Bypass exclusion rules
 `repos list` prints paths relative to `codeDir` from config.
 `repos list --json` returns objects with `name`, `path`, and `displayPath`.
 When multiple `--label` flags are provided, repos must match all listed labels.
+
+To include nested repos under a specific parent repo, set that parent row's `allowSubrepos` to `true` in `.reposdb.json`, then run `repos sync`.
+There is intentionally no global `.reposrc.json` key for this behavior.
 
 ### Exclude Command
 
