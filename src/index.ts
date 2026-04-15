@@ -61,7 +61,12 @@ program
   .option("-s, --summary", "Show only summary counts")
   .option("-q, --quiet", "Minimal output, only show repos with changes")
   .option("-f, --filter <pattern>", "Filter repos by pattern (e.g., 'api-*')")
-  .option("-l, --label <label>", "Filter repos by label (repeat for multiple labels)", collectOption, [])
+  .option(
+    "-l, --label <label>",
+    "Filter repos by label (repeat for multiple labels)",
+    collectOption,
+    [],
+  )
   .option("--fetch", "Fetch from remotes before checking status")
   .option("--no-exclude", "Include repos excluded by config/DB")
   .option("--bypass-org", "Include repos outside configured org scope")
@@ -83,7 +88,12 @@ program
   .option("-n, --dry-run", "Show what would be fetched without fetching")
   .option("-q, --quiet", "Minimal output")
   .option("-f, --filter <pattern>", "Filter repos by pattern (e.g., 'api-*')")
-  .option("-l, --label <label>", "Filter repos by label (repeat for multiple labels)", collectOption, [])
+  .option(
+    "-l, --label <label>",
+    "Filter repos by label (repeat for multiple labels)",
+    collectOption,
+    [],
+  )
   .option("-p, --parallel <number>", "Number of parallel operations", parseInt)
   .option("--prune", "Remove remote-tracking references that no longer exist")
   .option("-a, --all", "Fetch from all remotes")
@@ -109,7 +119,12 @@ program
   .option("-n, --dry-run", "Show what would be updated without pulling")
   .option("-q, --quiet", "Minimal output")
   .option("-f, --filter <pattern>", "Filter repos by pattern (e.g., 'api-*')")
-  .option("-l, --label <label>", "Filter repos by label (repeat for multiple labels)", collectOption, [])
+  .option(
+    "-l, --label <label>",
+    "Filter repos by label (repeat for multiple labels)",
+    collectOption,
+    [],
+  )
   .option("-p, --parallel <number>", "Number of parallel operations", parseInt)
   .option("--no-exclude", "Include repos excluded by config/DB")
   .option("--bypass-org", "Include repos outside configured org scope")
@@ -132,7 +147,11 @@ program
   .option("-o, --org <name>", "GitHub organization or username")
   .option("-h, --host <host>", "GitHub host (default: github.com)")
   .option("-d, --days <number>", "Activity threshold in days", parseInt)
-  .option("-p, --parallel <number>", "Number of parallel clone operations (default: 10)", parseInt)
+  .option(
+    "-p, --parallel <number>",
+    "Number of parallel clone operations (default: 10)",
+    parseInt,
+  )
   .option("-s, --shallow", "Shallow clone (faster, uses less disk space)")
   .action(async (options) => {
     await runClone({
@@ -152,7 +171,12 @@ program
   .option("--force", "Skip confirmation prompt")
   .option("-a, --all", "Also remove untracked files")
   .option("-f, --filter <pattern>", "Filter repos by pattern (e.g., 'api-*')")
-  .option("-l, --label <label>", "Filter repos by label (repeat for multiple labels)", collectOption, [])
+  .option(
+    "-l, --label <label>",
+    "Filter repos by label (repeat for multiple labels)",
+    collectOption,
+    [],
+  )
   .option("--no-exclude", "Include repos excluded by config/DB")
   .option("--bypass-org", "Include repos outside configured org scope")
   .action(async (options) => {
@@ -173,9 +197,18 @@ program
   .option("-q, --quiet", "Only list repos with changes (no diff output)")
   .option("--stat", "Show diffstat summary instead of full diff")
   .option("-f, --filter <pattern>", "Filter repos by pattern (e.g., 'api-*')")
-  .option("-l, --label <label>", "Filter repos by label (repeat for multiple labels)", collectOption, [])
+  .option(
+    "-l, --label <label>",
+    "Filter repos by label (repeat for multiple labels)",
+    collectOption,
+    [],
+  )
   .option("-p, --parallel <number>", "Number of parallel operations", parseInt)
-  .option("-m, --max-lines <number>", "Max lines per diff (default: 500, 0 for unlimited)", parseInt)
+  .option(
+    "-m, --max-lines <number>",
+    "Max lines per diff (default: 500, 0 for unlimited)",
+    parseInt,
+  )
   .option("--no-exclude", "Include repos excluded by config/DB")
   .option("--bypass-org", "Include repos outside configured org scope")
   .action(async (options) => {
@@ -197,7 +230,12 @@ program
   .option("-b, --create", "Create branch if it doesn't exist")
   .option("--force", "Skip repos with uncommitted changes")
   .option("-f, --filter <pattern>", "Filter repos by pattern (e.g., 'api-*')")
-  .option("-l, --label <label>", "Filter repos by label (repeat for multiple labels)", collectOption, [])
+  .option(
+    "-l, --label <label>",
+    "Filter repos by label (repeat for multiple labels)",
+    collectOption,
+    [],
+  )
   .option("-p, --parallel <number>", "Number of parallel operations", parseInt)
   .option("--no-exclude", "Include repos excluded by config/DB")
   .option("--bypass-org", "Include repos outside configured org scope")
@@ -220,8 +258,17 @@ program
   .option("-q, --quiet", "Only show output for repos with non-empty results")
   .option("-p, --parallel <number>", "Number of parallel operations", parseInt)
   .option("-f, --filter <pattern>", "Filter repos by pattern (e.g., 'api-*')")
-  .option("-l, --label <label>", "Filter repos by label (repeat for multiple labels)", collectOption, [])
-  .option("-d, --days <number>", "Only include repos locally active in the last N days", parseInt)
+  .option(
+    "-l, --label <label>",
+    "Filter repos by label (repeat for multiple labels)",
+    collectOption,
+    [],
+  )
+  .option(
+    "-d, --days <number>",
+    "Only include repos locally active in the last N days",
+    parseInt,
+  )
   .option("--no-exclude", "Include repos excluded by config/DB")
   .option("--bypass-org", "Include repos outside configured org scope")
   .action(async (command, options) => {
@@ -242,8 +289,18 @@ program
   .alias("ls")
   .description(commandDescription("list"))
   .option("-f, --filter <pattern>", "Filter repos by pattern (e.g., 'api-*')")
-  .option("-l, --label <label>", "Filter repos by label (repeat for multiple labels)", collectOption, [])
-  .option("-d, --days <number>", "Only include repos locally active in the last N days", parseInt)
+  .option(
+    "-l, --label <label>",
+    "Filter repos by label (repeat for multiple labels)",
+    collectOption,
+    [],
+  )
+  .option(
+    "-d, --days <number>",
+    "Only include repos locally active in the last N days",
+    parseInt,
+  )
+  .option("--json", "Output machine-readable JSON")
   .option("--no-exclude", "Include repos excluded by config/DB")
   .option("--bypass-org", "Include repos outside configured org scope")
   .action(async (options) => {
@@ -251,6 +308,7 @@ program
       filter: options.filter,
       labels: options.label,
       days: options.days,
+      json: options.json,
       noExclude: !options.exclude,
       bypassOrg: options.bypassOrg,
     });
@@ -259,7 +317,12 @@ program
 program
   .command("exclude [repos...]")
   .description(commandDescription("exclude"))
-  .option("-g, --glob <pattern>", "Exclude repositories by glob pattern", collectOption, [])
+  .option(
+    "-g, --glob <pattern>",
+    "Exclude repositories by glob pattern",
+    collectOption,
+    [],
+  )
   .option("--bypass-org", "Include repos outside configured org scope")
   .action(async (repos, options) => {
     if ((repos ?? []).length === 0 && (options.glob ?? []).length === 0) {
@@ -286,7 +349,12 @@ const labelCommand = program
 labelCommand
   .command("add <label> [repos...]")
   .description("Add a label to matching repositories")
-  .option("-g, --glob <pattern>", "Add repositories by glob pattern", collectOption, [])
+  .option(
+    "-g, --glob <pattern>",
+    "Add repositories by glob pattern",
+    collectOption,
+    [],
+  )
   .option("--bypass-org", "Include repos outside configured org scope")
   .action(async (label, repos, options) => {
     await runLabelAdd(label, repos ?? [], {
@@ -298,7 +366,12 @@ labelCommand
 labelCommand
   .command("rm <label> [repos...]")
   .description("Remove a label from matching repositories")
-  .option("-g, --glob <pattern>", "Remove repositories by glob pattern", collectOption, [])
+  .option(
+    "-g, --glob <pattern>",
+    "Remove repositories by glob pattern",
+    collectOption,
+    [],
+  )
   .option("--bypass-org", "Include repos outside configured org scope")
   .action(async (label, repos, options) => {
     await runLabelRemove(label, repos ?? [], {
@@ -335,6 +408,8 @@ program
   });
 
 assertOverviewCoverage();
-assertProgramRegistrationCoverage(program.commands.map((command) => command.name()));
+assertProgramRegistrationCoverage(
+  program.commands.map((command) => command.name()),
+);
 
 program.parse();

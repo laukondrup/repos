@@ -165,6 +165,7 @@ export interface ListOptions {
   filter?: string;
   labels?: string[];
   days?: number;
+  json?: boolean;
   basePath?: string;
   noExclude?: boolean;
   bypassOrg?: boolean;

@@ -16,7 +16,7 @@
 - `repos sync` reconciles local repo DB state without rewriting exclusion patterns
 - Label workflow for subsets (`repos label add|rm|list`) with repo args and glob targeting
 - Simplified exclusion model: single repo `excluded` state from config `exclusions` (dirs or globs)
-- `repos list` / `repos ls` preview command (supports `--days`, filters, exclusion bypass)
+- `repos list` / `repos ls` preview command (supports `--days`, filters, exclusion bypass, and `--json`)
 - Top-level `repos exclude` command for dirs/globs, with sync-backed exclusion updates
 - `repos exclude <repo>` now persists unmatched repo names to config exclusions (blocks future clones)
 - Local activity filtering for exec (`repos exec --days <n>`)
@@ -279,10 +279,12 @@ repos ls                       # Alias for `repos list`
 repos list --days 7            # Only repos locally active in last 7 days
 repos list --filter 'api-*'    # Only matching repos
 repos list --label backend     # Filter by label (repeatable)
+repos list --json              # Machine-readable output
 repos list --no-exclude        # Bypass exclusion rules
 ```
 
 `repos list` prints paths relative to `codeDir` from config.
+`repos list --json` returns objects with `name`, `path`, and `displayPath`.
 When multiple `--label` flags are provided, repos must match all listed labels.
 
 ### Exclude Command
