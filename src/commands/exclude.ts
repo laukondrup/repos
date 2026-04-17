@@ -51,6 +51,7 @@ export async function applyExclusions(options: ExcludeOptions): Promise<{
       excluded: true,
       targets: repoDirs,
       bypassOrg: options.bypassOrg,
+      org: options.org,
     });
     repoMatched = result.matched;
     repoUpdated = result.updated;
@@ -101,6 +102,7 @@ export async function runExclude(
     basePath?: string;
     configBasePath?: string;
     bypassOrg?: boolean;
+    org?: string;
   } = {},
 ): Promise<void> {
   const result = await applyExclusions({
@@ -109,6 +111,7 @@ export async function runExclude(
     basePath: options.basePath,
     configBasePath: options.configBasePath,
     bypassOrg: options.bypassOrg,
+    org: options.org,
   });
 
   if (result.addedConfigExclusions.length > 0) {

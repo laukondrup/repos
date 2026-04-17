@@ -68,6 +68,7 @@ program
     [],
   )
   .option("--fetch", "Fetch from remotes before checking status")
+  .option("-o, --org <name>", "Override configured org scope for this command")
   .option("--no-exclude", "Include repos excluded by config/DB")
   .option("--bypass-org", "Include repos outside configured org scope")
   .action(async (options) => {
@@ -77,6 +78,7 @@ program
       filter: options.filter,
       labels: options.label,
       fetch: options.fetch,
+      org: options.org,
       noExclude: !options.exclude,
       bypassOrg: options.bypassOrg,
     });
@@ -97,6 +99,7 @@ program
   .option("-p, --parallel <number>", "Number of parallel operations", parseInt)
   .option("--prune", "Remove remote-tracking references that no longer exist")
   .option("-a, --all", "Fetch from all remotes")
+  .option("-o, --org <name>", "Override configured org scope for this command")
   .option("--no-exclude", "Include repos excluded by config/DB")
   .option("--bypass-org", "Include repos outside configured org scope")
   .action(async (options) => {
@@ -108,6 +111,7 @@ program
       parallel: options.parallel,
       prune: options.prune,
       all: options.all,
+      org: options.org,
       noExclude: !options.exclude,
       bypassOrg: options.bypassOrg,
     });
@@ -126,6 +130,7 @@ program
     [],
   )
   .option("-p, --parallel <number>", "Number of parallel operations", parseInt)
+  .option("-o, --org <name>", "Override configured org scope for this command")
   .option("--no-exclude", "Include repos excluded by config/DB")
   .option("--bypass-org", "Include repos outside configured org scope")
   .action(async (options) => {
@@ -135,6 +140,7 @@ program
       filter: options.filter,
       labels: options.label,
       parallel: options.parallel,
+      org: options.org,
       noExclude: !options.exclude,
       bypassOrg: options.bypassOrg,
     });
@@ -177,6 +183,7 @@ program
     collectOption,
     [],
   )
+  .option("-o, --org <name>", "Override configured org scope for this command")
   .option("--no-exclude", "Include repos excluded by config/DB")
   .option("--bypass-org", "Include repos outside configured org scope")
   .action(async (options) => {
@@ -186,6 +193,7 @@ program
       all: options.all,
       filter: options.filter,
       labels: options.label,
+      org: options.org,
       noExclude: !options.exclude,
       bypassOrg: options.bypassOrg,
     });
@@ -209,6 +217,7 @@ program
     "Max lines per diff (default: 500, 0 for unlimited)",
     parseInt,
   )
+  .option("-o, --org <name>", "Override configured org scope for this command")
   .option("--no-exclude", "Include repos excluded by config/DB")
   .option("--bypass-org", "Include repos outside configured org scope")
   .action(async (options) => {
@@ -219,6 +228,7 @@ program
       labels: options.label,
       parallel: options.parallel,
       maxLines: options.maxLines,
+      org: options.org,
       noExclude: !options.exclude,
       bypassOrg: options.bypassOrg,
     });
@@ -237,6 +247,7 @@ program
     [],
   )
   .option("-p, --parallel <number>", "Number of parallel operations", parseInt)
+  .option("-o, --org <name>", "Override configured org scope for this command")
   .option("--no-exclude", "Include repos excluded by config/DB")
   .option("--bypass-org", "Include repos outside configured org scope")
   .action(async (branch, options) => {
@@ -247,6 +258,7 @@ program
       filter: options.filter,
       labels: options.label,
       parallel: options.parallel,
+      org: options.org,
       noExclude: !options.exclude,
       bypassOrg: options.bypassOrg,
     });
@@ -269,6 +281,7 @@ program
     "Only include repos locally active in the last N days",
     parseInt,
   )
+  .option("-o, --org <name>", "Override configured org scope for this command")
   .option("--no-exclude", "Include repos excluded by config/DB")
   .option("--bypass-org", "Include repos outside configured org scope")
   .action(async (command, options) => {
@@ -279,6 +292,7 @@ program
       filter: options.filter,
       labels: options.label,
       days: options.days,
+      org: options.org,
       noExclude: !options.exclude,
       bypassOrg: options.bypassOrg,
     });
@@ -300,6 +314,7 @@ program
     "Only include repos locally active in the last N days",
     parseInt,
   )
+  .option("-o, --org <name>", "Override configured org scope for this command")
   .option("--json", "Output machine-readable JSON")
   .option("--no-exclude", "Include repos excluded by config/DB")
   .option("--bypass-org", "Include repos outside configured org scope")
@@ -309,6 +324,7 @@ program
       labels: options.label,
       days: options.days,
       json: options.json,
+      org: options.org,
       noExclude: !options.exclude,
       bypassOrg: options.bypassOrg,
     });
@@ -323,14 +339,19 @@ program
     collectOption,
     [],
   )
+  .option("-o, --org <name>", "Override configured org scope for this command")
   .option("--bypass-org", "Include repos outside configured org scope")
   .action(async (repos, options) => {
     if ((repos ?? []).length === 0 && (options.glob ?? []).length === 0) {
-      await runExcludeInteractive({ bypassOrg: options.bypassOrg });
+      await runExcludeInteractive({
+        bypassOrg: options.bypassOrg,
+        org: options.org,
+      });
     } else {
       await runExclude(repos ?? [], {
         globs: options.glob,
         bypassOrg: options.bypassOrg,
+        org: options.org,
       });
     }
   });
@@ -355,11 +376,13 @@ labelCommand
     collectOption,
     [],
   )
+  .option("-o, --org <name>", "Override configured org scope for this command")
   .option("--bypass-org", "Include repos outside configured org scope")
   .action(async (label, repos, options) => {
     await runLabelAdd(label, repos ?? [], {
       globs: options.glob,
       bypassOrg: options.bypassOrg,
+      org: options.org,
     });
   });
 
@@ -372,21 +395,24 @@ labelCommand
     collectOption,
     [],
   )
+  .option("-o, --org <name>", "Override configured org scope for this command")
   .option("--bypass-org", "Include repos outside configured org scope")
   .action(async (label, repos, options) => {
     await runLabelRemove(label, repos ?? [], {
       globs: options.glob,
       bypassOrg: options.bypassOrg,
+      org: options.org,
     });
   });
 
 labelCommand
   .command("list [repos...]")
   .description("List repository labels")
+  .option("-o, --org <name>", "Override configured org scope for this command")
   .option("--bypass-org", "Include repos outside configured org scope")
   .action(async (repos, options) => {
     void repos;
-    await runLabelList({ bypassOrg: options.bypassOrg });
+    await runLabelList({ bypassOrg: options.bypassOrg, org: options.org });
   });
 
 program

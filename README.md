@@ -22,6 +22,7 @@
 - Local activity filtering for exec (`repos exec --days <n>`)
 - Label-based filtering (`--label`) and exclusion bypass (`--no-exclude`) across local repo commands
 - Local repo commands are scoped to configured `org` by default (owner inferred from repo DB `id`/origin), with `--bypass-org` to include everything
+- Most local repo commands now support `--org <name>` to temporarily override configured org scope (without editing config)
 - Repository discovery is root-only by default during sync for fast selection/reconcile
 - Optional edge-case: enable nested repo/submodule discovery per repo via `.reposdb.json` row field `allowSubrepos`
 
@@ -282,6 +283,7 @@ repos list --filter 'api-*'    # Only matching repos
 repos list --label backend     # Filter by label (repeatable)
 repos list --json              # Machine-readable output
 repos list --no-exclude        # Bypass exclusion rules
+repos list --org work-org      # Temporarily scope to another org
 ```
 
 `repos list` prints paths relative to `codeDir` from config.

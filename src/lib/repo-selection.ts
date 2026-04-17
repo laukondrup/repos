@@ -10,6 +10,7 @@ export interface SelectLocalReposOptions {
   labels?: string[];
   noExclude?: boolean;
   bypassOrg?: boolean;
+  org?: string;
 }
 
 export async function selectLocalRepos(
@@ -24,7 +25,7 @@ export async function selectLocalRepos(
   });
 
   let selectedRecords: RepoDbRepoRecord[] = db.repos;
-  const configuredOrg = config.org?.trim().toLowerCase();
+  const configuredOrg = (options.org ?? config.org)?.trim().toLowerCase();
   if (configuredOrg && !options.bypassOrg) {
     selectedRecords = selectedRecords.filter(
       (repo) => getRepoOwnerFromRecord(repo) === configuredOrg,

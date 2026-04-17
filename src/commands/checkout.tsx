@@ -93,6 +93,7 @@ export function CheckoutApp({ options, onComplete }: CheckoutAppProps) {
           labels: options.labels,
           noExclude: options.noExclude,
           bypassOrg: options.bypassOrg,
+          org: options.org,
         });
 
         if (repoPaths.length === 0) {

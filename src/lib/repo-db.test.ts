@@ -499,6 +499,14 @@ describe("repo-db labels", () => {
       expect(scopedList).toHaveLength(1);
       expect(scopedList[0].name).toBe("alpha");
 
+      const overrideList = await listRepoLabels({
+        basePath,
+        configBasePath: basePath,
+        org: "other",
+      });
+      expect(overrideList).toHaveLength(1);
+      expect(overrideList[0].name).toBe("beta");
+
       await updateRepoLabels({
         basePath,
         configBasePath: basePath,
@@ -506,6 +514,7 @@ describe("repo-db labels", () => {
         label: "scoped",
         targets: [],
         globs: ["*"],
+        org: "other",
       });
 
       const afterScoped = await listRepoLabels({
@@ -515,9 +524,10 @@ describe("repo-db labels", () => {
       });
       expect(
         afterScoped.find((item) => item.name === "alpha")?.labels,
-      ).toContain("scoped");
-      expect(afterScoped.find((item) => item.name === "beta")?.labels).toEqual(
         [],
+      );
+      expect(afterScoped.find((item) => item.name === "beta")?.labels).toContain(
+        "scoped",
       );
 
       await updateRepoLabels({

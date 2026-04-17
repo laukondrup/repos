@@ -81,6 +81,7 @@ export function StatusApp({ options, onComplete }: StatusAppProps) {
           labels: options.labels,
           noExclude: options.noExclude,
           bypassOrg: options.bypassOrg,
+          org: options.org,
         });
 
         if (repoPaths.length === 0) {

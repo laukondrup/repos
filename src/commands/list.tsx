@@ -42,6 +42,7 @@ export async function listRepos(options: ListOptions): Promise<ListedRepo[]> {
     labels: options.labels,
     noExclude: options.noExclude,
     bypassOrg: options.bypassOrg,
+    org: options.org,
   });
 
   if (options.days !== undefined) {

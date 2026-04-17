@@ -124,6 +124,58 @@ describe("CLI org scope bypass flags", () => {
   });
 });
 
+describe("CLI org override flags", () => {
+  test("supports --org on org-scoped commands", () => {
+    const commands = [
+      "status",
+      "fetch",
+      "pull",
+      "clean",
+      "diff",
+      "checkout <branch>",
+      "exec <command>",
+      "list",
+      "exclude [repos...]",
+      "add <label> [repos...]",
+      "rm <label> [repos...]",
+      "list [repos...]",
+    ];
+
+    for (const command of commands) {
+      const block = commandBlock(command);
+      expect(block).toContain('--org <name>');
+    }
+  });
+
+  test("passes org into command options", () => {
+    const commands = [
+      "status",
+      "fetch",
+      "pull",
+      "clean",
+      "diff",
+      "checkout <branch>",
+      "exec <command>",
+      "list",
+      "exclude [repos...]",
+      "add <label> [repos...]",
+      "rm <label> [repos...]",
+      "list [repos...]",
+    ];
+
+    for (const command of commands) {
+      const escaped = command.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const actionRegex = new RegExp(
+        `\\.command\\("${escaped}"\\)[\\s\\S]*?\\.action\\(async \\([^)]*\\) => \\{([\\s\\S]*?)\\}\\);`,
+        "m",
+      );
+      const match = source.match(actionRegex);
+      const actionBody = match?.[1] ?? "";
+      expect(actionBody).toContain("options.org");
+    }
+  });
+});
+
 describe("CLI label filters", () => {
   test("supports repeated --label on local repo commands", () => {
     const commands = [

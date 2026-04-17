@@ -14,12 +14,19 @@ interface ExcludeMenuAppProps {
   repos: string[];
   globs: string[];
   bypassOrg?: boolean;
+  org?: string;
   onComplete?: () => void;
 }
 
 type MenuPhase = "running" | "done" | "error";
 
-export function ExcludeMenuApp({ repos, globs, bypassOrg, onComplete }: ExcludeMenuAppProps) {
+export function ExcludeMenuApp({
+  repos,
+  globs,
+  bypassOrg,
+  org,
+  onComplete,
+}: ExcludeMenuAppProps) {
   const [phase, setPhase] = useState<MenuPhase>("running");
   const [error, setError] = useState<string | null>(null);
   const [summary, setSummary] = useState<{
@@ -31,7 +38,7 @@ export function ExcludeMenuApp({ repos, globs, bypassOrg, onComplete }: ExcludeM
   useEffect(() => {
     async function run() {
       try {
-        const result = await applyExclusions({ repos, globs, bypassOrg });
+        const result = await applyExclusions({ repos, globs, bypassOrg, org });
         setSummary({
           addedConfigExclusions: result.addedConfigExclusions,
           repoMatched: result.repoMatched,
@@ -44,7 +51,7 @@ export function ExcludeMenuApp({ repos, globs, bypassOrg, onComplete }: ExcludeM
       }
     }
     run();
-  }, [bypassOrg, globs, repos]);
+  }, [bypassOrg, globs, org, repos]);
 
   useEffect(() => {
     if (!onComplete) return;
@@ -92,10 +99,15 @@ type InteractivePhase = "loading" | "glob" | "loading_repos" | "repos" | "saving
 
 interface ExcludeInteractiveAppProps {
   bypassOrg?: boolean;
+  org?: string;
   onComplete?: () => void;
 }
 
-export function ExcludeInteractiveApp({ bypassOrg, onComplete }: ExcludeInteractiveAppProps) {
+export function ExcludeInteractiveApp({
+  bypassOrg,
+  org,
+  onComplete,
+}: ExcludeInteractiveAppProps) {
   const { exit } = useApp();
   const { stdout } = useStdout();
   const [phase, setPhase] = useState<InteractivePhase>("loading");
@@ -181,14 +193,14 @@ export function ExcludeInteractiveApp({ bypassOrg, onComplete }: ExcludeInteract
   const applyGlob = useCallback(async (pattern: string) => {
     setPhase("saving");
     try {
-      await applyExclusions({ repos: [], globs: [pattern], bypassOrg });
+      await applyExclusions({ repos: [], globs: [pattern], bypassOrg, org });
       setAppliedGlob(pattern);
       setPhase("done");
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
       setPhase("error");
     }
-  }, [bypassOrg]);
+  }, [bypassOrg, org]);
 
   // ── keyboard: glob phase ──────────────────────────────────────────────────
   useInput((input, key) => {
@@ -415,11 +427,15 @@ function StateBadgeInline({ state }: { state: "none" | "glob" | "excluded" }) {
   return <Text dimColor>[ ]</Text>;
 }
 
-export async function runExcludeInteractive(options: { bypassOrg?: boolean } = {}): Promise<void> {
+export async function runExcludeInteractive(options: {
+  bypassOrg?: boolean;
+  org?: string;
+} = {}): Promise<void> {
   let unmountFn: (() => void) | null = null;
   const { waitUntilExit, unmount } = render(
     <ExcludeInteractiveApp
       bypassOrg={options.bypassOrg}
+      org={options.org}
       onComplete={() => unmountFn?.()}
     />,
   );

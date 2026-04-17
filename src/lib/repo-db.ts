@@ -26,12 +26,14 @@ export interface RepoLabelUpdateOptions {
   targets: string[];
   globs: string[];
   bypassOrg?: boolean;
+  org?: string;
 }
 
 export interface RepoLabelListOptions {
   basePath?: string;
   configBasePath?: string;
   bypassOrg?: boolean;
+  org?: string;
 }
 
 export interface RepoExcludeUpdateOptions {
@@ -40,6 +42,7 @@ export interface RepoExcludeUpdateOptions {
   excluded: boolean;
   targets: string[];
   bypassOrg?: boolean;
+  org?: string;
 }
 
 export interface SyncRepoDbResult {
@@ -483,7 +486,11 @@ export async function updateRepoLabels(
     db.repos = refreshed.repos;
   }
 
-  const scopedRepos = applyOrgScope(db.repos, config.org, options.bypassOrg);
+  const scopedRepos = applyOrgScope(
+    db.repos,
+    options.org ?? config.org,
+    options.bypassOrg,
+  );
   const matches = resolveTargetMatches(
     scopedRepos,
     options.targets,
@@ -534,7 +541,11 @@ export async function updateRepoExclusions(
     db.repos = refreshed.repos;
   }
 
-  const scopedRepos = applyOrgScope(db.repos, config.org, options.bypassOrg);
+  const scopedRepos = applyOrgScope(
+    db.repos,
+    options.org ?? config.org,
+    options.bypassOrg,
+  );
   const matches = resolveTargetMatches(
     scopedRepos,
     options.targets,
@@ -582,7 +593,11 @@ export async function listRepoLabels(
   });
   const configBasePath = options.configBasePath ?? basePath;
   const config = await loadConfig(configBasePath);
-  const scopedRepos = applyOrgScope(db.repos, config.org, options.bypassOrg);
+  const scopedRepos = applyOrgScope(
+    db.repos,
+    options.org ?? config.org,
+    options.bypassOrg,
+  );
 
   return scopedRepos
     .map((repo) => ({

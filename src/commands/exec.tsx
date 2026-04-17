@@ -76,6 +76,7 @@ export function ExecApp({ options, onComplete }: ExecAppProps) {
           labels: options.labels,
           noExclude: options.noExclude,
           bypassOrg: options.bypassOrg,
+          org: options.org,
         });
 
         if (options.days !== undefined) {

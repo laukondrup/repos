@@ -257,6 +257,10 @@ describe("repo selection", () => {
       expect(scoped).toHaveLength(1);
       expect(scoped[0]).toContain("alpha");
 
+      const overridden = await selectLocalRepos({ basePath, org: "other" });
+      expect(overridden).toHaveLength(1);
+      expect(overridden[0]).toContain("beta");
+
       const bypassed = await selectLocalRepos({ basePath, bypassOrg: true });
       expect(bypassed).toHaveLength(3);
     } finally {
