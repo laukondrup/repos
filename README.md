@@ -289,6 +289,7 @@ repos list --org work-org      # Temporarily scope to another org
 `repos list` prints paths relative to `codeDir` from config.
 `repos list --json` returns objects with `name`, `path`, and `displayPath`.
 When multiple `--label` flags are provided, repos must match all listed labels.
+When org scoping is enabled, repos are included only when owner can be resolved from origin metadata. `repos sync` now refreshes origin metadata for existing local DB rows, so repos created before adding `origin` are picked up after the next sync/list run.
 
 To include nested repos under a specific parent repo, set that parent row's `allowSubrepos` to `true` in `.reposdb.json`, then run `repos sync`.
 There is intentionally no global `.reposrc.json` key for this behavior.

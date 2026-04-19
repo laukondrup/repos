@@ -369,6 +369,27 @@ export async function syncRepoDb(
     byNameWithoutOrigin,
     missingByPath: new Map(missingOrigins.map((item) => [item.repoPath, item])),
   };
+  const needsOriginRefresh = discovered
+    .filter((repoPath) => {
+      const existing = byPath.get(repoPath);
+      return Boolean(existing && !existing.originFullName);
+    })
+    .map((repoPath) => ({
+      repoPath,
+      name: getRepoName(repoPath),
+    }));
+  const { results: refreshedOrigins } = await runParallel(
+    needsOriginRefresh,
+    async (item) => ({
+      repoPath: item.repoPath,
+      name: item.name,
+      originFullName: await getOriginRepoFullName(item.repoPath),
+    }),
+    16,
+  );
+  const refreshedOriginByPath = new Map(
+    refreshedOrigins.map((item) => [item.repoPath, item.originFullName]),
+  );
 
   for (const repoPath of discovered) {
     const name = getRepoName(repoPath);
@@ -377,6 +398,10 @@ export async function syncRepoDb(
       name,
       resolutionContext,
     );
+    const resolvedOriginFullName =
+      existing && !existing.originFullName
+        ? (refreshedOriginByPath.get(repoPath) ?? originFullName)
+        : originFullName;
 
     const pathChanged = Boolean(existing && existing.path !== repoPath);
     const baseRecord: RepoDbRepoRecord = existing
@@ -384,16 +409,16 @@ export async function syncRepoDb(
           ...existing,
           name,
           path: repoPath,
-          originFullName,
+          originFullName: resolvedOriginFullName,
           // Keep manual exclusions for stable paths, but clear stale exclusions after path moves.
           excluded: pathChanged ? false : existing.excluded,
           allowSubrepos: existing.allowSubrepos === true,
         }
       : {
-          id: nextRecordId(originFullName, name, repoPath),
+          id: nextRecordId(resolvedOriginFullName, name, repoPath),
           name,
           path: repoPath,
-          originFullName,
+          originFullName: resolvedOriginFullName,
           labels: [],
           excluded: false,
           allowSubrepos: false,

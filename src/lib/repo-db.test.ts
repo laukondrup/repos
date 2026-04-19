@@ -254,6 +254,63 @@ describe("repo-db sync", () => {
     }
   });
 
+  test("refreshes origin for existing local records mapped by path", async () => {
+    const basePath = join(
+      tmpdir(),
+      `repos-db-origin-refresh-${randomUUID().slice(0, 8)}`,
+    );
+    await mkdir(basePath, { recursive: true });
+
+    await writeFile(
+      join(basePath, ".reposrc.json"),
+      JSON.stringify({
+        repoDbPath: ".reposdb.json",
+        exclusions: [],
+      }),
+    );
+
+    const alphaPath = join(basePath, "alpha");
+    await createGitRepo(alphaPath, "https://github.com/acme/alpha.git");
+
+    await writeFile(
+      join(basePath, ".reposdb.json"),
+      JSON.stringify(
+        {
+          version: 1,
+          repos: [
+            {
+              id: `local:alpha:${alphaPath}`,
+              name: "alpha",
+              path: alphaPath,
+              originFullName: null,
+              labels: ["stable"],
+              excluded: false,
+              allowSubrepos: false,
+            },
+          ],
+        },
+        null,
+        2,
+      ) + "\n",
+    );
+
+    try {
+      const result = await syncRepoDb({ basePath, configBasePath: basePath });
+      expect(result.total).toBe(1);
+
+      const db = JSON.parse(
+        await readFile(join(basePath, ".reposdb.json"), "utf-8"),
+      );
+      expect(db.repos).toHaveLength(1);
+      expect(db.repos[0].originFullName).toBe("acme/alpha");
+      expect(db.repos[0].id).toBe(`local:alpha:${alphaPath}`);
+      expect(db.repos[0].labels).toEqual(["stable"]);
+      expect(db.repos[0].allowSubrepos).toBe(false);
+    } finally {
+      await rm(basePath, { recursive: true, force: true });
+    }
+  });
+
   test("treats missing allowSubrepos in existing DB rows as false", async () => {
     const basePath = join(
       tmpdir(),
@@ -522,13 +579,10 @@ describe("repo-db labels", () => {
         configBasePath: basePath,
         bypassOrg: true,
       });
+      expect(afterScoped.find((item) => item.name === "alpha")?.labels, []);
       expect(
-        afterScoped.find((item) => item.name === "alpha")?.labels,
-        [],
-      );
-      expect(afterScoped.find((item) => item.name === "beta")?.labels).toContain(
-        "scoped",
-      );
+        afterScoped.find((item) => item.name === "beta")?.labels,
+      ).toContain("scoped");
 
       await updateRepoLabels({
         basePath,
