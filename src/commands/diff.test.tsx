@@ -2,7 +2,10 @@ import { describe, test, expect } from "bun:test";
 import React from "react";
 import { render } from "ink-testing-library";
 import { DiffApp } from "./diff.js";
-import { createTempRepoDir, createEmptyTempDir } from "../../tests/helpers/temp-repos.js";
+import {
+  createTempRepoDir,
+  createEmptyTempDir,
+} from "../../tests/helpers/temp-repos.js";
 import { waitFor } from "../../tests/helpers/ink-test-utils.js";
 import { writeFile } from "fs/promises";
 import { join } from "path";
@@ -13,7 +16,7 @@ describe("DiffApp", () => {
       const { path, cleanup } = await createEmptyTempDir();
       try {
         const { lastFrame, unmount } = render(
-          <DiffApp options={{ basePath: path }} onComplete={() => {}} />
+          <DiffApp options={{ basePath: path }} onComplete={() => {}} />,
         );
         expect(lastFrame()).toContain("Finding repositories");
         unmount();
@@ -26,7 +29,7 @@ describe("DiffApp", () => {
       const { path, cleanup } = await createEmptyTempDir();
       try {
         const { lastFrame, unmount } = render(
-          <DiffApp options={{ basePath: path }} onComplete={() => {}} />
+          <DiffApp options={{ basePath: path }} onComplete={() => {}} />,
         );
         await waitFor(() => lastFrame()?.includes("No repositories") ?? false);
         expect(lastFrame()).toContain("No repositories found");
@@ -45,7 +48,7 @@ describe("DiffApp", () => {
 
       try {
         const { lastFrame, unmount } = render(
-          <DiffApp options={{ basePath }} onComplete={() => {}} />
+          <DiffApp options={{ basePath }} onComplete={() => {}} />,
         );
 
         await waitFor(() => lastFrame()?.includes("Summary") ?? false, 5000);
@@ -67,7 +70,7 @@ describe("DiffApp", () => {
 
       try {
         const { lastFrame, unmount } = render(
-          <DiffApp options={{ basePath }} onComplete={() => {}} />
+          <DiffApp options={{ basePath }} onComplete={() => {}} />,
         );
 
         await waitFor(() => lastFrame()?.includes("Summary") ?? false, 5000);
@@ -91,7 +94,7 @@ describe("DiffApp", () => {
 
       try {
         const { lastFrame, unmount } = render(
-          <DiffApp options={{ basePath, quiet: true }} onComplete={() => {}} />
+          <DiffApp options={{ basePath, quiet: true }} onComplete={() => {}} />,
         );
 
         await waitFor(() => lastFrame()?.includes("Summary") ?? false, 5000);
@@ -116,7 +119,7 @@ describe("DiffApp", () => {
 
       try {
         const { lastFrame, unmount } = render(
-          <DiffApp options={{ basePath, stat: true }} onComplete={() => {}} />
+          <DiffApp options={{ basePath, stat: true }} onComplete={() => {}} />,
         );
 
         await waitFor(() => lastFrame()?.includes("Summary") ?? false, 5000);
@@ -144,7 +147,10 @@ describe("DiffApp", () => {
 
       try {
         const { lastFrame, unmount } = render(
-          <DiffApp options={{ basePath, filter: "api-*" }} onComplete={() => {}} />
+          <DiffApp
+            options={{ basePath, filter: "api-*" }}
+            onComplete={() => {}}
+          />,
         );
 
         await waitFor(() => lastFrame()?.includes("Summary") ?? false, 5000);
@@ -170,7 +176,7 @@ describe("DiffApp", () => {
 
       try {
         const { lastFrame, unmount } = render(
-          <DiffApp options={{ basePath }} onComplete={() => {}} />
+          <DiffApp options={{ basePath }} onComplete={() => {}} />,
         );
 
         await waitFor(() => lastFrame()?.includes("Summary") ?? false, 5000);
@@ -192,12 +198,15 @@ describe("DiffApp", () => {
         { name: "large-diff-repo" },
       ]);
 
-      const largeContent = Array.from({ length: 600 }, (_, i) => `line ${i + 1}`).join("\n");
+      const largeContent = Array.from(
+        { length: 600 },
+        (_, i) => `line ${i + 1}`,
+      ).join("\n");
       await writeFile(join(repos[0].path, "README.md"), largeContent);
 
       try {
         const { lastFrame, unmount } = render(
-          <DiffApp options={{ basePath }} onComplete={() => {}} />
+          <DiffApp options={{ basePath }} onComplete={() => {}} />,
         );
 
         await waitFor(() => lastFrame()?.includes("Summary") ?? false, 5000);
@@ -216,12 +225,15 @@ describe("DiffApp", () => {
         { name: "large-diff-repo" },
       ]);
 
-      const largeContent = Array.from({ length: 600 }, (_, i) => `line ${i + 1}`).join("\n");
+      const largeContent = Array.from(
+        { length: 600 },
+        (_, i) => `line ${i + 1}`,
+      ).join("\n");
       await writeFile(join(repos[0].path, "README.md"), largeContent);
 
       try {
         const { lastFrame, unmount } = render(
-          <DiffApp options={{ basePath, maxLines: 0 }} onComplete={() => {}} />
+          <DiffApp options={{ basePath, maxLines: 0 }} onComplete={() => {}} />,
         );
 
         await waitFor(() => lastFrame()?.includes("Summary") ?? false, 5000);
@@ -240,12 +252,18 @@ describe("DiffApp", () => {
         { name: "diff-repo" },
       ]);
 
-      const content = Array.from({ length: 50 }, (_, i) => `line ${i + 1}`).join("\n");
+      const content = Array.from(
+        { length: 50 },
+        (_, i) => `line ${i + 1}`,
+      ).join("\n");
       await writeFile(join(repos[0].path, "README.md"), content);
 
       try {
         const { lastFrame, unmount } = render(
-          <DiffApp options={{ basePath, maxLines: 10 }} onComplete={() => {}} />
+          <DiffApp
+            options={{ basePath, maxLines: 10 }}
+            onComplete={() => {}}
+          />,
         );
 
         await waitFor(() => lastFrame()?.includes("Summary") ?? false, 5000);

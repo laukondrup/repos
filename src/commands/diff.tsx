@@ -16,13 +16,23 @@ interface DiffAppProps {
 
 type Phase = "finding" | "diffing" | "cancelling" | "done" | "cancelled";
 
-function DiffOutput({ result, showStat, maxLines }: { result: DiffResult; showStat: boolean; maxLines?: number }) {
+function DiffOutput({
+  result,
+  showStat,
+  maxLines,
+}: {
+  result: DiffResult;
+  showStat: boolean;
+  maxLines?: number;
+}) {
   const content = showStat ? result.stat : result.diff;
 
   return (
     <Box flexDirection="column" marginBottom={1}>
       <Box>
-        <Text bold color="cyan">{result.name}</Text>
+        <Text bold color="cyan">
+          {result.name}
+        </Text>
       </Box>
       <Box paddingLeft={2}>
         <DiffHighlight content={content} maxLines={maxLines} />
@@ -52,10 +62,14 @@ export function DiffApp({ options, onComplete }: DiffAppProps) {
     async function runDiff() {
       try {
         const config = await loadConfig();
-        const parallelCount = options.parallel ?? config.parallel ?? DEFAULT_CONFIG.parallel;
+        const parallelCount =
+          options.parallel ?? config.parallel ?? DEFAULT_CONFIG.parallel;
         setParallel(parallelCount);
 
-        const configuredMaxLines = options.maxLines ?? config.diffMaxLines ?? DEFAULT_CONFIG.diffMaxLines;
+        const configuredMaxLines =
+          options.maxLines ??
+          config.diffMaxLines ??
+          DEFAULT_CONFIG.diffMaxLines;
         setMaxLines(configuredMaxLines === 0 ? undefined : configuredMaxLines);
 
         let repoPaths = await selectLocalRepos({
@@ -71,7 +85,7 @@ export function DiffApp({ options, onComplete }: DiffAppProps) {
           setError(
             options.filter
               ? `No repositories match pattern: ${options.filter}`
-              : "No repositories found in current directory"
+              : "No repositories found in current directory",
           );
           setPhase("done");
           return;
@@ -99,7 +113,9 @@ export function DiffApp({ options, onComplete }: DiffAppProps) {
             allResults[currentIndex] = result.hasDiff ? result : null;
             completed++;
             setProgress({ completed, total: repoPaths.length });
-            setResults([...allResults.filter((r): r is DiffResult => r !== null)]);
+            setResults([
+              ...allResults.filter((r): r is DiffResult => r !== null),
+            ]);
           }
         };
 
@@ -128,7 +144,11 @@ export function DiffApp({ options, onComplete }: DiffAppProps) {
       } else if ((phase === "done" || phase === "cancelled") && onComplete) {
         onComplete();
       }
-    } else if (key.delete && (phase === "done" || phase === "cancelled") && onComplete) {
+    } else if (
+      key.delete &&
+      (phase === "done" || phase === "cancelled") &&
+      onComplete
+    ) {
       onComplete();
     }
   });
@@ -168,7 +188,10 @@ export function DiffApp({ options, onComplete }: DiffAppProps) {
           <Text bold color="cyan">
             Repository Diff
           </Text>
-          <Text dimColor> • {repos.length} repos • parallel: {parallel}</Text>
+          <Text dimColor>
+            {" "}
+            • {repos.length} repos • parallel: {parallel}
+          </Text>
         </Box>
 
         <Box marginBottom={1}>
@@ -185,7 +208,9 @@ export function DiffApp({ options, onComplete }: DiffAppProps) {
               <Spinner type="dots" />
             </Text>
             <Box marginLeft={1}>
-              <Text color="yellow">Cancelling... waiting for in-progress operations to finish</Text>
+              <Text color="yellow">
+                Cancelling... waiting for in-progress operations to finish
+              </Text>
             </Box>
           </Box>
         ) : (
@@ -198,7 +223,8 @@ export function DiffApp({ options, onComplete }: DiffAppProps) {
   }
 
   const reposWithChanges = results.length;
-  const reposProcessed = phase === "cancelled" ? progress.completed : repos.length;
+  const reposProcessed =
+    phase === "cancelled" ? progress.completed : repos.length;
   const cleanRepos = reposProcessed - reposWithChanges;
 
   return (
@@ -207,17 +233,24 @@ export function DiffApp({ options, onComplete }: DiffAppProps) {
         <Text bold color="cyan">
           Repository Diff
         </Text>
-        <Text dimColor> • {repos.length} repos • parallel: {parallel}</Text>
+        <Text dimColor>
+          {" "}
+          • {repos.length} repos • parallel: {parallel}
+        </Text>
       </Box>
 
       {reposWithChanges === 0 && phase !== "cancelled" ? (
         <Box marginBottom={1}>
-          <Text color="green">✓ All repositories are clean (no uncommitted changes)</Text>
+          <Text color="green">
+            ✓ All repositories are clean (no uncommitted changes)
+          </Text>
         </Box>
       ) : options.quiet ? (
         <Box flexDirection="column" marginBottom={1}>
-          <Text bold color="yellow">Repositories with changes ({reposWithChanges}):</Text>
-          {results.map(r => (
+          <Text bold color="yellow">
+            Repositories with changes ({reposWithChanges}):
+          </Text>
+          {results.map((r) => (
             <Box key={r.name} paddingLeft={2}>
               <Text color="yellow">● </Text>
               <Text>{r.name}</Text>
@@ -226,8 +259,13 @@ export function DiffApp({ options, onComplete }: DiffAppProps) {
         </Box>
       ) : (
         <Box flexDirection="column">
-          {results.map(r => (
-            <DiffOutput key={r.name} result={r} showStat={options.stat ?? false} maxLines={maxLines} />
+          {results.map((r) => (
+            <DiffOutput
+              key={r.name}
+              result={r}
+              showStat={options.stat ?? false}
+              maxLines={maxLines}
+            />
           ))}
         </Box>
       )}
@@ -276,7 +314,8 @@ export function DiffApp({ options, onComplete }: DiffAppProps) {
       {phase === "cancelled" && (
         <Box marginTop={1}>
           <Text color="yellow">
-            Operation cancelled. {reposProcessed} of {repos.length} repositories checked.
+            Operation cancelled. {reposProcessed} of {repos.length} repositories
+            checked.
           </Text>
         </Box>
       )}

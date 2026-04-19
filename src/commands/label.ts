@@ -29,7 +29,9 @@ export async function runLabelAdd(
     org: options.org,
   });
 
-  console.log(`Label '${label}' added to ${result.updated} repositories (${result.matched} matched).`);
+  console.log(
+    `Label '${label}' added to ${result.updated} repositories (${result.matched} matched).`,
+  );
 }
 
 export async function runLabelRemove(
@@ -46,10 +48,14 @@ export async function runLabelRemove(
     org: options.org,
   });
 
-  console.log(`Label '${label}' removed from ${result.updated} repositories (${result.matched} matched).`);
+  console.log(
+    `Label '${label}' removed from ${result.updated} repositories (${result.matched} matched).`,
+  );
 }
 
-export async function runLabelList(options: LabelListOptions = {}): Promise<void> {
+export async function runLabelList(
+  options: LabelListOptions = {},
+): Promise<void> {
   const rows = await listRepoLabels({
     bypassOrg: options.bypassOrg,
     org: options.org,

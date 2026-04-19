@@ -11,7 +11,7 @@ describe("InitApp", () => {
       const { path, cleanup } = await createEmptyTempDir();
       try {
         const { lastFrame, unmount } = render(
-          <InitApp basePath={path} onComplete={() => {}} />
+          <InitApp basePath={path} onComplete={() => {}} />,
         );
         expect(lastFrame()).toContain("Checking environment");
         unmount();
@@ -24,14 +24,14 @@ describe("InitApp", () => {
       const { path, cleanup } = await createEmptyTempDir();
       try {
         const { lastFrame, unmount } = render(
-          <InitApp basePath={path} onComplete={() => {}} />
+          <InitApp basePath={path} onComplete={() => {}} />,
         );
         await waitFor(
           () =>
             (lastFrame()?.includes("Setup Wizard") ||
               lastFrame()?.includes("Configure")) ??
             false,
-          5000
+          5000,
         );
         expect(lastFrame()).toBeTruthy();
         unmount();
@@ -52,12 +52,12 @@ describe("InitApp", () => {
       // Create a .reposrc.json file (the correct config filename)
       await writeFile(
         join(tempDir, ".reposrc.json"),
-        JSON.stringify({ org: "test" })
+        JSON.stringify({ org: "test" }),
       );
 
       try {
         const { lastFrame, unmount } = render(
-          <InitApp basePath={tempDir} onComplete={() => {}} />
+          <InitApp basePath={tempDir} onComplete={() => {}} />,
         );
 
         // Wait for either "already exists" or moves past checking
@@ -66,7 +66,7 @@ describe("InitApp", () => {
             (lastFrame()?.includes("already exists") ||
               lastFrame()?.includes("Setup Wizard")) ??
             false,
-          5000
+          5000,
         );
 
         // If config detection works correctly
@@ -93,12 +93,12 @@ describe("InitApp", () => {
 
       await writeFile(
         join(tempDir, ".reposrc.json"),
-        JSON.stringify({ org: "test" })
+        JSON.stringify({ org: "test" }),
       );
 
       try {
         const { lastFrame, unmount } = render(
-          <InitApp force={true} basePath={tempDir} onComplete={() => {}} />
+          <InitApp force={true} basePath={tempDir} onComplete={() => {}} />,
         );
 
         // With force, should proceed to wizard
@@ -108,7 +108,7 @@ describe("InitApp", () => {
               lastFrame()?.includes("Configure") ||
               lastFrame()?.includes("gh CLI")) ??
             false,
-          5000
+          5000,
         );
 
         const frame = lastFrame();

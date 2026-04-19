@@ -25,11 +25,11 @@ describe("Parallel Operations Integration", () => {
         items,
         async (item) => {
           // Simulate async work with random delay
-          await new Promise(r => setTimeout(r, Math.random() * 50));
+          await new Promise((r) => setTimeout(r, Math.random() * 50));
           executionOrder.push(item);
           return item * 2;
         },
-        5
+        5,
       );
 
       expect(results.length).toBe(5);
@@ -49,11 +49,11 @@ describe("Parallel Operations Integration", () => {
         async (item) => {
           currentConcurrent++;
           maxConcurrent = Math.max(maxConcurrent, currentConcurrent);
-          await new Promise(r => setTimeout(r, 50));
+          await new Promise((r) => setTimeout(r, 50));
           currentConcurrent--;
           return item;
         },
-        concurrency
+        concurrency,
       );
 
       expect(maxConcurrent).toBeLessThanOrEqual(concurrency);
@@ -66,13 +66,13 @@ describe("Parallel Operations Integration", () => {
       await runParallel(
         items,
         async (item) => {
-          await new Promise(r => setTimeout(r, 10));
+          await new Promise((r) => setTimeout(r, 10));
           return item;
         },
         2,
         (completed, total) => {
           progressReports.push({ completed, total });
-        }
+        },
       );
 
       // Should have progress reports
@@ -95,13 +95,13 @@ describe("Parallel Operations Integration", () => {
           if (processedCount >= 3) {
             shouldCancel = true;
           }
-          await new Promise(r => setTimeout(r, 30));
+          await new Promise((r) => setTimeout(r, 30));
           processedCount++;
           return item;
         },
         2,
         undefined,
-        () => shouldCancel
+        () => shouldCancel,
       );
 
       expect(cancelled).toBe(true);
@@ -120,17 +120,20 @@ describe("Parallel Operations Integration", () => {
             }
             return { value: item * 2, error: null };
           } catch (err) {
-            return { value: null, error: err instanceof Error ? err.message : "unknown" };
+            return {
+              value: null,
+              error: err instanceof Error ? err.message : "unknown",
+            };
           }
         },
-        5
+        5,
       );
 
       // All items should have results
       expect(results.length).toBe(5);
 
-      const successResults = results.filter(r => r?.value !== null);
-      const errorResults = results.filter(r => r?.error !== null);
+      const successResults = results.filter((r) => r?.value !== null);
+      const errorResults = results.filter((r) => r?.error !== null);
 
       expect(successResults.length).toBe(4);
       expect(errorResults.length).toBe(1);
@@ -156,7 +159,9 @@ describe("Parallel Operations Integration", () => {
         }
       }
 
-      const repoPaths = Array.from({ length: 5 }, (_, i) => join(tempDir, `repo-${i + 1}`));
+      const repoPaths = Array.from({ length: 5 }, (_, i) =>
+        join(tempDir, `repo-${i + 1}`),
+      );
 
       const { results } = await runParallel(
         repoPaths,
@@ -164,16 +169,16 @@ describe("Parallel Operations Integration", () => {
           const result = await $`git -C ${repoPath} status --porcelain`.quiet();
           return {
             path: repoPath,
-            isDirty: result.text().trim().length > 0
+            isDirty: result.text().trim().length > 0,
           };
         },
-        5
+        5,
       );
 
       expect(results.length).toBe(5);
 
-      const dirtyRepos = results.filter(r => r?.isDirty);
-      const cleanRepos = results.filter(r => r && !r.isDirty);
+      const dirtyRepos = results.filter((r) => r?.isDirty);
+      const cleanRepos = results.filter((r) => r && !r.isDirty);
 
       expect(dirtyRepos.length).toBe(2); // repos 2 and 4
       expect(cleanRepos.length).toBe(3); // repos 1, 3, and 5
@@ -192,20 +197,26 @@ describe("Parallel Operations Integration", () => {
         await $`git -C ${repoPath} branch feature-branch`.quiet();
       }
 
-      const repoPaths = Array.from({ length: 3 }, (_, i) => join(tempDir, `branch-repo-${i + 1}`));
+      const repoPaths = Array.from({ length: 3 }, (_, i) =>
+        join(tempDir, `branch-repo-${i + 1}`),
+      );
 
       const { results } = await runParallel(
         repoPaths,
         async (repoPath) => {
           await $`git -C ${repoPath} checkout feature-branch`.quiet();
-          const branch = (await $`git -C ${repoPath} branch --show-current`.quiet()).text().trim();
+          const branch = (
+            await $`git -C ${repoPath} branch --show-current`.quiet()
+          )
+            .text()
+            .trim();
           return { path: repoPath, branch };
         },
-        3
+        3,
       );
 
       expect(results.length).toBe(3);
-      expect(results.every(r => r?.branch === "feature-branch")).toBe(true);
+      expect(results.every((r) => r?.branch === "feature-branch")).toBe(true);
     });
   });
 });

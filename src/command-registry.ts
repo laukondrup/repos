@@ -116,7 +116,8 @@ export const TOP_LEVEL_COMMANDS: TopLevelCommandDefinition[] = [
   },
   {
     id: "exclude",
-    description: "Exclude repositories by directory or glob, then sync exclusion state",
+    description:
+      "Exclude repositories by directory or glob, then sync exclusion state",
     overview: {
       category: "repo",
       label: "Exclude",
@@ -174,9 +175,9 @@ export function getRequiredOverviewCommandIds(): string[] {
 }
 
 export function getOverviewCommandIds(): string[] {
-  return TOP_LEVEL_COMMANDS
-    .filter((command) => command.overview)
-    .map((command) => command.id);
+  return TOP_LEVEL_COMMANDS.filter((command) => command.overview).map(
+    (command) => command.id,
+  );
 }
 
 export function getCommandDefinition(id: string): TopLevelCommandDefinition {
@@ -190,12 +191,22 @@ export function getCommandDefinition(id: string): TopLevelCommandDefinition {
 export function getOverviewMenuGroups(): Array<{
   category: CommandCategory;
   label: string;
-  items: Array<{ label: string; value: string; key: string; description: string }>;
+  items: Array<{
+    label: string;
+    value: string;
+    key: string;
+    description: string;
+  }>;
 }> {
   const groups: Array<{
     category: CommandCategory;
     label: string;
-    items: Array<{ label: string; value: string; key: string; description: string }>;
+    items: Array<{
+      label: string;
+      value: string;
+      key: string;
+      description: string;
+    }>;
   }> = [
     { category: "git", label: "Git Operations", items: [] },
     { category: "repo", label: "Management", items: [] },
@@ -204,7 +215,9 @@ export function getOverviewMenuGroups(): Array<{
 
   for (const command of TOP_LEVEL_COMMANDS) {
     if (!command.overview) continue;
-    const group = groups.find((item) => item.category === command.overview?.category);
+    const group = groups.find(
+      (item) => item.category === command.overview?.category,
+    );
     if (!group) continue;
     group.items.push({
       label: command.overview.label,
@@ -239,7 +252,9 @@ export function assertOverviewCoverage(): void {
   );
 }
 
-export function assertProgramRegistrationCoverage(registeredIds: string[]): void {
+export function assertProgramRegistrationCoverage(
+  registeredIds: string[],
+): void {
   const filteredRegistered = registeredIds.filter((id) => id !== "help");
   const expected = sorted(getTopLevelCommandIds());
   const actual = sorted(filteredRegistered);

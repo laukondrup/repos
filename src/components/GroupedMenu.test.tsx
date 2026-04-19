@@ -12,21 +12,40 @@ const testGroups: MenuGroup[] = [
     category: "git",
     label: "Git Operations",
     items: [
-      { label: "Status", value: "status", key: "s", description: "Check status of all repositories" },
-      { label: "Fetch", value: "fetch", key: "f", description: "Fetch updates from remotes" },
+      {
+        label: "Status",
+        value: "status",
+        key: "s",
+        description: "Check status of all repositories",
+      },
+      {
+        label: "Fetch",
+        value: "fetch",
+        key: "f",
+        description: "Fetch updates from remotes",
+      },
     ],
   },
   {
     category: "repo",
     label: "Management",
     items: [
-      { label: "Clone", value: "clone", key: "o", description: "Clone repositories" },
+      {
+        label: "Clone",
+        value: "clone",
+        key: "o",
+        description: "Clone repositories",
+      },
     ],
   },
 ];
 
 // Helper to send keypress with retries (ink stdin can be unreliable)
-async function sendKey(stdin: { write: (s: string) => void }, key: string, retries = 3) {
+async function sendKey(
+  stdin: { write: (s: string) => void },
+  key: string,
+  retries = 3,
+) {
   for (let i = 0; i < retries; i++) {
     stdin.write(key);
     await new Promise((r) => setTimeout(r, 50));
@@ -38,7 +57,7 @@ describe("GroupedMenu", () => {
     test("displays group labels", () => {
       const onSelect = mock(() => {});
       const { lastFrame, unmount } = render(
-        <GroupedMenu groups={testGroups} onSelect={onSelect} />
+        <GroupedMenu groups={testGroups} onSelect={onSelect} />,
       );
 
       const frame = lastFrame();
@@ -50,7 +69,7 @@ describe("GroupedMenu", () => {
     test("displays menu items with hotkeys", () => {
       const onSelect = mock(() => {});
       const { lastFrame, unmount } = render(
-        <GroupedMenu groups={testGroups} onSelect={onSelect} />
+        <GroupedMenu groups={testGroups} onSelect={onSelect} />,
       );
 
       const frame = stripAnsi(lastFrame() ?? "");
@@ -63,7 +82,7 @@ describe("GroupedMenu", () => {
     test("displays description for selected item", () => {
       const onSelect = mock(() => {});
       const { lastFrame, unmount } = render(
-        <GroupedMenu groups={testGroups} onSelect={onSelect} />
+        <GroupedMenu groups={testGroups} onSelect={onSelect} />,
       );
 
       const frame = lastFrame();
@@ -75,7 +94,7 @@ describe("GroupedMenu", () => {
     test("displays keyboard hints footer", () => {
       const onSelect = mock(() => {});
       const { lastFrame, unmount } = render(
-        <GroupedMenu groups={testGroups} onSelect={onSelect} />
+        <GroupedMenu groups={testGroups} onSelect={onSelect} />,
       );
 
       const frame = lastFrame();
@@ -88,7 +107,7 @@ describe("GroupedMenu", () => {
     test("shows selection indicator on first item", () => {
       const onSelect = mock(() => {});
       const { lastFrame, unmount } = render(
-        <GroupedMenu groups={testGroups} onSelect={onSelect} />
+        <GroupedMenu groups={testGroups} onSelect={onSelect} />,
       );
 
       const frame = lastFrame();
@@ -104,7 +123,7 @@ describe("GroupedMenu", () => {
         selectedItem = item;
       });
       const { stdin, unmount } = render(
-        <GroupedMenu groups={testGroups} onSelect={onSelect} />
+        <GroupedMenu groups={testGroups} onSelect={onSelect} />,
       );
 
       await new Promise((r) => setTimeout(r, 50));
@@ -121,7 +140,7 @@ describe("GroupedMenu", () => {
     test("l jumps to first item of next group", async () => {
       const onSelect = mock(() => {});
       const { stdin, lastFrame, unmount } = render(
-        <GroupedMenu groups={testGroups} onSelect={onSelect} />
+        <GroupedMenu groups={testGroups} onSelect={onSelect} />,
       );
 
       expect(lastFrame()).toContain("Check status of all repositories");
@@ -131,7 +150,7 @@ describe("GroupedMenu", () => {
 
       await waitFor(
         () => lastFrame()?.includes("Clone repositories") ?? false,
-        1000
+        1000,
       );
       expect(lastFrame()).toContain("Clone repositories");
       unmount();
@@ -140,20 +159,21 @@ describe("GroupedMenu", () => {
     test("h jumps to first item of previous group", async () => {
       const onSelect = mock(() => {});
       const { stdin, lastFrame, unmount } = render(
-        <GroupedMenu groups={testGroups} onSelect={onSelect} />
+        <GroupedMenu groups={testGroups} onSelect={onSelect} />,
       );
 
       await new Promise((r) => setTimeout(r, 50));
       await sendKey(stdin, "l");
       await waitFor(
         () => lastFrame()?.includes("Clone repositories") ?? false,
-        1000
+        1000,
       );
 
       await sendKey(stdin, "h");
       await waitFor(
-        () => lastFrame()?.includes("Check status of all repositories") ?? false,
-        1000
+        () =>
+          lastFrame()?.includes("Check status of all repositories") ?? false,
+        1000,
       );
       expect(lastFrame()).toContain("Check status of all repositories");
       unmount();
@@ -162,20 +182,21 @@ describe("GroupedMenu", () => {
     test("l wraps from last group to first group", async () => {
       const onSelect = mock(() => {});
       const { stdin, lastFrame, unmount } = render(
-        <GroupedMenu groups={testGroups} onSelect={onSelect} />
+        <GroupedMenu groups={testGroups} onSelect={onSelect} />,
       );
 
       await new Promise((r) => setTimeout(r, 50));
       await sendKey(stdin, "l");
       await waitFor(
         () => lastFrame()?.includes("Clone repositories") ?? false,
-        1000
+        1000,
       );
 
       await sendKey(stdin, "l");
       await waitFor(
-        () => lastFrame()?.includes("Check status of all repositories") ?? false,
-        1000
+        () =>
+          lastFrame()?.includes("Check status of all repositories") ?? false,
+        1000,
       );
       expect(lastFrame()).toContain("Check status of all repositories");
       unmount();
@@ -184,7 +205,7 @@ describe("GroupedMenu", () => {
     test("h wraps from first group to last group", async () => {
       const onSelect = mock(() => {});
       const { stdin, lastFrame, unmount } = render(
-        <GroupedMenu groups={testGroups} onSelect={onSelect} />
+        <GroupedMenu groups={testGroups} onSelect={onSelect} />,
       );
 
       expect(lastFrame()).toContain("Check status of all repositories");
@@ -193,7 +214,7 @@ describe("GroupedMenu", () => {
       await sendKey(stdin, "h");
       await waitFor(
         () => lastFrame()?.includes("Clone repositories") ?? false,
-        1000
+        1000,
       );
       expect(lastFrame()).toContain("Clone repositories");
       unmount();
@@ -207,7 +228,7 @@ describe("GroupedMenu", () => {
         selectedItem = item;
       });
       const { stdin, unmount } = render(
-        <GroupedMenu groups={testGroups} onSelect={onSelect} />
+        <GroupedMenu groups={testGroups} onSelect={onSelect} />,
       );
 
       await new Promise((r) => setTimeout(r, 50));
@@ -225,7 +246,7 @@ describe("GroupedMenu", () => {
         selectedItem = item;
       });
       const { stdin, unmount } = render(
-        <GroupedMenu groups={testGroups} onSelect={onSelect} />
+        <GroupedMenu groups={testGroups} onSelect={onSelect} />,
       );
 
       await new Promise((r) => setTimeout(r, 50));
@@ -243,7 +264,7 @@ describe("GroupedMenu", () => {
         selectedItem = item;
       });
       const { stdin, unmount } = render(
-        <GroupedMenu groups={testGroups} onSelect={onSelect} />
+        <GroupedMenu groups={testGroups} onSelect={onSelect} />,
       );
 
       await new Promise((r) => setTimeout(r, 50));
@@ -258,7 +279,7 @@ describe("GroupedMenu", () => {
     test("invalid hotkey does nothing", async () => {
       const onSelect = mock(() => {});
       const { stdin, unmount } = render(
-        <GroupedMenu groups={testGroups} onSelect={onSelect} />
+        <GroupedMenu groups={testGroups} onSelect={onSelect} />,
       );
 
       await new Promise((r) => setTimeout(r, 50));
@@ -285,7 +306,7 @@ describe("GroupedMenu", () => {
 
       const onSelect = mock(() => {});
       const { lastFrame, unmount } = render(
-        <GroupedMenu groups={groupsWithoutKeys} onSelect={onSelect} />
+        <GroupedMenu groups={groupsWithoutKeys} onSelect={onSelect} />,
       );
 
       const frame = lastFrame();
@@ -299,7 +320,7 @@ describe("GroupedMenu", () => {
     test("renders all groups in order", () => {
       const onSelect = mock(() => {});
       const { lastFrame, unmount } = render(
-        <GroupedMenu groups={testGroups} onSelect={onSelect} />
+        <GroupedMenu groups={testGroups} onSelect={onSelect} />,
       );
 
       const frame = lastFrame()!;
@@ -314,7 +335,7 @@ describe("GroupedMenu", () => {
     test("renders correct number of items", () => {
       const onSelect = mock(() => {});
       const { lastFrame, unmount } = render(
-        <GroupedMenu groups={testGroups} onSelect={onSelect} />
+        <GroupedMenu groups={testGroups} onSelect={onSelect} />,
       );
 
       const frame = lastFrame();

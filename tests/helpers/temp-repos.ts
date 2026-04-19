@@ -8,7 +8,10 @@ import { randomUUID } from "crypto";
  * Create an empty temp directory for test isolation.
  * Prevents tests from operating on the actual repository.
  */
-export async function createEmptyTempDir(): Promise<{ path: string; cleanup: () => Promise<void> }> {
+export async function createEmptyTempDir(): Promise<{
+  path: string;
+  cleanup: () => Promise<void>;
+}> {
   const path = join(tmpdir(), `repos-test-empty-${randomUUID().slice(0, 8)}`);
   await mkdir(path, { recursive: true });
   return {
@@ -38,7 +41,9 @@ export interface TempRepoOptions {
 /**
  * Create a temporary git repository for testing
  */
-export async function createTempRepo(options: TempRepoOptions = {}): Promise<TempRepo> {
+export async function createTempRepo(
+  options: TempRepoOptions = {},
+): Promise<TempRepo> {
   const basePath = join(tmpdir(), "repos-test");
   await mkdir(basePath, { recursive: true });
 
@@ -108,9 +113,11 @@ export async function createTempRepo(options: TempRepoOptions = {}): Promise<Tem
 /**
  * Create multiple temporary repos in a parent directory
  */
-export async function createTempRepoDir(
-  repos: TempRepoOptions[]
-): Promise<{ basePath: string; repos: TempRepo[]; cleanup: () => Promise<void> }> {
+export async function createTempRepoDir(repos: TempRepoOptions[]): Promise<{
+  basePath: string;
+  repos: TempRepo[];
+  cleanup: () => Promise<void>;
+}> {
   const basePath = join(tmpdir(), `repos-test-${randomUUID().slice(0, 8)}`);
   await mkdir(basePath, { recursive: true });
   await writeFile(

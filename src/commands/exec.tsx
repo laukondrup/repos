@@ -2,7 +2,11 @@ import React, { useState, useEffect, useRef } from "react";
 import { render, Box, Text, useInput } from "ink";
 import Spinner from "ink-spinner";
 import { selectLocalRepos } from "../lib/repo-selection.js";
-import { execInRepo, isRepoLocallyActiveWithinDays, type ExecResult } from "../lib/git.js";
+import {
+  execInRepo,
+  isRepoLocallyActiveWithinDays,
+  type ExecResult,
+} from "../lib/git.js";
 import { loadConfig } from "../lib/config.js";
 import { ProgressBar } from "../components/ProgressBar.js";
 import { Divider } from "../components/Divider.js";
@@ -15,7 +19,13 @@ interface ExecAppProps {
 
 type Phase = "finding" | "executing" | "cancelling" | "done" | "cancelled";
 
-function ResultOutput({ result, quiet }: { result: ExecResult; quiet: boolean }) {
+function ResultOutput({
+  result,
+  quiet,
+}: {
+  result: ExecResult;
+  quiet: boolean;
+}) {
   if (quiet && !result.output) {
     return null;
   }
@@ -27,14 +37,18 @@ function ResultOutput({ result, quiet }: { result: ExecResult; quiet: boolean })
     <Box flexDirection="column" marginBottom={1}>
       <Box>
         <Text color={statusColor}>{statusIcon} </Text>
-        <Text bold color="cyan">{result.name}</Text>
+        <Text bold color="cyan">
+          {result.name}
+        </Text>
         {result.exitCode !== 0 && (
           <Text dimColor> (exit code: {result.exitCode})</Text>
         )}
       </Box>
       {result.output && (
         <Box paddingLeft={2}>
-          <Text color={result.success ? undefined : "red"}>{result.output}</Text>
+          <Text color={result.success ? undefined : "red"}>
+            {result.output}
+          </Text>
         </Box>
       )}
     </Box>
@@ -94,8 +108,8 @@ export function ExecApp({ options, onComplete }: ExecAppProps) {
             options.days !== undefined
               ? `No repositories active within ${options.days} days`
               : options.filter
-              ? `No repositories match pattern: ${options.filter}`
-              : "No repositories found in current directory"
+                ? `No repositories match pattern: ${options.filter}`
+                : "No repositories found in current directory",
           );
           setPhase("done");
           return;
@@ -152,7 +166,11 @@ export function ExecApp({ options, onComplete }: ExecAppProps) {
       } else if ((phase === "done" || phase === "cancelled") && onComplete) {
         onComplete();
       }
-    } else if (key.delete && (phase === "done" || phase === "cancelled") && onComplete) {
+    } else if (
+      key.delete &&
+      (phase === "done" || phase === "cancelled") &&
+      onComplete
+    ) {
       onComplete();
     }
   });
@@ -183,15 +201,15 @@ export function ExecApp({ options, onComplete }: ExecAppProps) {
     );
   }
 
-  const successful = results.filter(r => r.success).length;
-  const failed = results.filter(r => !r.success).length;
-  const withOutput = results.filter(r => r.output).length;
+  const successful = results.filter((r) => r.success).length;
+  const failed = results.filter((r) => !r.success).length;
+  const withOutput = results.filter((r) => r.output).length;
   const duration = Math.round((Date.now() - startTime) / 1000);
 
   const displayCmd = options.command
-    ? (options.command.length > 40
-        ? options.command.slice(0, 37) + "..."
-        : options.command)
+    ? options.command.length > 40
+      ? options.command.slice(0, 37) + "..."
+      : options.command
     : "(no command)";
 
   return (
@@ -200,7 +218,10 @@ export function ExecApp({ options, onComplete }: ExecAppProps) {
         <Text bold color="cyan">
           Exec: {displayCmd}
         </Text>
-        <Text dimColor> • {repos.length} repos • parallel: {parallel}</Text>
+        <Text dimColor>
+          {" "}
+          • {repos.length} repos • parallel: {parallel}
+        </Text>
       </Box>
 
       {(phase === "executing" || phase === "cancelling") && (
@@ -218,7 +239,9 @@ export function ExecApp({ options, onComplete }: ExecAppProps) {
                 <Spinner type="dots" />
               </Text>
               <Box marginLeft={1}>
-                <Text color="yellow">Cancelling... waiting for in-progress operations to finish</Text>
+                <Text color="yellow">
+                  Cancelling... waiting for in-progress operations to finish
+                </Text>
               </Box>
             </Box>
           ) : (
@@ -231,8 +254,12 @@ export function ExecApp({ options, onComplete }: ExecAppProps) {
 
       {(phase === "done" || phase === "cancelled") && (
         <Box flexDirection="column">
-          {results.map(r => (
-            <ResultOutput key={r.name} result={r} quiet={options.quiet ?? false} />
+          {results.map((r) => (
+            <ResultOutput
+              key={r.name}
+              result={r}
+              quiet={options.quiet ?? false}
+            />
           ))}
         </Box>
       )}
@@ -293,7 +320,8 @@ export function ExecApp({ options, onComplete }: ExecAppProps) {
       {phase === "cancelled" && (
         <Box marginTop={1}>
           <Text color="yellow">
-            Operation cancelled. {results.length} of {repos.length} repositories processed.
+            Operation cancelled. {results.length} of {repos.length} repositories
+            processed.
           </Text>
         </Box>
       )}

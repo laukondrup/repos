@@ -188,7 +188,9 @@ describe("Git Operations Integration", () => {
       await $`git -C ${repoPath} add .`.quiet();
       await $`git -C ${repoPath} commit -m "Initial commit"`.quiet();
 
-      const result = await checkoutBranch(repoPath, "new-feature", { create: true });
+      const result = await checkoutBranch(repoPath, "new-feature", {
+        create: true,
+      });
 
       expect(result.success).toBe(true);
       expect(result.message).toBe("created");

@@ -14,16 +14,11 @@ function commandBlock(command: string): string {
 
 describe("CLI dry-run aliases", () => {
   test("uses -n alias for every --dry-run option", () => {
-    const commandsWithDryRun = [
-      "fetch",
-      "pull",
-      "clone",
-      "clean",
-    ];
+    const commandsWithDryRun = ["fetch", "pull", "clone", "clean"];
 
     for (const command of commandsWithDryRun) {
       const block = commandBlock(command);
-      expect(block).toContain('-n, --dry-run');
+      expect(block).toContain("-n, --dry-run");
     }
   });
 });
@@ -43,7 +38,7 @@ describe("CLI exclusion flags", () => {
 
     for (const command of commands) {
       const block = commandBlock(command);
-      expect(block).toContain('--no-exclude');
+      expect(block).toContain("--no-exclude");
     }
   });
 
@@ -91,7 +86,7 @@ describe("CLI org scope bypass flags", () => {
 
     for (const command of commands) {
       const block = commandBlock(command);
-      expect(block).toContain('--bypass-org');
+      expect(block).toContain("--bypass-org");
     }
   });
 
@@ -143,7 +138,7 @@ describe("CLI org override flags", () => {
 
     for (const command of commands) {
       const block = commandBlock(command);
-      expect(block).toContain('--org <name>');
+      expect(block).toContain("--org <name>");
     }
   });
 
@@ -191,7 +186,7 @@ describe("CLI label filters", () => {
 
     for (const command of commands) {
       const block = commandBlock(command);
-      expect(block).toContain('--label <label>');
+      expect(block).toContain("--label <label>");
     }
   });
 
@@ -223,22 +218,22 @@ describe("CLI label filters", () => {
 describe("CLI exec options", () => {
   test("supports --days for local activity filtering", () => {
     const block = commandBlock("exec <command>");
-    expect(block).toContain('--days <number>');
+    expect(block).toContain("--days <number>");
   });
 });
 
 describe("CLI list options", () => {
   test("supports --days and --no-exclude for repo preview selection", () => {
     const block = commandBlock("list");
-    expect(block).toContain('--days <number>');
-    expect(block).toContain('--no-exclude');
+    expect(block).toContain("--days <number>");
+    expect(block).toContain("--no-exclude");
   });
 });
 
 describe("CLI exclude options", () => {
   test("supports repo args and --glob for exclusions", () => {
     const block = commandBlock("exclude [repos...]");
-    expect(block).toContain('--glob <pattern>');
+    expect(block).toContain("--glob <pattern>");
   });
 });
 

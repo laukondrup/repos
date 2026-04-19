@@ -17,7 +17,9 @@ export interface FormField {
 interface OptionsFormProps {
   title: string;
   fields: FormField[];
-  onSubmit: (values: Record<string, boolean | string | number | undefined>) => void;
+  onSubmit: (
+    values: Record<string, boolean | string | number | undefined>,
+  ) => void;
   onCancel: () => void;
   submitLabel?: string;
 }
@@ -29,7 +31,9 @@ export function OptionsForm({
   onCancel,
   submitLabel = "Start",
 }: OptionsFormProps) {
-  const [values, setValues] = useState<Record<string, boolean | string | number | undefined>>(() => {
+  const [values, setValues] = useState<
+    Record<string, boolean | string | number | undefined>
+  >(() => {
     const initial: Record<string, boolean | string | number | undefined> = {};
     for (const field of fields) {
       initial[field.name] = field.defaultValue;
@@ -89,7 +93,8 @@ export function OptionsForm({
       return;
     }
 
-    const finalValues: Record<string, boolean | string | number | undefined> = {};
+    const finalValues: Record<string, boolean | string | number | undefined> =
+      {};
     for (const field of fields) {
       const val = values[field.name];
       if (field.type === "number" && typeof val === "string") {
@@ -172,7 +177,10 @@ export function OptionsForm({
           <Text color={isFocused ? "cyan" : undefined}>
             [{isChecked ? "✓" : " "}]
           </Text>
-          <Text color={isFocused ? "white" : undefined} dimColor={!isFocused}> {field.label}</Text>
+          <Text color={isFocused ? "white" : undefined} dimColor={!isFocused}>
+            {" "}
+            {field.label}
+          </Text>
         </Box>
       );
     }
@@ -186,15 +194,22 @@ export function OptionsForm({
           <Text color={isFocused ? "cyan" : undefined}>
             {isFocused ? "❯ " : "  "}
           </Text>
-          <Text color={isFocused ? "white" : undefined} dimColor={!isFocused}>{field.label}</Text>
+          <Text color={isFocused ? "white" : undefined} dimColor={!isFocused}>
+            {field.label}
+          </Text>
           {field.required && <Text color="red">*</Text>}
-          <Text color={isFocused ? "white" : undefined} dimColor={!isFocused}>: </Text>
+          <Text color={isFocused ? "white" : undefined} dimColor={!isFocused}>
+            :{" "}
+          </Text>
           {isEditingThis ? (
             <TextInput
               value={displayValue}
               onChange={(newValue) => {
                 if (field.type === "number") {
-                  handleNumberChange(field.name, newValue.replace(/[^0-9]/g, ""));
+                  handleNumberChange(
+                    field.name,
+                    newValue.replace(/[^0-9]/g, ""),
+                  );
                 } else {
                   handleTextChange(field.name, newValue);
                 }
@@ -203,16 +218,21 @@ export function OptionsForm({
               placeholder={field.placeholder}
             />
           ) : (
-            <Text color={displayValue ? "green" : undefined} dimColor={!displayValue}>
+            <Text
+              color={displayValue ? "green" : undefined}
+              dimColor={!displayValue}
+            >
               {displayValue || field.placeholder || "(empty)"}
             </Text>
           )}
         </Box>
-        {isFocused && !isEditing && (field.type === "text" || field.type === "number") && (
-          <Box marginLeft={2}>
-            <Text dimColor>Space to edit</Text>
-          </Box>
-        )}
+        {isFocused &&
+          !isEditing &&
+          (field.type === "text" || field.type === "number") && (
+            <Box marginLeft={2}>
+              <Text dimColor>Space to edit</Text>
+            </Box>
+          )}
       </Box>
     );
   };

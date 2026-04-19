@@ -2,7 +2,10 @@ import { describe, test, expect } from "bun:test";
 import React from "react";
 import { render } from "ink-testing-library";
 import { CleanApp } from "./clean.js";
-import { createTempRepoDir, createEmptyTempDir } from "../../tests/helpers/temp-repos.js";
+import {
+  createTempRepoDir,
+  createEmptyTempDir,
+} from "../../tests/helpers/temp-repos.js";
 import { waitFor } from "../../tests/helpers/ink-test-utils.js";
 import { writeFile } from "fs/promises";
 import { join } from "path";
@@ -13,7 +16,7 @@ describe("CleanApp", () => {
       const { path, cleanup } = await createEmptyTempDir();
       try {
         const { lastFrame, unmount } = render(
-          <CleanApp options={{ basePath: path }} onComplete={() => {}} />
+          <CleanApp options={{ basePath: path }} onComplete={() => {}} />,
         );
         expect(lastFrame()).toContain("Finding repositories");
         unmount();
@@ -26,7 +29,7 @@ describe("CleanApp", () => {
       const { path, cleanup } = await createEmptyTempDir();
       try {
         const { lastFrame, unmount } = render(
-          <CleanApp options={{ basePath: path }} onComplete={() => {}} />
+          <CleanApp options={{ basePath: path }} onComplete={() => {}} />,
         );
         await waitFor(() => lastFrame()?.includes("No repositories") ?? false);
         expect(lastFrame()).toContain("No repositories found");
@@ -45,10 +48,15 @@ describe("CleanApp", () => {
 
       try {
         const { lastFrame, unmount } = render(
-          <CleanApp options={{ basePath }} onComplete={() => {}} />
+          <CleanApp options={{ basePath }} onComplete={() => {}} />,
         );
 
-        await waitFor(() => lastFrame()?.includes("All repositories are already clean") ?? false, 5000);
+        await waitFor(
+          () =>
+            lastFrame()?.includes("All repositories are already clean") ??
+            false,
+          5000,
+        );
         expect(lastFrame()).toContain("All repositories are already clean");
         unmount();
       } finally {
@@ -67,7 +75,7 @@ describe("CleanApp", () => {
 
       try {
         const { lastFrame, unmount } = render(
-          <CleanApp options={{ basePath }} onComplete={() => {}} />
+          <CleanApp options={{ basePath }} onComplete={() => {}} />,
         );
 
         await waitFor(() => lastFrame()?.includes("WARNING") ?? false, 5000);
@@ -90,7 +98,10 @@ describe("CleanApp", () => {
 
       try {
         const { lastFrame, unmount } = render(
-          <CleanApp options={{ basePath, dryRun: true }} onComplete={() => {}} />
+          <CleanApp
+            options={{ basePath, dryRun: true }}
+            onComplete={() => {}}
+          />,
         );
 
         await waitFor(() => lastFrame()?.includes("Dry Run") ?? false, 5000);
@@ -114,7 +125,10 @@ describe("CleanApp", () => {
 
       try {
         const { lastFrame, unmount } = render(
-          <CleanApp options={{ basePath, force: true }} onComplete={() => {}} />
+          <CleanApp
+            options={{ basePath, force: true }}
+            onComplete={() => {}}
+          />,
         );
 
         // Should skip confirmation and go to cleaning
@@ -123,7 +137,7 @@ describe("CleanApp", () => {
             (lastFrame()?.includes("Cleaning") ||
               lastFrame()?.includes("cleaned")) ??
             false,
-          5000
+          5000,
         );
 
         const frame = lastFrame();
@@ -148,7 +162,10 @@ describe("CleanApp", () => {
 
       try {
         const { lastFrame, unmount } = render(
-          <CleanApp options={{ basePath, filter: "api-*", dryRun: true }} onComplete={() => {}} />
+          <CleanApp
+            options={{ basePath, filter: "api-*", dryRun: true }}
+            onComplete={() => {}}
+          />,
         );
 
         await waitFor(() => lastFrame()?.includes("Dry Run") ?? false, 5000);

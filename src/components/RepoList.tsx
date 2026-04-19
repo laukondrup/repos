@@ -18,9 +18,7 @@ export function RepoList({ repos, maxShow = 10 }: RepoListProps) {
           • {repo}
         </Text>
       ))}
-      {remaining > 0 && (
-        <Text dimColor>... and {remaining} more</Text>
-      )}
+      {remaining > 0 && <Text dimColor>... and {remaining} more</Text>}
     </Box>
   );
 }
@@ -92,9 +90,7 @@ export function ResultList({
           </Box>
         );
       })}
-      {remaining > 0 && (
-        <Text dimColor>... and {remaining} more</Text>
-      )}
+      {remaining > 0 && <Text dimColor>... and {remaining} more</Text>}
     </Box>
   );
 }
@@ -127,11 +123,8 @@ export function OperationStats({
         <Text color="green">Successful: {successful}</Text>
         {skipped > 0 && <Text color="yellow">Skipped: {skipped}</Text>}
         {failed > 0 && <Text color="red">Failed: {failed}</Text>}
-        {duration !== undefined && (
-          <Text dimColor>Duration: {duration}s</Text>
-        )}
+        {duration !== undefined && <Text dimColor>Duration: {duration}s</Text>}
       </Box>
     </Box>
   );
 }
-

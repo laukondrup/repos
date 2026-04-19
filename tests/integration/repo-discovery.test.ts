@@ -2,7 +2,11 @@ import { describe, test, expect, beforeEach, afterEach } from "bun:test";
 import { $ } from "bun";
 import { mkdir, rm, writeFile } from "fs/promises";
 import { join } from "path";
-import { findRepos, filterRepos, getAllRepoStatuses } from "../../src/lib/repos.js";
+import {
+  findRepos,
+  filterRepos,
+  getAllRepoStatuses,
+} from "../../src/lib/repos.js";
 
 describe("Repository Discovery Integration", () => {
   let tempDir: string;
@@ -26,9 +30,9 @@ describe("Repository Discovery Integration", () => {
       const repos = await findRepos(tempDir);
 
       expect(repos.length).toBe(3);
-      expect(repos.map(r => r.split("/").pop())).toContain("repo-a");
-      expect(repos.map(r => r.split("/").pop())).toContain("repo-b");
-      expect(repos.map(r => r.split("/").pop())).toContain("repo-c");
+      expect(repos.map((r) => r.split("/").pop())).toContain("repo-a");
+      expect(repos.map((r) => r.split("/").pop())).toContain("repo-b");
+      expect(repos.map((r) => r.split("/").pop())).toContain("repo-c");
     });
 
     test("returns empty array when no repos found", async () => {
@@ -85,9 +89,9 @@ describe("Repository Discovery Integration", () => {
       const filtered = filterRepos(repos, "api-*");
 
       expect(filtered.length).toBe(2);
-      expect(filtered.some(r => r.includes("api-server"))).toBe(true);
-      expect(filtered.some(r => r.includes("api-client"))).toBe(true);
-      expect(filtered.some(r => r.includes("web-server"))).toBe(false);
+      expect(filtered.some((r) => r.includes("api-server"))).toBe(true);
+      expect(filtered.some((r) => r.includes("api-client"))).toBe(true);
+      expect(filtered.some((r) => r.includes("web-server"))).toBe(false);
     });
 
     test("filters case-insensitively", async () => {
@@ -139,8 +143,8 @@ describe("Repository Discovery Integration", () => {
 
       expect(statuses.length).toBe(2);
 
-      const cleanStatus = statuses.find(s => s.name === "clean-repo");
-      const dirtyStatus = statuses.find(s => s.name === "dirty-repo");
+      const cleanStatus = statuses.find((s) => s.name === "clean-repo");
+      const dirtyStatus = statuses.find((s) => s.name === "dirty-repo");
 
       expect(cleanStatus?.modified).toBe(0);
       expect(dirtyStatus?.modified).toBe(1);

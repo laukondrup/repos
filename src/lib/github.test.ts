@@ -97,7 +97,9 @@ describe("github.ts", () => {
 
     await listUserRepos("laukondrup");
 
-    expect(calledUrls.some((url) => url.includes("/users/laukondrup/repos?"))).toBe(true);
+    expect(
+      calledUrls.some((url) => url.includes("/users/laukondrup/repos?")),
+    ).toBe(true);
     expect(calledUrls.some((url) => url.includes("/user/repos?"))).toBe(false);
   });
 });

@@ -4,14 +4,26 @@ const source = await Bun.file(new URL("./App.tsx", import.meta.url)).text();
 
 function caseBlock(command: string): string {
   const escaped = command.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const regex = new RegExp(`case "${escaped}":[\\s\\S]*?return \\[([\\s\\S]*?)\\];`, "m");
+  const regex = new RegExp(
+    `case "${escaped}":[\\s\\S]*?return \\[([\\s\\S]*?)\\];`,
+    "m",
+  );
   const match = source.match(regex);
   return match?.[1] ?? "";
 }
 
 describe("interactive local repo filtering", () => {
   test("exposes labels, include-excluded, and bypass-org toggles for local repo commands", () => {
-    const commands = ["status", "fetch", "pull", "diff", "checkout", "exec", "list", "clean"];
+    const commands = [
+      "status",
+      "fetch",
+      "pull",
+      "diff",
+      "checkout",
+      "exec",
+      "list",
+      "clean",
+    ];
 
     for (const command of commands) {
       const block = caseBlock(command);

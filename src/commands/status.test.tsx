@@ -2,7 +2,10 @@ import { describe, test, expect } from "bun:test";
 import React from "react";
 import { render } from "ink-testing-library";
 import { StatusApp } from "./status.js";
-import { createTempRepoDir, createEmptyTempDir } from "../../tests/helpers/temp-repos.js";
+import {
+  createTempRepoDir,
+  createEmptyTempDir,
+} from "../../tests/helpers/temp-repos.js";
 import { waitFor } from "../../tests/helpers/ink-test-utils.js";
 
 describe("StatusApp", () => {
@@ -11,7 +14,7 @@ describe("StatusApp", () => {
       const { path, cleanup } = await createEmptyTempDir();
       try {
         const { lastFrame, unmount } = render(
-          <StatusApp options={{ basePath: path }} onComplete={() => {}} />
+          <StatusApp options={{ basePath: path }} onComplete={() => {}} />,
         );
         expect(lastFrame()).toContain("Finding repositories");
         unmount();
@@ -24,7 +27,7 @@ describe("StatusApp", () => {
       const { path, cleanup } = await createEmptyTempDir();
       try {
         const { lastFrame, unmount } = render(
-          <StatusApp options={{ basePath: path }} onComplete={() => {}} />
+          <StatusApp options={{ basePath: path }} onComplete={() => {}} />,
         );
         await waitFor(() => lastFrame()?.includes("No repositories") ?? false);
         expect(lastFrame()).toContain("No repositories found");
@@ -41,10 +44,15 @@ describe("StatusApp", () => {
 
       try {
         const { lastFrame, unmount } = render(
-          <StatusApp options={{ basePath, filter: "nonexistent-*" }} onComplete={() => {}} />
+          <StatusApp
+            options={{ basePath, filter: "nonexistent-*" }}
+            onComplete={() => {}}
+          />,
         );
 
-        await waitFor(() => lastFrame()?.includes("No repositories match") ?? false);
+        await waitFor(
+          () => lastFrame()?.includes("No repositories match") ?? false,
+        );
         expect(lastFrame()).toContain("No repositories match pattern");
 
         unmount();
@@ -61,7 +69,7 @@ describe("StatusApp", () => {
 
       try {
         const { lastFrame, unmount } = render(
-          <StatusApp options={{ basePath }} onComplete={() => {}} />
+          <StatusApp options={{ basePath }} onComplete={() => {}} />,
         );
 
         await waitFor(
@@ -69,7 +77,7 @@ describe("StatusApp", () => {
             (lastFrame()?.includes("Checking Status") ||
               lastFrame()?.includes("Repository Status")) ??
             false,
-          3000
+          3000,
         );
 
         const frame = lastFrame();
@@ -89,7 +97,7 @@ describe("StatusApp", () => {
 
       try {
         const { lastFrame, unmount } = render(
-          <StatusApp options={{ basePath }} onComplete={() => {}} />
+          <StatusApp options={{ basePath }} onComplete={() => {}} />,
         );
 
         await waitFor(() => lastFrame()?.includes("Summary:") ?? false, 5000);
@@ -115,7 +123,10 @@ describe("StatusApp", () => {
 
       try {
         const { lastFrame, unmount } = render(
-          <StatusApp options={{ basePath, quiet: true }} onComplete={() => {}} />
+          <StatusApp
+            options={{ basePath, quiet: true }}
+            onComplete={() => {}}
+          />,
         );
 
         await waitFor(() => lastFrame()?.includes("Summary:") ?? false, 5000);
@@ -137,7 +148,10 @@ describe("StatusApp", () => {
 
       try {
         const { lastFrame, unmount } = render(
-          <StatusApp options={{ basePath, summary: true }} onComplete={() => {}} />
+          <StatusApp
+            options={{ basePath, summary: true }}
+            onComplete={() => {}}
+          />,
         );
 
         await waitFor(() => lastFrame()?.includes("Summary") ?? false, 5000);
@@ -158,7 +172,10 @@ describe("StatusApp", () => {
 
       try {
         const { lastFrame, unmount } = render(
-          <StatusApp options={{ basePath, filter: "api-*" }} onComplete={() => {}} />
+          <StatusApp
+            options={{ basePath, filter: "api-*" }}
+            onComplete={() => {}}
+          />,
         );
 
         await waitFor(() => lastFrame()?.includes("Summary:") ?? false, 5000);
@@ -188,7 +205,7 @@ describe("StatusApp", () => {
 
       try {
         const { lastFrame, stdin, unmount } = render(
-          <StatusApp options={{ basePath }} onComplete={onComplete} />
+          <StatusApp options={{ basePath }} onComplete={onComplete} />,
         );
 
         await waitFor(() => lastFrame()?.includes("⌫/Esc Back") ?? false, 5000);

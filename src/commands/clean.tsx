@@ -6,16 +6,31 @@ import { selectLocalRepos } from "../lib/repo-selection.js";
 import { cleanRepo } from "../lib/git.js";
 import { Confirm } from "../components/Confirm.js";
 import { ProgressBar } from "../components/ProgressBar.js";
-import { RepoList, ResultList, OperationStats } from "../components/RepoList.js";
+import {
+  RepoList,
+  ResultList,
+  OperationStats,
+} from "../components/RepoList.js";
 import { Divider } from "../components/Divider.js";
-import type { CleanupOptions, RepoStatus, RepoOperationResult } from "../types.js";
+import type {
+  CleanupOptions,
+  RepoStatus,
+  RepoOperationResult,
+} from "../types.js";
 
 interface CleanAppProps {
   options: CleanupOptions;
   onComplete?: () => void;
 }
 
-type Phase = "finding" | "confirming" | "cleaning" | "cancelling" | "done" | "confirmLiveRun" | "cancelled";
+type Phase =
+  | "finding"
+  | "confirming"
+  | "cleaning"
+  | "cancelling"
+  | "done"
+  | "confirmLiveRun"
+  | "cancelled";
 
 export function CleanApp({ options, onComplete }: CleanAppProps) {
   const [phase, setPhase] = useState<Phase>("finding");
@@ -29,7 +44,11 @@ export function CleanApp({ options, onComplete }: CleanAppProps) {
   const cancelledRef = useRef(false);
 
   useEffect(() => {
-    if (dirtyRepos.length > 0 && !isDryRun && (phase === "confirming" || phase === "cleaning")) {
+    if (
+      dirtyRepos.length > 0 &&
+      !isDryRun &&
+      (phase === "confirming" || phase === "cleaning")
+    ) {
       return;
     }
 
@@ -48,7 +67,7 @@ export function CleanApp({ options, onComplete }: CleanAppProps) {
           setError(
             options.filter
               ? `No repositories match pattern: ${options.filter}`
-              : "No repositories found in current directory"
+              : "No repositories found in current directory",
           );
           setPhase("done");
           return;
@@ -165,7 +184,11 @@ export function CleanApp({ options, onComplete }: CleanAppProps) {
       } else if ((phase === "done" || phase === "cancelled") && onComplete) {
         onComplete();
       }
-    } else if (key.delete && (phase === "done" || phase === "cancelled") && onComplete) {
+    } else if (
+      key.delete &&
+      (phase === "done" || phase === "cancelled") &&
+      onComplete
+    ) {
       onComplete();
     }
   });
@@ -273,8 +296,12 @@ export function CleanApp({ options, onComplete }: CleanAppProps) {
     const repoNames = dirtyRepos.map((r) => r.name);
     const totalChanges = dirtyRepos.reduce(
       (sum, r) =>
-        sum + r.modified + r.staged + r.deleted + (options.all ? r.untracked : 0),
-      0
+        sum +
+        r.modified +
+        r.staged +
+        r.deleted +
+        (options.all ? r.untracked : 0),
+      0,
     );
 
     return (
@@ -292,9 +319,7 @@ export function CleanApp({ options, onComplete }: CleanAppProps) {
         <Box marginY={1} paddingLeft={2}>
           <RepoList repos={repoNames} maxShow={10} />
         </Box>
-        <Text dimColor>
-          Total files affected: ~{totalChanges}
-        </Text>
+        <Text dimColor>Total files affected: ~{totalChanges}</Text>
         <Box marginTop={1}>
           <Confirm
             message="Are you sure you want to proceed?"
@@ -334,7 +359,9 @@ export function CleanApp({ options, onComplete }: CleanAppProps) {
                 <Spinner type="dots" />
               </Text>
               <Box marginLeft={1}>
-                <Text color="yellow">Cancelling... waiting for in-progress operations to finish</Text>
+                <Text color="yellow">
+                  Cancelling... waiting for in-progress operations to finish
+                </Text>
               </Box>
             </Box>
           ) : (
@@ -347,8 +374,19 @@ export function CleanApp({ options, onComplete }: CleanAppProps) {
 
       {results.length > 0 && (
         <Box flexDirection="column" marginBottom={1}>
-          {(phase === "cleaning" || phase === "cancelling") && <Divider marginTop={1} marginBottom={1} />}
-          <ResultList results={results} maxShow={phase === "done" || phase === "cancelled" || phase === "cancelling" ? 50 : 10} />
+          {(phase === "cleaning" || phase === "cancelling") && (
+            <Divider marginTop={1} marginBottom={1} />
+          )}
+          <ResultList
+            results={results}
+            maxShow={
+              phase === "done" ||
+              phase === "cancelled" ||
+              phase === "cancelling"
+                ? 50
+                : 10
+            }
+          />
         </Box>
       )}
 
@@ -358,14 +396,17 @@ export function CleanApp({ options, onComplete }: CleanAppProps) {
             total={dirtyRepos.length}
             successful={successful}
             failed={failed}
-            skipped={phase === "cancelled" ? dirtyRepos.length - results.length : 0}
+            skipped={
+              phase === "cancelled" ? dirtyRepos.length - results.length : 0
+            }
             duration={duration}
             operation="cleaned"
           />
           {phase === "cancelled" && (
             <Box marginTop={1}>
               <Text color="yellow">
-                Operation cancelled. {results.length} of {dirtyRepos.length} repositories processed.
+                Operation cancelled. {results.length} of {dirtyRepos.length}{" "}
+                repositories processed.
               </Text>
             </Box>
           )}

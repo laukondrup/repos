@@ -66,7 +66,7 @@ export function GroupedMenu({ groups, onSelect }: GroupedMenuProps) {
       onSelect(selectableItems[selectedIndex]);
     } else {
       const item = selectableItems.find(
-        (i) => i.key?.toLowerCase() === input.toLowerCase()
+        (i) => i.key?.toLowerCase() === input.toLowerCase(),
       );
       if (item) {
         onSelect(item);
@@ -93,7 +93,7 @@ export function GroupedMenu({ groups, onSelect }: GroupedMenuProps) {
                   {isSelected ? "❯  " : "   "}
                 </Text>
                 <Text dimColor>{item.key ? `${item.key} ` : "  "}</Text>
-                <Text>{" "}</Text>
+                <Text> </Text>
                 <Text color={isSelected ? "cyan" : undefined} bold={isSelected}>
                   {item.label}
                 </Text>
@@ -129,7 +129,11 @@ export function GroupedMenu({ groups, onSelect }: GroupedMenuProps) {
       <Box flexDirection="column">
         <Box flexDirection="row" gap={2}>
           {groups.map((group) => (
-            <Box key={group.category} flexDirection="column" width={columnWidth}>
+            <Box
+              key={group.category}
+              flexDirection="column"
+              width={columnWidth}
+            >
               {renderGroup(group)}
             </Box>
           ))}

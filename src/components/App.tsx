@@ -604,7 +604,10 @@ type CommandOptions =
   | { command: "checkout"; options: CheckoutOptions }
   | { command: "exec"; options: ExecOptions }
   | { command: "list"; options: ListOptions }
-  | { command: "exclude"; options: { repos: string[]; globs: string[]; bypassOrg?: boolean } }
+  | {
+      command: "exclude";
+      options: { repos: string[]; globs: string[]; bypassOrg?: boolean };
+    }
   | { command: "clone"; options: CloneOptions }
   | { command: "clean"; options: CleanupOptions }
   | { command: "sync" }
@@ -785,16 +788,14 @@ export function App() {
         setRunningCommand({
           command: "exclude",
           options: {
-            repos:
-              ((values.repos as string | undefined) ?? "")
-                .trim()
-                .split(/\s+/)
-                .filter(Boolean),
-            globs:
-              ((values.globs as string | undefined) ?? "")
-                .trim()
-                .split(/\s+/)
-                .filter(Boolean),
+            repos: ((values.repos as string | undefined) ?? "")
+              .trim()
+              .split(/\s+/)
+              .filter(Boolean),
+            globs: ((values.globs as string | undefined) ?? "")
+              .trim()
+              .split(/\s+/)
+              .filter(Boolean),
             bypassOrg: values.bypassOrg as boolean | undefined,
           },
         });
@@ -910,13 +911,9 @@ export function App() {
           />
         );
       case "sync":
-        return (
-          <SyncApp onComplete={handleCommandComplete} />
-        );
+        return <SyncApp onComplete={handleCommandComplete} />;
       case "label":
-        return (
-          <LabelMenuApp onComplete={handleCommandComplete} />
-        );
+        return <LabelMenuApp onComplete={handleCommandComplete} />;
       case "config":
         return (
           <ConfigApp
@@ -925,11 +922,7 @@ export function App() {
           />
         );
       case "init":
-        return (
-          <InitApp
-            onComplete={handleCommandComplete}
-          />
-        );
+        return <InitApp onComplete={handleCommandComplete} />;
     }
   }
 
@@ -987,9 +980,7 @@ export function App() {
           </Text>
           <Text dimColor> - Repository Manager</Text>
         </Box>
-        {repoCount !== null && (
-          <Text dimColor>{repoCount} repos tracked</Text>
-        )}
+        {repoCount !== null && <Text dimColor>{repoCount} repos tracked</Text>}
       </Box>
       <GroupedMenu groups={menuGroups} onSelect={handleSelect} />
     </Box>

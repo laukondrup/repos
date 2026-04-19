@@ -2,7 +2,10 @@ import { describe, test, expect } from "bun:test";
 import React from "react";
 import { render } from "ink-testing-library";
 import { FetchApp } from "./fetch.js";
-import { createTempRepoDir, createEmptyTempDir } from "../../tests/helpers/temp-repos.js";
+import {
+  createTempRepoDir,
+  createEmptyTempDir,
+} from "../../tests/helpers/temp-repos.js";
 import { waitFor } from "../../tests/helpers/ink-test-utils.js";
 
 describe("FetchApp", () => {
@@ -11,7 +14,7 @@ describe("FetchApp", () => {
       const { path, cleanup } = await createEmptyTempDir();
       try {
         const { lastFrame, unmount } = render(
-          <FetchApp options={{ basePath: path }} onComplete={() => {}} />
+          <FetchApp options={{ basePath: path }} onComplete={() => {}} />,
         );
         expect(lastFrame()).toContain("Finding repositories");
         unmount();
@@ -24,7 +27,7 @@ describe("FetchApp", () => {
       const { path, cleanup } = await createEmptyTempDir();
       try {
         const { lastFrame, unmount } = render(
-          <FetchApp options={{ basePath: path }} onComplete={() => {}} />
+          <FetchApp options={{ basePath: path }} onComplete={() => {}} />,
         );
         await waitFor(() => lastFrame()?.includes("No repositories") ?? false);
         expect(lastFrame()).toContain("No repositories found");
@@ -44,7 +47,7 @@ describe("FetchApp", () => {
 
       try {
         const { lastFrame, unmount } = render(
-          <FetchApp options={{ basePath }} onComplete={() => {}} />
+          <FetchApp options={{ basePath }} onComplete={() => {}} />,
         );
 
         await waitFor(() => lastFrame()?.includes("Summary") ?? false, 5000);
@@ -68,10 +71,16 @@ describe("FetchApp", () => {
 
       try {
         const { lastFrame, unmount } = render(
-          <FetchApp options={{ basePath, dryRun: true }} onComplete={() => {}} />
+          <FetchApp
+            options={{ basePath, dryRun: true }}
+            onComplete={() => {}}
+          />,
         );
 
-        await waitFor(() => lastFrame()?.includes("Would fetch:") ?? false, 5000);
+        await waitFor(
+          () => lastFrame()?.includes("Would fetch:") ?? false,
+          5000,
+        );
 
         const frame = lastFrame();
         expect(frame).toContain("repo-a");
@@ -93,7 +102,10 @@ describe("FetchApp", () => {
 
       try {
         const { lastFrame, unmount } = render(
-          <FetchApp options={{ basePath, filter: "api-*" }} onComplete={() => {}} />
+          <FetchApp
+            options={{ basePath, filter: "api-*" }}
+            onComplete={() => {}}
+          />,
         );
 
         await waitFor(() => lastFrame()?.includes("Summary") ?? false, 5000);
@@ -117,7 +129,10 @@ describe("FetchApp", () => {
 
       try {
         const { lastFrame, unmount } = render(
-          <FetchApp options={{ basePath, prune: true }} onComplete={() => {}} />
+          <FetchApp
+            options={{ basePath, prune: true }}
+            onComplete={() => {}}
+          />,
         );
 
         // Wait for either the fetching phase or completion
@@ -126,7 +141,7 @@ describe("FetchApp", () => {
             (lastFrame()?.includes("prune") ||
               lastFrame()?.includes("Summary")) ??
             false,
-          5000
+          5000,
         );
 
         const frame = lastFrame();
@@ -144,7 +159,7 @@ describe("FetchApp", () => {
 
       try {
         const { lastFrame, unmount } = render(
-          <FetchApp options={{ basePath, all: true }} onComplete={() => {}} />
+          <FetchApp options={{ basePath, all: true }} onComplete={() => {}} />,
         );
 
         await waitFor(
@@ -152,7 +167,7 @@ describe("FetchApp", () => {
             (lastFrame()?.includes("all") ||
               lastFrame()?.includes("Summary")) ??
             false,
-          5000
+          5000,
         );
 
         const frame = lastFrame();
@@ -173,7 +188,7 @@ describe("FetchApp", () => {
 
       try {
         const { lastFrame, unmount } = render(
-          <FetchApp options={{ basePath }} onComplete={() => {}} />
+          <FetchApp options={{ basePath }} onComplete={() => {}} />,
         );
 
         await waitFor(() => lastFrame()?.includes("Summary") ?? false, 5000);
@@ -204,7 +219,7 @@ describe("FetchApp", () => {
             onComplete={() => {
               onCompleteCalled = true;
             }}
-          />
+          />,
         );
 
         await waitFor(() => lastFrame()?.includes("⌫/Esc Back") ?? false, 5000);

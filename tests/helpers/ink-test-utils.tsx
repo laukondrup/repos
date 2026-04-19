@@ -3,7 +3,7 @@
  */
 export async function waitFor(
   condition: () => boolean,
-  timeout = 5000
+  timeout = 5000,
 ): Promise<void> {
   const start = Date.now();
   while (!condition()) {

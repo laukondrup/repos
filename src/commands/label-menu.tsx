@@ -9,25 +9,44 @@ interface LabelMenuAppProps {
 }
 
 type LabelAction = "list" | "add" | "remove";
-type Phase = "action" | "label" | "targets" | "globs" | "bypassOrg" | "running" | "error";
+type Phase =
+  | "action"
+  | "label"
+  | "targets"
+  | "globs"
+  | "bypassOrg"
+  | "running"
+  | "error";
 
 const actionGroups = [
   {
     category: "label",
     label: "Labels",
     items: [
-      { label: "List", value: "list", key: "l", description: "List labels for all tracked repositories" },
-      { label: "Add", value: "add", key: "a", description: "Add a label to target repositories" },
-      { label: "Remove", value: "remove", key: "r", description: "Remove a label from target repositories" },
+      {
+        label: "List",
+        value: "list",
+        key: "l",
+        description: "List labels for all tracked repositories",
+      },
+      {
+        label: "Add",
+        value: "add",
+        key: "a",
+        description: "Add a label to target repositories",
+      },
+      {
+        label: "Remove",
+        value: "remove",
+        key: "r",
+        description: "Remove a label from target repositories",
+      },
     ],
   },
 ];
 
 function splitArgs(value: string): string[] {
-  return value
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean);
+  return value.trim().split(/\s+/).filter(Boolean);
 }
 
 export function LabelMenuApp({ onComplete }: LabelMenuAppProps) {
@@ -45,7 +64,9 @@ export function LabelMenuApp({ onComplete }: LabelMenuAppProps) {
     async function run() {
       try {
         if (action === "list") {
-          await runLabelList({ bypassOrg: bypassOrgInput.trim().toLowerCase() === "y" });
+          await runLabelList({
+            bypassOrg: bypassOrgInput.trim().toLowerCase() === "y",
+          });
         } else if (action === "add") {
           await runLabelAdd(label.trim(), splitArgs(targetsInput), {
             globs: splitArgs(globsInput),
@@ -81,7 +102,9 @@ export function LabelMenuApp({ onComplete }: LabelMenuAppProps) {
     return (
       <Box flexDirection="column" padding={1}>
         <Box marginBottom={1}>
-          <Text bold color="cyan">labels</Text>
+          <Text bold color="cyan">
+            labels
+          </Text>
           <Text dimColor> - Label Commands</Text>
         </Box>
         <GroupedMenu groups={actionGroups} onSelect={onSelectAction} />
@@ -92,7 +115,9 @@ export function LabelMenuApp({ onComplete }: LabelMenuAppProps) {
   if (phase === "label") {
     return (
       <Box flexDirection="column" padding={1}>
-        <Text bold color="cyan">labels {action}</Text>
+        <Text bold color="cyan">
+          labels {action}
+        </Text>
         <Box marginTop={1}>
           <Text>Label name:</Text>
         </Box>
@@ -115,7 +140,9 @@ export function LabelMenuApp({ onComplete }: LabelMenuAppProps) {
   if (phase === "targets") {
     return (
       <Box flexDirection="column" padding={1}>
-        <Text bold color="cyan">labels {action}</Text>
+        <Text bold color="cyan">
+          labels {action}
+        </Text>
         <Box marginTop={1}>
           <Text>Targets (repo names/paths, space-separated, optional):</Text>
         </Box>
@@ -136,7 +163,9 @@ export function LabelMenuApp({ onComplete }: LabelMenuAppProps) {
   if (phase === "globs") {
     return (
       <Box flexDirection="column" padding={1}>
-        <Text bold color="cyan">labels {action}</Text>
+        <Text bold color="cyan">
+          labels {action}
+        </Text>
         <Box marginTop={1}>
           <Text>Globs (space-separated, optional):</Text>
         </Box>
@@ -157,7 +186,9 @@ export function LabelMenuApp({ onComplete }: LabelMenuAppProps) {
   if (phase === "bypassOrg") {
     return (
       <Box flexDirection="column" padding={1}>
-        <Text bold color="cyan">labels {action}</Text>
+        <Text bold color="cyan">
+          labels {action}
+        </Text>
         <Box marginTop={1}>
           <Text>Bypass org scope? (y/N):</Text>
         </Box>

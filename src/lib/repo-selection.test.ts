@@ -43,16 +43,24 @@ describe("repo selection", () => {
       expect(defaultSelection.length).toBe(1);
       expect(defaultSelection[0]).toContain("alpha");
 
-      const bypassSelection = await selectLocalRepos({ basePath, noExclude: true });
+      const bypassSelection = await selectLocalRepos({
+        basePath,
+        noExclude: true,
+      });
       expect(bypassSelection).toHaveLength(2);
-      expect(bypassSelection.some((repo) => repo.includes("clones/beta"))).toBe(true);
+      expect(bypassSelection.some((repo) => repo.includes("clones/beta"))).toBe(
+        true,
+      );
     } finally {
       await rm(basePath, { recursive: true, force: true });
     }
   });
 
   test("respects explicit path exclusions from config", async () => {
-    const basePath = join(tmpdir(), `repo-select-path-${randomUUID().slice(0, 8)}`);
+    const basePath = join(
+      tmpdir(),
+      `repo-select-path-${randomUUID().slice(0, 8)}`,
+    );
     await mkdir(basePath, { recursive: true });
 
     await writeFile(
@@ -77,7 +85,10 @@ describe("repo selection", () => {
   });
 
   test("respects per-repo exclusion flag in repo DB", async () => {
-    const basePath = join(tmpdir(), `repo-select-db-${randomUUID().slice(0, 8)}`);
+    const basePath = join(
+      tmpdir(),
+      `repo-select-db-${randomUUID().slice(0, 8)}`,
+    );
     await mkdir(basePath, { recursive: true });
 
     await writeFile(
@@ -94,7 +105,9 @@ describe("repo selection", () => {
 
     const dbPath = join(basePath, ".reposdb.json");
     const db = JSON.parse(await readFile(dbPath, "utf-8"));
-    const alpha = db.repos.find((repo: { name: string }) => repo.name === "alpha");
+    const alpha = db.repos.find(
+      (repo: { name: string }) => repo.name === "alpha",
+    );
     alpha.excluded = true;
     await writeFile(dbPath, JSON.stringify(db, null, 2) + "\n");
 
@@ -108,7 +121,10 @@ describe("repo selection", () => {
   });
 
   test("forces DB sync during selection", async () => {
-    const basePath = join(tmpdir(), `repo-select-sync-${randomUUID().slice(0, 8)}`);
+    const basePath = join(
+      tmpdir(),
+      `repo-select-sync-${randomUUID().slice(0, 8)}`,
+    );
     await mkdir(basePath, { recursive: true });
 
     await writeFile(
@@ -123,14 +139,19 @@ describe("repo selection", () => {
     try {
       const selection = await selectLocalRepos({ basePath });
       expect(selection).toHaveLength(1);
-      expect(await Bun.file(join(basePath, ".reposdb.json")).exists()).toBe(true);
+      expect(await Bun.file(join(basePath, ".reposdb.json")).exists()).toBe(
+        true,
+      );
     } finally {
       await rm(basePath, { recursive: true, force: true });
     }
   });
 
   test("filters repositories by labels from repo DB", async () => {
-    const basePath = join(tmpdir(), `repo-select-labels-${randomUUID().slice(0, 8)}`);
+    const basePath = join(
+      tmpdir(),
+      `repo-select-labels-${randomUUID().slice(0, 8)}`,
+    );
     await mkdir(basePath, { recursive: true });
 
     await writeFile(
@@ -197,7 +218,10 @@ describe("repo selection", () => {
   });
 
   test("scopes selection to configured org by default and supports bypassOrg", async () => {
-    const basePath = join(tmpdir(), `repo-select-org-${randomUUID().slice(0, 8)}`);
+    const basePath = join(
+      tmpdir(),
+      `repo-select-org-${randomUUID().slice(0, 8)}`,
+    );
     await mkdir(basePath, { recursive: true });
 
     const alphaPath = join(basePath, "alpha");
@@ -269,7 +293,10 @@ describe("repo selection", () => {
   });
 
   test("uses originFullName owner when DB id does not include origin owner", async () => {
-    const basePath = join(tmpdir(), `repo-select-org-fallback-${randomUUID().slice(0, 8)}`);
+    const basePath = join(
+      tmpdir(),
+      `repo-select-org-fallback-${randomUUID().slice(0, 8)}`,
+    );
     await mkdir(basePath, { recursive: true });
 
     const alphaPath = join(basePath, "alpha");

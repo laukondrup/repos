@@ -15,7 +15,10 @@ interface FetchAppProps {
 
 type Phase = "finding" | "fetching" | "cancelling" | "done" | "cancelled";
 
-function getResultIcon(result: RepoOperationResult): { icon: string; color: string } {
+function getResultIcon(result: RepoOperationResult): {
+  icon: string;
+  color: string;
+} {
   if (result.success) {
     return { icon: "✓", color: "green" };
   }
@@ -31,29 +34,28 @@ function ResultRow({ result }: { result: RepoOperationResult }) {
         <Text color={color}>{icon}</Text>
       </Box>
       <Box width={28}>
-        <Text>{result.name.slice(0, 26)}{result.name.length > 26 ? "…" : ""}</Text>
-      </Box>
-      <Box width={16}>
-        <Text color={result.success ? "green" : "red"}>
-          {result.message}
+        <Text>
+          {result.name.slice(0, 26)}
+          {result.name.length > 26 ? "…" : ""}
         </Text>
       </Box>
-      {result.error && (
-        <Text dimColor>({result.error})</Text>
-      )}
+      <Box width={16}>
+        <Text color={result.success ? "green" : "red"}>{result.message}</Text>
+      </Box>
+      {result.error && <Text dimColor>({result.error})</Text>}
     </Box>
   );
 }
 
 function ResultsTable({
   results,
-  showAll = false
+  showAll = false,
 }: {
   results: RepoOperationResult[];
   showAll?: boolean;
 }) {
-  const successful = results.filter(r => r.success);
-  const errors = results.filter(r => !r.success);
+  const successful = results.filter((r) => r.success);
+  const errors = results.filter((r) => !r.success);
 
   const maxShow = showAll ? 100 : 8;
 
@@ -61,30 +63,40 @@ function ResultsTable({
     <Box flexDirection="column">
       {successful.length > 0 && (
         <Box flexDirection="column" marginBottom={1}>
-          <Text color="green" bold>Fetched ({successful.length}):</Text>
+          <Text color="green" bold>
+            Fetched ({successful.length}):
+          </Text>
           {showAll ? (
             <>
-              {successful.slice(0, maxShow).map(r => (
+              {successful.slice(0, maxShow).map((r) => (
                 <ResultRow key={r.name} result={r} />
               ))}
               {successful.length > maxShow && (
-                <Text dimColor>  ... and {successful.length - maxShow} more</Text>
+                <Text dimColor>
+                  {" "}
+                  ... and {successful.length - maxShow} more
+                </Text>
               )}
             </>
           ) : (
-            <Text color="green">  {successful.length} repositories fetched successfully</Text>
+            <Text color="green">
+              {" "}
+              {successful.length} repositories fetched successfully
+            </Text>
           )}
         </Box>
       )}
 
       {errors.length > 0 && (
         <Box flexDirection="column" marginBottom={1}>
-          <Text color="red" bold>Errors ({errors.length}):</Text>
-          {errors.slice(0, maxShow).map(r => (
+          <Text color="red" bold>
+            Errors ({errors.length}):
+          </Text>
+          {errors.slice(0, maxShow).map((r) => (
             <ResultRow key={r.name} result={r} />
           ))}
           {errors.length > maxShow && (
-            <Text dimColor>  ... and {errors.length - maxShow} more</Text>
+            <Text dimColor> ... and {errors.length - maxShow} more</Text>
           )}
         </Box>
       )}
@@ -128,7 +140,7 @@ export function FetchApp({ options, onComplete }: FetchAppProps) {
           setError(
             options.filter
               ? `No repositories match pattern: ${options.filter}`
-              : "No repositories found in current directory"
+              : "No repositories found in current directory",
           );
           setPhase("done");
           return;
@@ -139,11 +151,13 @@ export function FetchApp({ options, onComplete }: FetchAppProps) {
         setPhase("fetching");
 
         if (options.dryRun) {
-          const dryRunResults: RepoOperationResult[] = repoPaths.map(repoPath => ({
-            name: repoPath.split("/").pop() || repoPath,
-            success: true,
-            message: "would fetch",
-          }));
+          const dryRunResults: RepoOperationResult[] = repoPaths.map(
+            (repoPath) => ({
+              name: repoPath.split("/").pop() || repoPath,
+              success: true,
+              message: "would fetch",
+            }),
+          );
           setResults(dryRunResults);
           setProgress({ completed: repoPaths.length, total: repoPaths.length });
           setPhase("done");
@@ -200,7 +214,11 @@ export function FetchApp({ options, onComplete }: FetchAppProps) {
       } else if ((phase === "done" || phase === "cancelled") && onComplete) {
         onComplete();
       }
-    } else if (key.delete && (phase === "done" || phase === "cancelled") && onComplete) {
+    } else if (
+      key.delete &&
+      (phase === "done" || phase === "cancelled") &&
+      onComplete
+    ) {
       onComplete();
     }
   });
@@ -231,8 +249,8 @@ export function FetchApp({ options, onComplete }: FetchAppProps) {
     );
   }
 
-  const successful = results.filter(r => r.success).length;
-  const errors = results.filter(r => !r.success).length;
+  const successful = results.filter((r) => r.success).length;
+  const errors = results.filter((r) => !r.success).length;
   const duration = Math.round((Date.now() - startTime) / 1000);
 
   const fetchFlags: string[] = [];
@@ -246,7 +264,11 @@ export function FetchApp({ options, onComplete }: FetchAppProps) {
         <Text bold color="cyan">
           {options.dryRun ? "Fetch Check (Dry Run)" : "Fetching Repositories"}
         </Text>
-        <Text dimColor> • {repos.length} repos • parallel: {parallel}{flagsStr}</Text>
+        <Text dimColor>
+          {" "}
+          • {repos.length} repos • parallel: {parallel}
+          {flagsStr}
+        </Text>
       </Box>
 
       {(phase === "fetching" || phase === "cancelling") && (
@@ -264,7 +286,9 @@ export function FetchApp({ options, onComplete }: FetchAppProps) {
                 <Spinner type="dots" />
               </Text>
               <Box marginLeft={1}>
-                <Text color="yellow">Cancelling... waiting for in-progress operations to finish</Text>
+                <Text color="yellow">
+                  Cancelling... waiting for in-progress operations to finish
+                </Text>
               </Box>
             </Box>
           ) : (
@@ -275,12 +299,14 @@ export function FetchApp({ options, onComplete }: FetchAppProps) {
         </>
       )}
 
-      {(phase === "fetching" || phase === "cancelling") && !options.quiet && results.length > 0 && (
-        <Box flexDirection="column" marginTop={1}>
-          <Divider marginTop={0} marginBottom={1} />
-          <ResultsTable results={results} showAll={false} />
-        </Box>
-      )}
+      {(phase === "fetching" || phase === "cancelling") &&
+        !options.quiet &&
+        results.length > 0 && (
+          <Box flexDirection="column" marginTop={1}>
+            <Divider marginTop={0} marginBottom={1} />
+            <ResultsTable results={results} showAll={false} />
+          </Box>
+        )}
 
       {(phase === "done" || phase === "cancelled") && !options.quiet && (
         <ResultsTable results={results} showAll={true} />
@@ -300,7 +326,9 @@ export function FetchApp({ options, onComplete }: FetchAppProps) {
             {successful > 0 && (
               <Box>
                 <Box width={25}>
-                  <Text color="green">{options.dryRun ? "Would fetch:" : "Fetched:"}</Text>
+                  <Text color="green">
+                    {options.dryRun ? "Would fetch:" : "Fetched:"}
+                  </Text>
                 </Box>
                 <Text color="green">{successful}</Text>
               </Box>
@@ -334,16 +362,15 @@ export function FetchApp({ options, onComplete }: FetchAppProps) {
       {phase === "cancelled" && (
         <Box marginTop={1}>
           <Text color="yellow">
-            Operation cancelled. {results.length} of {repos.length} repositories processed.
+            Operation cancelled. {results.length} of {repos.length} repositories
+            processed.
           </Text>
         </Box>
       )}
 
       {phase === "done" && options.dryRun && (
         <Box marginTop={1}>
-          <Text color="cyan">
-            Run without --dry-run to actually fetch.
-          </Text>
+          <Text color="cyan">Run without --dry-run to actually fetch.</Text>
         </Box>
       )}
 

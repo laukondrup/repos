@@ -2,7 +2,10 @@ import { describe, test, expect } from "bun:test";
 import React from "react";
 import { render } from "ink-testing-library";
 import { PullApp } from "./pull.js";
-import { createTempRepoDir, createEmptyTempDir } from "../../tests/helpers/temp-repos.js";
+import {
+  createTempRepoDir,
+  createEmptyTempDir,
+} from "../../tests/helpers/temp-repos.js";
 import { waitFor } from "../../tests/helpers/ink-test-utils.js";
 
 describe("PullApp", () => {
@@ -11,7 +14,7 @@ describe("PullApp", () => {
       const { path, cleanup } = await createEmptyTempDir();
       try {
         const { lastFrame, unmount } = render(
-          <PullApp options={{ basePath: path }} onComplete={() => {}} />
+          <PullApp options={{ basePath: path }} onComplete={() => {}} />,
         );
         expect(lastFrame()).toContain("Finding repositories");
         unmount();
@@ -24,7 +27,7 @@ describe("PullApp", () => {
       const { path, cleanup } = await createEmptyTempDir();
       try {
         const { lastFrame, unmount } = render(
-          <PullApp options={{ basePath: path }} onComplete={() => {}} />
+          <PullApp options={{ basePath: path }} onComplete={() => {}} />,
         );
         await waitFor(() => lastFrame()?.includes("No repositories") ?? false);
         expect(lastFrame()).toContain("No repositories found");
@@ -43,7 +46,7 @@ describe("PullApp", () => {
 
       try {
         const { lastFrame, unmount } = render(
-          <PullApp options={{ basePath }} onComplete={() => {}} />
+          <PullApp options={{ basePath }} onComplete={() => {}} />,
         );
 
         await waitFor(() => lastFrame()?.includes("Summary") ?? false, 10000);
@@ -63,10 +66,16 @@ describe("PullApp", () => {
 
       try {
         const { lastFrame, unmount } = render(
-          <PullApp options={{ dryRun: true, basePath }} onComplete={() => {}} />
+          <PullApp
+            options={{ dryRun: true, basePath }}
+            onComplete={() => {}}
+          />,
         );
 
-        await waitFor(() => lastFrame()?.includes("Update Check") ?? false, 10000);
+        await waitFor(
+          () => lastFrame()?.includes("Update Check") ?? false,
+          10000,
+        );
 
         const frame = lastFrame();
         expect(frame).toContain("Dry Run");
@@ -86,7 +95,10 @@ describe("PullApp", () => {
 
       try {
         const { lastFrame, unmount } = render(
-          <PullApp options={{ filter: "api-*", basePath }} onComplete={() => {}} />
+          <PullApp
+            options={{ filter: "api-*", basePath }}
+            onComplete={() => {}}
+          />,
         );
 
         await waitFor(() => lastFrame()?.includes("Summary") ?? false, 10000);
@@ -115,10 +127,13 @@ describe("PullApp", () => {
             onComplete={() => {
               onCompleteCalled = true;
             }}
-          />
+          />,
         );
 
-        await waitFor(() => lastFrame()?.includes("⌫/Esc Back") ?? false, 10000);
+        await waitFor(
+          () => lastFrame()?.includes("⌫/Esc Back") ?? false,
+          10000,
+        );
         expect(lastFrame()).toContain("⌫/Esc Back");
 
         // Small delay to ensure useInput hook is fully registered

@@ -59,7 +59,7 @@ describe("config.ts", () => {
 
       await writeFile(
         join(tempDir, ".reposrc.json"),
-        JSON.stringify(customConfig)
+        JSON.stringify(customConfig),
       );
 
       try {
@@ -86,7 +86,7 @@ describe("config.ts", () => {
 
       await writeFile(
         join(tempDir, ".reposrc.json"),
-        JSON.stringify(customConfig)
+        JSON.stringify(customConfig),
       );
 
       try {
@@ -108,7 +108,7 @@ describe("config.ts", () => {
 
       await writeFile(
         join(tempDir, ".reposrc.json"),
-        JSON.stringify(customConfig)
+        JSON.stringify(customConfig),
       );
 
       try {
@@ -129,7 +129,7 @@ describe("config.ts", () => {
 
       await writeFile(
         join(tempDir, ".reposrc.json"),
-        JSON.stringify(customConfig)
+        JSON.stringify(customConfig),
       );
 
       try {
@@ -205,10 +205,15 @@ describe("config.ts", () => {
 
     test("gets nested value", () => {
       const config = {
-        github: { host: "github.example.com", apiUrl: "https://api.example.com" },
+        github: {
+          host: "github.example.com",
+          apiUrl: "https://api.example.com",
+        },
       };
       expect(getConfigValue(config, "github.host")).toBe("github.example.com");
-      expect(getConfigValue(config, "github.apiUrl")).toBe("https://api.example.com");
+      expect(getConfigValue(config, "github.apiUrl")).toBe(
+        "https://api.example.com",
+      );
     });
 
     test("returns undefined for non-existent key", () => {
@@ -217,7 +222,9 @@ describe("config.ts", () => {
     });
 
     test("returns undefined for non-existent nested key", () => {
-      const config = { github: { host: "github.com", apiUrl: "https://api.github.com" } };
+      const config = {
+        github: { host: "github.com", apiUrl: "https://api.github.com" },
+      };
       expect(getConfigValue(config, "github.nonexistent")).toBeUndefined();
     });
   });
@@ -230,8 +237,14 @@ describe("config.ts", () => {
     });
 
     test("sets nested github value", () => {
-      const config = { github: { host: "github.com", apiUrl: "https://api.github.com" } };
-      const updated = setConfigValue(config, "github.host", "github.example.com");
+      const config = {
+        github: { host: "github.com", apiUrl: "https://api.github.com" },
+      };
+      const updated = setConfigValue(
+        config,
+        "github.host",
+        "github.example.com",
+      );
       expect(updated.github?.host).toBe("github.example.com");
     });
 

@@ -25,7 +25,9 @@ async function runWithTimeout(
 ): Promise<Awaited<ReturnType<typeof $>>> {
   const timeoutPromise = new Promise<never>((_, reject) => {
     setTimeout(() => {
-      reject(new GitTimeoutError(`timed out after ${Math.round(timeoutMs / 1000)}s`));
+      reject(
+        new GitTimeoutError(`timed out after ${Math.round(timeoutMs / 1000)}s`),
+      );
     }, timeoutMs);
   });
   return Promise.race([shellPromise, timeoutPromise]);
@@ -102,7 +104,9 @@ function parseRemoteRepoFullName(remoteUrl: string): string | null {
     return sshMatch[1].toLowerCase();
   }
 
-  const httpsMatch = remoteUrl.match(/^https?:\/\/[^/]+\/([^/]+\/[^/]+?)(?:\.git)?$/);
+  const httpsMatch = remoteUrl.match(
+    /^https?:\/\/[^/]+\/([^/]+\/[^/]+?)(?:\.git)?$/,
+  );
   if (httpsMatch) {
     return httpsMatch[1].toLowerCase();
   }
@@ -131,7 +135,9 @@ function parseOriginUrlFromGitConfig(content: string): string | null {
   return null;
 }
 
-async function readOriginUrlFromGitConfig(repoPath: string): Promise<string | null> {
+async function readOriginUrlFromGitConfig(
+  repoPath: string,
+): Promise<string | null> {
   try {
     const gitPath = join(repoPath, ".git");
     let configPath = join(gitPath, "config");
@@ -153,7 +159,9 @@ async function readOriginUrlFromGitConfig(repoPath: string): Promise<string | nu
   }
 }
 
-export async function getOriginRepoFullName(repoPath: string): Promise<string | null> {
+export async function getOriginRepoFullName(
+  repoPath: string,
+): Promise<string | null> {
   const originFromConfig = await readOriginUrlFromGitConfig(repoPath);
   if (originFromConfig) {
     const parsed = parseRemoteRepoFullName(originFromConfig);
@@ -185,7 +193,10 @@ export async function getRepoStatus(repoPath: string): Promise<RepoStatus> {
     const statusResult = await $`git -C ${repoPath} status --porcelain`.quiet();
     // Split first, then filter - don't use trim() as it removes leading spaces
     // which are significant in git porcelain output (e.g., " M file.txt")
-    const statusLines = statusResult.text().split("\n").filter((line) => line.length >= 2);
+    const statusLines = statusResult
+      .text()
+      .split("\n")
+      .filter((line) => line.length >= 2);
 
     for (const line of statusLines) {
       const indexStatus = line[0];
@@ -196,8 +207,7 @@ export async function getRepoStatus(repoPath: string): Promise<RepoStatus> {
       else if (worktreeStatus === "D") deleted++;
       if (indexStatus === "?") untracked++;
     }
-  } catch {
-  }
+  } catch {}
   let ahead = 0;
   let behind = 0;
   let hasUpstream = false;
@@ -217,8 +227,7 @@ export async function getRepoStatus(repoPath: string): Promise<RepoStatus> {
         await $`git -C ${repoPath} rev-list --count ${upstream}..HEAD`.quiet();
       ahead = parseInt(behindResult.text().trim()) || 0;
     }
-  } catch {
-  }
+  } catch {}
 
   const isClean =
     modified === 0 && staged === 0 && untracked === 0 && deleted === 0;
@@ -248,8 +257,9 @@ export async function isRepoLocallyActiveWithinDays(
   }
 
   try {
-    const result =
-      await $`git -C ${repoPath} log -1 --format=%ct --all`.quiet().nothrow();
+    const result = await $`git -C ${repoPath} log -1 --format=%ct --all`
+      .quiet()
+      .nothrow();
     if (result.exitCode !== 0) {
       return false;
     }
@@ -532,7 +542,9 @@ export async function diffRepo(repoPath: string): Promise<DiffResult> {
     const diffResult = await $`git -C ${repoPath} diff`.quiet().nothrow();
     const diff = diffResult.text().trim();
 
-    const statResult = await $`git -C ${repoPath} diff --stat`.quiet().nothrow();
+    const statResult = await $`git -C ${repoPath} diff --stat`
+      .quiet()
+      .nothrow();
     const stat = statResult.text().trim();
 
     return {

@@ -373,7 +373,9 @@ describe("git.ts", () => {
     test("returns exists error when creating existing branch", async () => {
       const repo = await createTempRepo();
       try {
-        const result = await checkoutBranch(repo.path, "main", { create: true });
+        const result = await checkoutBranch(repo.path, "main", {
+          create: true,
+        });
         expect(result.success).toBe(false);
         expect(result.message).toBe("exists");
       } finally {

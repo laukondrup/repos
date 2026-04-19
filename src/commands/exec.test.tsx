@@ -2,7 +2,10 @@ import { describe, test, expect } from "bun:test";
 import React from "react";
 import { render } from "ink-testing-library";
 import { ExecApp } from "./exec.js";
-import { createTempRepoDir, createEmptyTempDir } from "../../tests/helpers/temp-repos.js";
+import {
+  createTempRepoDir,
+  createEmptyTempDir,
+} from "../../tests/helpers/temp-repos.js";
 import { waitFor } from "../../tests/helpers/ink-test-utils.js";
 
 describe("ExecApp", () => {
@@ -11,7 +14,10 @@ describe("ExecApp", () => {
       const { path, cleanup } = await createEmptyTempDir();
       try {
         const { lastFrame, unmount } = render(
-          <ExecApp options={{ basePath: path, command: "echo hello" }} onComplete={() => {}} />
+          <ExecApp
+            options={{ basePath: path, command: "echo hello" }}
+            onComplete={() => {}}
+          />,
         );
         expect(lastFrame()).toContain("Finding repositories");
         unmount();
@@ -24,7 +30,10 @@ describe("ExecApp", () => {
       const { path, cleanup } = await createEmptyTempDir();
       try {
         const { lastFrame, unmount } = render(
-          <ExecApp options={{ basePath: path, command: "echo hello" }} onComplete={() => {}} />
+          <ExecApp
+            options={{ basePath: path, command: "echo hello" }}
+            onComplete={() => {}}
+          />,
         );
         await waitFor(() => lastFrame()?.includes("No repositories") ?? false);
         expect(lastFrame()).toContain("No repositories found");
@@ -43,7 +52,10 @@ describe("ExecApp", () => {
 
       try {
         const { lastFrame, unmount } = render(
-          <ExecApp options={{ basePath, command: "echo hello" }} onComplete={() => {}} />
+          <ExecApp
+            options={{ basePath, command: "echo hello" }}
+            onComplete={() => {}}
+          />,
         );
 
         await waitFor(() => lastFrame()?.includes("Summary") ?? false, 5000);
@@ -66,7 +78,10 @@ describe("ExecApp", () => {
 
       try {
         const { lastFrame, unmount } = render(
-          <ExecApp options={{ basePath, command: "pwd" }} onComplete={() => {}} />
+          <ExecApp
+            options={{ basePath, command: "pwd" }}
+            onComplete={() => {}}
+          />,
         );
 
         await waitFor(() => lastFrame()?.includes("Summary") ?? false, 5000);
@@ -87,7 +102,10 @@ describe("ExecApp", () => {
 
       try {
         const { lastFrame, unmount } = render(
-          <ExecApp options={{ basePath, command: "exit 1" }} onComplete={() => {}} />
+          <ExecApp
+            options={{ basePath, command: "exit 1" }}
+            onComplete={() => {}}
+          />,
         );
 
         await waitFor(() => lastFrame()?.includes("Summary") ?? false, 5000);
@@ -110,7 +128,10 @@ describe("ExecApp", () => {
 
       try {
         const { lastFrame, unmount } = render(
-          <ExecApp options={{ basePath, command: "echo test", filter: "api-*" }} onComplete={() => {}} />
+          <ExecApp
+            options={{ basePath, command: "echo test", filter: "api-*" }}
+            onComplete={() => {}}
+          />,
         );
 
         await waitFor(() => lastFrame()?.includes("Summary") ?? false, 5000);
@@ -133,10 +154,16 @@ describe("ExecApp", () => {
 
       try {
         const { lastFrame, unmount } = render(
-          <ExecApp options={{ basePath, command: "echo test", parallel: 2 }} onComplete={() => {}} />
+          <ExecApp
+            options={{ basePath, command: "echo test", parallel: 2 }}
+            onComplete={() => {}}
+          />,
         );
 
-        await waitFor(() => lastFrame()?.includes("parallel: 2") ?? false, 5000);
+        await waitFor(
+          () => lastFrame()?.includes("parallel: 2") ?? false,
+          5000,
+        );
 
         const frame = lastFrame();
         expect(frame).toContain("parallel: 2");

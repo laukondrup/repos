@@ -58,11 +58,15 @@ export function SyncApp({ onComplete }: SyncAppProps) {
 
   return (
     <Box flexDirection="column" padding={1}>
-      <Text bold color="cyan">Repository Sync Complete</Text>
+      <Text bold color="cyan">
+        Repository Sync Complete
+      </Text>
       <Text>Tracked repositories: {summary.total}</Text>
       <Text color="green">Created: {summary.created}</Text>
       <Text color="yellow">Updated: {summary.updated}</Text>
-      {summary.removed > 0 && <Text color="red">Removed: {summary.removed}</Text>}
+      {summary.removed > 0 && (
+        <Text color="red">Removed: {summary.removed}</Text>
+      )}
       <Text dimColor>DB: {summary.dbPath}</Text>
     </Box>
   );
@@ -75,7 +79,7 @@ export async function runSync(): Promise<void> {
       onComplete={() => {
         unmountFn?.();
       }}
-    />
+    />,
   );
   unmountFn = unmount;
   await waitUntilExit();

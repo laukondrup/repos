@@ -12,7 +12,8 @@ interface LineStyle {
 
 export function DiffHighlight({ content, maxLines }: DiffHighlightProps) {
   const allLines = content.split("\n");
-  const shouldTruncate = maxLines !== undefined && maxLines > 0 && allLines.length > maxLines;
+  const shouldTruncate =
+    maxLines !== undefined && maxLines > 0 && allLines.length > maxLines;
   const lines = shouldTruncate ? allLines.slice(0, maxLines) : allLines;
 
   return (
@@ -27,7 +28,8 @@ export function DiffHighlight({ content, maxLines }: DiffHighlightProps) {
       })}
       {shouldTruncate && (
         <Text color="yellow">
-          ... (showing {maxLines} of {allLines.length} lines - use --stat for summary)
+          ... (showing {maxLines} of {allLines.length} lines - use --stat for
+          summary)
         </Text>
       )}
     </Box>

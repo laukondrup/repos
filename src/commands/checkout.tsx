@@ -15,7 +15,10 @@ interface CheckoutAppProps {
 
 type Phase = "finding" | "checking" | "cancelling" | "done" | "cancelled";
 
-function getResultIcon(result: RepoOperationResult): { icon: string; color: string } {
+function getResultIcon(result: RepoOperationResult): {
+  icon: string;
+  color: string;
+} {
   if (result.success) {
     if (result.message === "created") {
       return { icon: "+", color: "green" };
@@ -40,19 +43,18 @@ function ResultRow({ result }: { result: RepoOperationResult }) {
         <Text color={color}>{icon}</Text>
       </Box>
       <Box width={28}>
-        <Text>{result.name.slice(0, 26)}{result.name.length > 26 ? "…" : ""}</Text>
+        <Text>
+          {result.name.slice(0, 26)}
+          {result.name.length > 26 ? "…" : ""}
+        </Text>
       </Box>
       <Box width={16}>
         <Text color={result.success ? "green" : "yellow"}>
           {result.message}
         </Text>
       </Box>
-      {result.details && (
-        <Text dimColor>{result.details}</Text>
-      )}
-      {result.error && (
-        <Text dimColor>({result.error})</Text>
-      )}
+      {result.details && <Text dimColor>{result.details}</Text>}
+      {result.error && <Text dimColor>({result.error})</Text>}
     </Box>
   );
 }
@@ -100,7 +102,7 @@ export function CheckoutApp({ options, onComplete }: CheckoutAppProps) {
           setError(
             options.filter
               ? `No repositories match pattern: ${options.filter}`
-              : "No repositories found in current directory"
+              : "No repositories found in current directory",
           );
           setPhase("done");
           return;
@@ -180,7 +182,11 @@ export function CheckoutApp({ options, onComplete }: CheckoutAppProps) {
       } else if ((phase === "done" || phase === "cancelled") && onComplete) {
         onComplete();
       }
-    } else if (key.delete && (phase === "done" || phase === "cancelled") && onComplete) {
+    } else if (
+      key.delete &&
+      (phase === "done" || phase === "cancelled") &&
+      onComplete
+    ) {
       onComplete();
     }
   });
@@ -220,7 +226,10 @@ export function CheckoutApp({ options, onComplete }: CheckoutAppProps) {
           <Text bold color="cyan">
             Checkout Branch: {options.branch}
           </Text>
-          <Text dimColor> • {repos.length} repos • parallel: {parallel}</Text>
+          <Text dimColor>
+            {" "}
+            • {repos.length} repos • parallel: {parallel}
+          </Text>
         </Box>
 
         <Box marginBottom={1}>
@@ -237,7 +246,9 @@ export function CheckoutApp({ options, onComplete }: CheckoutAppProps) {
               <Spinner type="dots" />
             </Text>
             <Box marginLeft={1}>
-              <Text color="yellow">Cancelling... waiting for in-progress operations to finish</Text>
+              <Text color="yellow">
+                Cancelling... waiting for in-progress operations to finish
+              </Text>
             </Box>
           </Box>
         ) : (
@@ -249,11 +260,17 @@ export function CheckoutApp({ options, onComplete }: CheckoutAppProps) {
     );
   }
 
-  const switched = results.filter(r => r.success && r.message === "switched").length;
-  const created = results.filter(r => r.success && r.message === "created").length;
-  const skipped = results.filter(r => r.message === "skipped").length;
-  const notFound = results.filter(r => r.message === "not found").length;
-  const errors = results.filter(r => !r.success && r.message !== "skipped" && r.message !== "not found").length;
+  const switched = results.filter(
+    (r) => r.success && r.message === "switched",
+  ).length;
+  const created = results.filter(
+    (r) => r.success && r.message === "created",
+  ).length;
+  const skipped = results.filter((r) => r.message === "skipped").length;
+  const notFound = results.filter((r) => r.message === "not found").length;
+  const errors = results.filter(
+    (r) => !r.success && r.message !== "skipped" && r.message !== "not found",
+  ).length;
 
   return (
     <Box flexDirection="column" padding={1}>
@@ -261,12 +278,15 @@ export function CheckoutApp({ options, onComplete }: CheckoutAppProps) {
         <Text bold color="cyan">
           Checkout Branch: {options.branch}
         </Text>
-        <Text dimColor> • {repos.length} repos • parallel: {parallel}</Text>
+        <Text dimColor>
+          {" "}
+          • {repos.length} repos • parallel: {parallel}
+        </Text>
         {options.create && <Text dimColor> • create if missing</Text>}
       </Box>
 
       <Box flexDirection="column" marginBottom={1}>
-        {results.map(r => (
+        {results.map((r) => (
           <ResultRow key={r.name} result={r} />
         ))}
       </Box>
@@ -341,7 +361,8 @@ export function CheckoutApp({ options, onComplete }: CheckoutAppProps) {
       {phase === "cancelled" && (
         <Box marginTop={1}>
           <Text color="yellow">
-            Operation cancelled. {results.length} of {repos.length} repositories processed.
+            Operation cancelled. {results.length} of {repos.length} repositories
+            processed.
           </Text>
         </Box>
       )}
@@ -349,7 +370,8 @@ export function CheckoutApp({ options, onComplete }: CheckoutAppProps) {
       {notFound > 0 && !options.create && phase !== "cancelled" && (
         <Box marginTop={1}>
           <Text color="yellow">
-            Tip: Use --create (-b) to create the branch in repos where it doesn't exist.
+            Tip: Use --create (-b) to create the branch in repos where it
+            doesn't exist.
           </Text>
         </Box>
       )}

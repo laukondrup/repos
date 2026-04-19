@@ -63,8 +63,12 @@ export function ExcludeMenuApp({
   if (phase === "running") {
     return (
       <Box padding={1}>
-        <Text color="cyan"><Spinner type="dots" /></Text>
-        <Box marginLeft={1}><Text>Applying exclusions and syncing...</Text></Box>
+        <Text color="cyan">
+          <Spinner type="dots" />
+        </Text>
+        <Box marginLeft={1}>
+          <Text>Applying exclusions and syncing...</Text>
+        </Box>
       </Box>
     );
   }
@@ -79,8 +83,12 @@ export function ExcludeMenuApp({
 
   return (
     <Box flexDirection="column" padding={1}>
-      <Text bold color="green">✓ Exclusions updated</Text>
-      <Text>Added config exclusions: {summary?.addedConfigExclusions.length ?? 0}</Text>
+      <Text bold color="green">
+        ✓ Exclusions updated
+      </Text>
+      <Text>
+        Added config exclusions: {summary?.addedConfigExclusions.length ?? 0}
+      </Text>
       <Text>Repo targets matched: {summary?.repoMatched ?? 0}</Text>
       <Text>Repo flags updated: {summary?.repoUpdated ?? 0}</Text>
     </Box>
@@ -95,7 +103,14 @@ interface RepoRow {
   pendingExcluded: boolean;
 }
 
-type InteractivePhase = "loading" | "glob" | "loading_repos" | "repos" | "saving" | "done" | "error";
+type InteractivePhase =
+  | "loading"
+  | "glob"
+  | "loading_repos"
+  | "repos"
+  | "saving"
+  | "done"
+  | "error";
 
 interface ExcludeInteractiveAppProps {
   bypassOrg?: boolean;
@@ -152,7 +167,12 @@ export function ExcludeInteractiveApp({
       const resolved = await resolveCodeDir();
       const loadedRows: RepoRow[] = db.repos.map((record) => ({
         record,
-        excludedByGlob: matchesConfigExclusion(record.path, record.name, resolved, exclusions),
+        excludedByGlob: matchesConfigExclusion(
+          record.path,
+          record.name,
+          resolved,
+          exclusions,
+        ),
         pendingExcluded: record.excluded,
       }));
       setBasePath(bp);
@@ -190,97 +210,106 @@ export function ExcludeInteractiveApp({
   }, [rows]);
 
   // ── apply glob ────────────────────────────────────────────────────────────
-  const applyGlob = useCallback(async (pattern: string) => {
-    setPhase("saving");
-    try {
-      await applyExclusions({ repos: [], globs: [pattern], bypassOrg, org });
-      setAppliedGlob(pattern);
-      setPhase("done");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-      setPhase("error");
-    }
-  }, [bypassOrg, org]);
+  const applyGlob = useCallback(
+    async (pattern: string) => {
+      setPhase("saving");
+      try {
+        await applyExclusions({ repos: [], globs: [pattern], bypassOrg, org });
+        setAppliedGlob(pattern);
+        setPhase("done");
+      } catch (err) {
+        setError(err instanceof Error ? err.message : String(err));
+        setPhase("error");
+      }
+    },
+    [bypassOrg, org],
+  );
 
   // ── keyboard: glob phase ──────────────────────────────────────────────────
-  useInput((input, key) => {
-    if (phase !== "glob") return;
+  useInput(
+    (input, key) => {
+      if (phase !== "glob") return;
 
-    if (key.tab) {
-      loadRepos();
-      return;
-    }
-    if (key.escape) {
-      exit();
-      return;
-    }
-    if (key.return) {
-      if (globText.trim()) {
-        applyGlob(globText.trim());
-      } else {
+      if (key.tab) {
         loadRepos();
+        return;
       }
-      return;
-    }
-    if (key.backspace || key.delete) {
-      setGlobText((t) => t.slice(0, -1));
-      return;
-    }
-    if (input && !key.ctrl && !key.meta) {
-      setGlobText((t) => t + input);
-    }
-  }, { isActive: phase === "glob" });
+      if (key.escape) {
+        exit();
+        return;
+      }
+      if (key.return) {
+        if (globText.trim()) {
+          applyGlob(globText.trim());
+        } else {
+          loadRepos();
+        }
+        return;
+      }
+      if (key.backspace || key.delete) {
+        setGlobText((t) => t.slice(0, -1));
+        return;
+      }
+      if (input && !key.ctrl && !key.meta) {
+        setGlobText((t) => t + input);
+      }
+    },
+    { isActive: phase === "glob" },
+  );
 
   // ── keyboard: repos phase ─────────────────────────────────────────────────
-  useInput((input, key) => {
-    if (phase !== "repos") return;
+  useInput(
+    (input, key) => {
+      if (phase !== "repos") return;
 
-    if (key.escape || input === "g") {
-      setPhase("glob");
-      return;
-    }
-    if (input === "q") {
-      exit();
-      return;
-    }
-    if (input === "s" || key.return) {
-      saveRepos();
-      return;
-    }
+      if (key.escape || input === "g") {
+        setPhase("glob");
+        return;
+      }
+      if (input === "q") {
+        exit();
+        return;
+      }
+      if (input === "s" || key.return) {
+        saveRepos();
+        return;
+      }
 
-    const total = rows.length;
+      const total = rows.length;
 
-    if (key.upArrow || input === "k") {
-      setSelectedIndex((i) => {
-        const next = i > 0 ? i - 1 : total - 1;
-        setScrollOffset((off) => {
-          if (next < off) return next;
-          if (next >= off + viewportSize) return next - viewportSize + 1;
-          return off;
+      if (key.upArrow || input === "k") {
+        setSelectedIndex((i) => {
+          const next = i > 0 ? i - 1 : total - 1;
+          setScrollOffset((off) => {
+            if (next < off) return next;
+            if (next >= off + viewportSize) return next - viewportSize + 1;
+            return off;
+          });
+          return next;
         });
-        return next;
-      });
-    } else if (key.downArrow || input === "j") {
-      setSelectedIndex((i) => {
-        const next = i < total - 1 ? i + 1 : 0;
-        setScrollOffset((off) => {
-          if (next === 0) return 0;
-          if (next >= off + viewportSize) return next - viewportSize + 1;
-          if (next < off) return next;
-          return off;
+      } else if (key.downArrow || input === "j") {
+        setSelectedIndex((i) => {
+          const next = i < total - 1 ? i + 1 : 0;
+          setScrollOffset((off) => {
+            if (next === 0) return 0;
+            if (next >= off + viewportSize) return next - viewportSize + 1;
+            if (next < off) return next;
+            return off;
+          });
+          return next;
         });
-        return next;
-      });
-    } else if (input === " ") {
-      setRows((prev) =>
-        prev.map((row, i) =>
-          i === selectedIndex
-            ? { ...row, pendingExcluded: !row.pendingExcluded }
-            : row,
-        ),
-      );
-    }
-  }, { isActive: phase === "repos" });
+      } else if (input === " ") {
+        setRows((prev) =>
+          prev.map((row, i) =>
+            i === selectedIndex
+              ? { ...row, pendingExcluded: !row.pendingExcluded }
+              : row,
+          ),
+        );
+      }
+    },
+    { isActive: phase === "repos" },
+  );
 
   // ── done / error cleanup ──────────────────────────────────────────────────
   useEffect(() => {
@@ -295,8 +324,12 @@ export function ExcludeInteractiveApp({
   if (phase === "loading" || phase === "loading_repos") {
     return (
       <Box padding={1}>
-        <Text color="cyan"><Spinner type="dots" /></Text>
-        <Box marginLeft={1}><Text dimColor>Loading repositories...</Text></Box>
+        <Text color="cyan">
+          <Spinner type="dots" />
+        </Text>
+        <Box marginLeft={1}>
+          <Text dimColor>Loading repositories...</Text>
+        </Box>
       </Box>
     );
   }
@@ -304,8 +337,12 @@ export function ExcludeInteractiveApp({
   if (phase === "saving") {
     return (
       <Box padding={1}>
-        <Text color="cyan"><Spinner type="dots" /></Text>
-        <Box marginLeft={1}><Text dimColor>Saving exclusions...</Text></Box>
+        <Text color="cyan">
+          <Spinner type="dots" />
+        </Text>
+        <Box marginLeft={1}>
+          <Text dimColor>Saving exclusions...</Text>
+        </Box>
       </Box>
     );
   }
@@ -321,10 +358,22 @@ export function ExcludeInteractiveApp({
   if (phase === "done") {
     return (
       <Box flexDirection="column" padding={1}>
-        <Text bold color="green">✓ Exclusions updated</Text>
-        {appliedGlob && <Text>Glob pattern applied: <Text color="cyan">{appliedGlob}</Text></Text>}
-        {savedCount > 0 && <Text>Toggled {savedCount} repo{savedCount !== 1 ? "s" : ""}</Text>}
-        {!appliedGlob && savedCount === 0 && <Text dimColor>No changes made</Text>}
+        <Text bold color="green">
+          ✓ Exclusions updated
+        </Text>
+        {appliedGlob && (
+          <Text>
+            Glob pattern applied: <Text color="cyan">{appliedGlob}</Text>
+          </Text>
+        )}
+        {savedCount > 0 && (
+          <Text>
+            Toggled {savedCount} repo{savedCount !== 1 ? "s" : ""}
+          </Text>
+        )}
+        {!appliedGlob && savedCount === 0 && (
+          <Text dimColor>No changes made</Text>
+        )}
       </Box>
     );
   }
@@ -333,17 +382,22 @@ export function ExcludeInteractiveApp({
     return (
       <Box flexDirection="column" paddingX={1} paddingY={1}>
         <Box marginBottom={1}>
-          <Text bold color="cyan">exclude</Text>
-          <Text dimColor>  Exclude repositories</Text>
+          <Text bold color="cyan">
+            exclude
+          </Text>
+          <Text dimColor> Exclude repositories</Text>
         </Box>
-        <Text>Glob pattern <Text dimColor>(leave empty + Enter to select repos)</Text>:</Text>
+        <Text>
+          Glob pattern{" "}
+          <Text dimColor>(leave empty + Enter to select repos)</Text>:
+        </Text>
         <Box marginTop={1}>
           <Text color="cyan">❯ </Text>
           <Text>{globText}</Text>
           <Text inverse> </Text>
         </Box>
         <Box marginTop={1}>
-          <Text dimColor>Enter: apply glob  Tab: select repos  Esc: quit</Text>
+          <Text dimColor>Enter: apply glob Tab: select repos Esc: quit</Text>
         </Box>
       </Box>
     );
@@ -351,15 +405,22 @@ export function ExcludeInteractiveApp({
 
   if (phase === "repos") {
     const visibleRows = rows.slice(scrollOffset, scrollOffset + viewportSize);
-    const changedCount = rows.filter((r) => r.pendingExcluded !== r.record.excluded).length;
+    const changedCount = rows.filter(
+      (r) => r.pendingExcluded !== r.record.excluded,
+    ).length;
 
     return (
       <Box flexDirection="column" paddingX={1} paddingY={1}>
         <Box marginBottom={1}>
-          <Text bold color="cyan">exclude</Text>
-          <Text dimColor>  {rows.length} repos</Text>
+          <Text bold color="cyan">
+            exclude
+          </Text>
+          <Text dimColor> {rows.length} repos</Text>
           {changedCount > 0 && (
-            <Text color="yellow">  {changedCount} pending change{changedCount !== 1 ? "s" : ""}</Text>
+            <Text color="yellow">
+              {" "}
+              {changedCount} pending change{changedCount !== 1 ? "s" : ""}
+            </Text>
           )}
         </Box>
 
@@ -378,12 +439,14 @@ export function ExcludeInteractiveApp({
 
           return (
             <Box key={row.record.id}>
-              <Text color={isSelected ? "cyan" : undefined}>{isSelected ? "❯ " : "  "}</Text>
+              <Text color={isSelected ? "cyan" : undefined}>
+                {isSelected ? "❯ " : "  "}
+              </Text>
               <StateBadge state={state} />
               <Text color={isSelected ? "cyan" : undefined} bold={isSelected}>
                 {row.record.name}
               </Text>
-              <Text dimColor>  {relPath}</Text>
+              <Text dimColor> {relPath}</Text>
             </Box>
           );
         })}
@@ -391,17 +454,23 @@ export function ExcludeInteractiveApp({
         {rows.length > viewportSize && (
           <Box marginTop={1}>
             <Text dimColor>
-              {scrollOffset + 1}–{Math.min(scrollOffset + viewportSize, rows.length)} / {rows.length}
+              {scrollOffset + 1}–
+              {Math.min(scrollOffset + viewportSize, rows.length)} /{" "}
+              {rows.length}
             </Text>
           </Box>
         )}
 
         <Box marginTop={1}>
-          <Text dimColor>↑↓/jk navigate  Space toggle  s/Enter save  g glob mode  q quit</Text>
+          <Text dimColor>
+            ↑↓/jk navigate Space toggle s/Enter save g glob mode q quit
+          </Text>
         </Box>
         <Box>
           <Text dimColor>
-            <StateBadgeInline state="none" /> not excluded  <StateBadgeInline state="glob" /> glob pattern  <StateBadgeInline state="excluded" /> excluded
+            <StateBadgeInline state="none" /> not excluded{" "}
+            <StateBadgeInline state="glob" /> glob pattern{" "}
+            <StateBadgeInline state="excluded" /> excluded
           </Text>
         </Box>
       </Box>
@@ -427,10 +496,12 @@ function StateBadgeInline({ state }: { state: "none" | "glob" | "excluded" }) {
   return <Text dimColor>[ ]</Text>;
 }
 
-export async function runExcludeInteractive(options: {
-  bypassOrg?: boolean;
-  org?: string;
-} = {}): Promise<void> {
+export async function runExcludeInteractive(
+  options: {
+    bypassOrg?: boolean;
+    org?: string;
+  } = {},
+): Promise<void> {
   let unmountFn: (() => void) | null = null;
   const { waitUntilExit, unmount } = render(
     <ExcludeInteractiveApp

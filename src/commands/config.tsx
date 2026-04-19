@@ -51,7 +51,7 @@ export function ConfigApp({ options, onComplete }: ConfigAppProps) {
             setMessage(
               typeof value === "object"
                 ? JSON.stringify(value, null, 2)
-                : String(value)
+                : String(value),
             );
           }
           setIsDone(true);
@@ -62,13 +62,16 @@ export function ConfigApp({ options, onComplete }: ConfigAppProps) {
           let parsedValue: unknown = options.value;
           try {
             parsedValue = JSON.parse(options.value);
-          } catch {
-          }
+          } catch {}
 
-          const newConfig = setConfigValue(currentConfig, options.set, parsedValue);
+          const newConfig = setConfigValue(
+            currentConfig,
+            options.set,
+            parsedValue,
+          );
           const location = options.location || "global";
           await saveConfig(newConfig, location);
-          
+
           setConfig(newConfig);
           setConfigPath(getHomeConfigPath());
           setMessage(`Set ${options.set} = ${options.value}`);
@@ -103,9 +106,7 @@ export function ConfigApp({ options, onComplete }: ConfigAppProps) {
     return (
       <Box flexDirection="column" padding={1}>
         <Text color="green">{message}</Text>
-        {configPath && (
-          <Text dimColor>Config file: {configPath}</Text>
-        )}
+        {configPath && <Text dimColor>Config file: {configPath}</Text>}
         {onComplete && (
           <Box marginTop={1}>
             <Text dimColor>⌫/Esc Back</Text>

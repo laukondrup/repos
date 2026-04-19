@@ -3,7 +3,10 @@ import { $ } from "bun";
 import React from "react";
 import { render } from "ink-testing-library";
 import { CheckoutApp } from "./checkout.js";
-import { createTempRepoDir, createEmptyTempDir } from "../../tests/helpers/temp-repos.js";
+import {
+  createTempRepoDir,
+  createEmptyTempDir,
+} from "../../tests/helpers/temp-repos.js";
 import { waitFor } from "../../tests/helpers/ink-test-utils.js";
 
 describe("CheckoutApp", () => {
@@ -12,7 +15,10 @@ describe("CheckoutApp", () => {
       const { path, cleanup } = await createEmptyTempDir();
       try {
         const { lastFrame, unmount } = render(
-          <CheckoutApp options={{ basePath: path, branch: "main" }} onComplete={() => {}} />
+          <CheckoutApp
+            options={{ basePath: path, branch: "main" }}
+            onComplete={() => {}}
+          />,
         );
         expect(lastFrame()).toContain("Finding repositories");
         unmount();
@@ -25,9 +31,14 @@ describe("CheckoutApp", () => {
       const { path, cleanup } = await createEmptyTempDir();
       try {
         const { lastFrame, unmount } = render(
-          <CheckoutApp options={{ basePath: path, branch: "" }} onComplete={() => {}} />
+          <CheckoutApp
+            options={{ basePath: path, branch: "" }}
+            onComplete={() => {}}
+          />,
         );
-        await waitFor(() => lastFrame()?.includes("Branch name is required") ?? false);
+        await waitFor(
+          () => lastFrame()?.includes("Branch name is required") ?? false,
+        );
         expect(lastFrame()).toContain("Branch name is required");
         unmount();
       } finally {
@@ -39,9 +50,14 @@ describe("CheckoutApp", () => {
       const { path, cleanup } = await createEmptyTempDir();
       try {
         const { lastFrame, unmount } = render(
-          <CheckoutApp options={{ basePath: path, branch: "   " }} onComplete={() => {}} />
+          <CheckoutApp
+            options={{ basePath: path, branch: "   " }}
+            onComplete={() => {}}
+          />,
         );
-        await waitFor(() => lastFrame()?.includes("Branch name is required") ?? false);
+        await waitFor(
+          () => lastFrame()?.includes("Branch name is required") ?? false,
+        );
         expect(lastFrame()).toContain("Branch name is required");
         unmount();
       } finally {
@@ -53,7 +69,10 @@ describe("CheckoutApp", () => {
       const { path, cleanup } = await createEmptyTempDir();
       try {
         const { lastFrame, unmount } = render(
-          <CheckoutApp options={{ basePath: path, branch: "main" }} onComplete={() => {}} />
+          <CheckoutApp
+            options={{ basePath: path, branch: "main" }}
+            onComplete={() => {}}
+          />,
         );
         await waitFor(() => lastFrame()?.includes("No repositories") ?? false);
         expect(lastFrame()).toContain("No repositories found");
@@ -74,7 +93,10 @@ describe("CheckoutApp", () => {
 
       try {
         const { lastFrame, unmount } = render(
-          <CheckoutApp options={{ basePath, branch: "feature-branch" }} onComplete={() => {}} />
+          <CheckoutApp
+            options={{ basePath, branch: "feature-branch" }}
+            onComplete={() => {}}
+          />,
         );
 
         await waitFor(() => lastFrame()?.includes("Summary") ?? false, 5000);
@@ -95,7 +117,10 @@ describe("CheckoutApp", () => {
 
       try {
         const { lastFrame, unmount } = render(
-          <CheckoutApp options={{ basePath, branch: "new-feature", create: true }} onComplete={() => {}} />
+          <CheckoutApp
+            options={{ basePath, branch: "new-feature", create: true }}
+            onComplete={() => {}}
+          />,
         );
 
         await waitFor(() => lastFrame()?.includes("Summary") ?? false, 5000);
@@ -115,7 +140,10 @@ describe("CheckoutApp", () => {
 
       try {
         const { lastFrame, unmount } = render(
-          <CheckoutApp options={{ basePath, branch: "nonexistent-branch" }} onComplete={() => {}} />
+          <CheckoutApp
+            options={{ basePath, branch: "nonexistent-branch" }}
+            onComplete={() => {}}
+          />,
         );
 
         await waitFor(() => lastFrame()?.includes("Summary") ?? false, 5000);
@@ -140,7 +168,10 @@ describe("CheckoutApp", () => {
 
       try {
         const { lastFrame, unmount } = render(
-          <CheckoutApp options={{ basePath, branch: "feature-branch" }} onComplete={() => {}} />
+          <CheckoutApp
+            options={{ basePath, branch: "feature-branch" }}
+            onComplete={() => {}}
+          />,
         );
 
         await waitFor(() => lastFrame()?.includes("Summary") ?? false, 5000);
@@ -169,7 +200,10 @@ describe("CheckoutApp", () => {
 
       try {
         const { lastFrame, unmount } = render(
-          <CheckoutApp options={{ basePath, branch: "feature-branch", filter: "api-*" }} onComplete={() => {}} />
+          <CheckoutApp
+            options={{ basePath, branch: "feature-branch", filter: "api-*" }}
+            onComplete={() => {}}
+          />,
         );
 
         await waitFor(() => lastFrame()?.includes("Summary") ?? false, 5000);
@@ -202,7 +236,7 @@ describe("CheckoutApp", () => {
             onComplete={() => {
               onCompleteCalled = true;
             }}
-          />
+          />,
         );
 
         // Wait for completion first (Summary), then check for escape hint

@@ -206,7 +206,8 @@ export async function listUserRepos(
       {},
       opts.timeout,
     );
-    useAuthenticatedEndpoint = user.login.toLowerCase() === username.toLowerCase();
+    useAuthenticatedEndpoint =
+      user.login.toLowerCase() === username.toLowerCase();
   } catch {
     useAuthenticatedEndpoint = false;
   }
@@ -243,12 +244,18 @@ export async function listRepos(
   const ghConfig = opts.config || (await getGitHubConfig());
 
   try {
-    return await listOrgRepos(orgOrUser, { config: ghConfig, timeout: opts.timeout });
+    return await listOrgRepos(orgOrUser, {
+      config: ghConfig,
+      timeout: opts.timeout,
+    });
   } catch (error) {
     if (error instanceof TimeoutError || error instanceof ConnectionError) {
       throw error;
     }
-    return await listUserRepos(orgOrUser, { config: ghConfig, timeout: opts.timeout });
+    return await listUserRepos(orgOrUser, {
+      config: ghConfig,
+      timeout: opts.timeout,
+    });
   }
 }
 
@@ -316,8 +323,7 @@ export async function detectGitHubHost(): Promise<string | null> {
         if (httpsMatch) return httpsMatch[1];
       }
     }
-  } catch {
-  }
+  } catch {}
 
   return null;
 }

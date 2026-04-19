@@ -38,17 +38,23 @@ describe("getLineStyle", () => {
     });
 
     test("returns cyan for @@ with function context", () => {
-      expect(getLineStyle("@@ -10,7 +10,8 @@ function test()")).toEqual({ color: "cyan" });
+      expect(getLineStyle("@@ -10,7 +10,8 @@ function test()")).toEqual({
+        color: "cyan",
+      });
     });
   });
 
   describe("metadata lines", () => {
     test("returns dimColor for diff --git", () => {
-      expect(getLineStyle("diff --git a/file.txt b/file.txt")).toEqual({ dimColor: true });
+      expect(getLineStyle("diff --git a/file.txt b/file.txt")).toEqual({
+        dimColor: true,
+      });
     });
 
     test("returns dimColor for index line", () => {
-      expect(getLineStyle("index abc1234..def5678 100644")).toEqual({ dimColor: true });
+      expect(getLineStyle("index abc1234..def5678 100644")).toEqual({
+        dimColor: true,
+      });
     });
 
     test("returns dimColor for --- header", () => {
@@ -64,15 +70,21 @@ describe("getLineStyle", () => {
     });
 
     test("returns dimColor for deleted file mode", () => {
-      expect(getLineStyle("deleted file mode 100644")).toEqual({ dimColor: true });
+      expect(getLineStyle("deleted file mode 100644")).toEqual({
+        dimColor: true,
+      });
     });
 
     test("returns dimColor for rename from", () => {
-      expect(getLineStyle("rename from old-name.txt")).toEqual({ dimColor: true });
+      expect(getLineStyle("rename from old-name.txt")).toEqual({
+        dimColor: true,
+      });
     });
 
     test("returns dimColor for rename to", () => {
-      expect(getLineStyle("rename to new-name.txt")).toEqual({ dimColor: true });
+      expect(getLineStyle("rename to new-name.txt")).toEqual({
+        dimColor: true,
+      });
     });
 
     test("returns dimColor for similarity index", () => {
@@ -90,7 +102,9 @@ describe("getLineStyle", () => {
 
   describe("binary files", () => {
     test("returns magenta for binary files message", () => {
-      expect(getLineStyle("Binary files a/image.png and b/image.png differ")).toEqual({ color: "magenta" });
+      expect(
+        getLineStyle("Binary files a/image.png and b/image.png differ"),
+      ).toEqual({ color: "magenta" });
     });
   });
 
@@ -159,9 +173,7 @@ describe("DiffHighlight", () => {
     });
 
     test("renders hunk headers", () => {
-      const { lastFrame } = render(
-        <DiffHighlight content="@@ -1,5 +1,6 @@" />
-      );
+      const { lastFrame } = render(<DiffHighlight content="@@ -1,5 +1,6 @@" />);
       expect(lastFrame()).toContain("@@ -1,5 +1,6 @@");
     });
 
@@ -277,7 +289,9 @@ rename to new.txt`;
 
     test("does not truncate when maxLines is 0", () => {
       const content = "line1\nline2\nline3\nline4\nline5";
-      const { lastFrame } = render(<DiffHighlight content={content} maxLines={0} />);
+      const { lastFrame } = render(
+        <DiffHighlight content={content} maxLines={0} />,
+      );
       const frame = lastFrame()!;
       expect(frame).toContain("line1");
       expect(frame).toContain("line5");
@@ -286,7 +300,9 @@ rename to new.txt`;
 
     test("does not truncate when content is within limit", () => {
       const content = "line1\nline2\nline3";
-      const { lastFrame } = render(<DiffHighlight content={content} maxLines={5} />);
+      const { lastFrame } = render(
+        <DiffHighlight content={content} maxLines={5} />,
+      );
       const frame = lastFrame()!;
       expect(frame).toContain("line1");
       expect(frame).toContain("line3");
@@ -295,7 +311,9 @@ rename to new.txt`;
 
     test("does not truncate when content equals limit", () => {
       const content = "line1\nline2\nline3";
-      const { lastFrame } = render(<DiffHighlight content={content} maxLines={3} />);
+      const { lastFrame } = render(
+        <DiffHighlight content={content} maxLines={3} />,
+      );
       const frame = lastFrame()!;
       expect(frame).toContain("line1");
       expect(frame).toContain("line3");
@@ -304,7 +322,9 @@ rename to new.txt`;
 
     test("truncates when content exceeds limit", () => {
       const content = "line1\nline2\nline3\nline4\nline5";
-      const { lastFrame } = render(<DiffHighlight content={content} maxLines={3} />);
+      const { lastFrame } = render(
+        <DiffHighlight content={content} maxLines={3} />,
+      );
       const frame = lastFrame()!;
       expect(frame).toContain("line1");
       expect(frame).toContain("line2");
@@ -315,7 +335,9 @@ rename to new.txt`;
 
     test("shows truncation message with shown and total count", () => {
       const content = "line1\nline2\nline3\nline4\nline5";
-      const { lastFrame } = render(<DiffHighlight content={content} maxLines={3} />);
+      const { lastFrame } = render(
+        <DiffHighlight content={content} maxLines={3} />,
+      );
       const frame = lastFrame()!;
       expect(frame).toContain("showing 3 of 5 lines");
       expect(frame).toContain("--stat");
@@ -323,7 +345,9 @@ rename to new.txt`;
 
     test("truncates at maxLines=1", () => {
       const content = "line1\nline2\nline3";
-      const { lastFrame } = render(<DiffHighlight content={content} maxLines={1} />);
+      const { lastFrame } = render(
+        <DiffHighlight content={content} maxLines={1} />,
+      );
       const frame = lastFrame()!;
       expect(frame).toContain("line1");
       expect(frame).not.toContain("line2");
@@ -333,7 +357,9 @@ rename to new.txt`;
     test("truncates large diff and shows count", () => {
       const lines = Array.from({ length: 100 }, (_, i) => `+line${i + 1}`);
       const content = lines.join("\n");
-      const { lastFrame } = render(<DiffHighlight content={content} maxLines={10} />);
+      const { lastFrame } = render(
+        <DiffHighlight content={content} maxLines={10} />,
+      );
       const frame = lastFrame()!;
       expect(frame).toContain("+line1");
       expect(frame).toContain("+line10");

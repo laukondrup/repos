@@ -28,7 +28,10 @@ export function matchesConfigExclusion(
 
     if (normalized.startsWith("/")) {
       if (isGlobPattern(normalized)) {
-        const relFromRoot = relative(basePath, resolve(normalized)).replace(/\\/g, "/");
+        const relFromRoot = relative(basePath, resolve(normalized)).replace(
+          /\\/g,
+          "/",
+        );
         if (!relFromRoot.startsWith("..")) {
           const regex = globToRegex(relFromRoot);
           return regex.test(relPath);
@@ -39,7 +42,10 @@ export function matchesConfigExclusion(
 
     if (isGlobPattern(normalized)) {
       const regex = globToRegex(normalized.replace(/^\.?\//, ""));
-      return regex.test(relPath) || (!normalized.includes("/") && regex.test(repoName));
+      return (
+        regex.test(relPath) ||
+        (!normalized.includes("/") && regex.test(repoName))
+      );
     }
 
     const trimmed = normalized.replace(/^\.?\//, "").replace(/\/+$/, "");

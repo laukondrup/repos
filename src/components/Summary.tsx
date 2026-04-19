@@ -20,9 +20,13 @@ export function SummaryRow({
   return (
     <Box>
       <Box width={labelWidth}>
-        <Text color={color} dimColor={dimColor}>{label}:</Text>
+        <Text color={color} dimColor={dimColor}>
+          {label}:
+        </Text>
       </Box>
-      <Text color={color} dimColor={dimColor}>{value}</Text>
+      <Text color={color} dimColor={dimColor}>
+        {value}
+      </Text>
     </Box>
   );
 }
@@ -33,7 +37,11 @@ interface SummaryProps {
   width?: number;
 }
 
-export function Summary({ title = "Summary", children, width = 50 }: SummaryProps) {
+export function Summary({
+  title = "Summary",
+  children,
+  width = 50,
+}: SummaryProps) {
   return (
     <Box flexDirection="column">
       <Divider width={width} />
@@ -58,4 +66,3 @@ export function ReturnHint({ visible = true }: ReturnHintProps) {
     </Box>
   );
 }
-

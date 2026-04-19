@@ -15,8 +15,7 @@ async function loadConfigFile(path: string): Promise<ReposConfig | null> {
       const content = await file.text();
       return JSON.parse(content) as ReposConfig;
     }
-  } catch {
-  }
+  } catch {}
   return null;
 }
 
@@ -46,7 +45,7 @@ export async function loadConfig(basePath?: string): Promise<ReposConfig> {
 
 function mergeConfig(
   defaults: Required<ReposConfig>,
-  user: ReposConfig
+  user: ReposConfig,
 ): ReposConfig {
   const exclusions = user.exclusions ?? defaults.exclusions;
   return {
@@ -68,7 +67,7 @@ function mergeConfig(
 export async function saveConfig(
   config: ReposConfig,
   location: "cwd" | "home" | "global" = "global",
-  basePath?: string
+  basePath?: string,
 ): Promise<void> {
   const path =
     location === "cwd" ? getCwdConfigPath(basePath) : getHomeConfigPath();
@@ -78,7 +77,7 @@ export async function saveConfig(
 
 export async function configExists(
   location: "cwd" | "home" | "global" | "any" = "any",
-  basePath?: string
+  basePath?: string,
 ): Promise<boolean> {
   if (basePath && (location === "cwd" || location === "any")) {
     const cwdExists = await Bun.file(getCwdConfigPath(basePath)).exists();
@@ -147,20 +146,19 @@ export async function loadGhCliConfig(): Promise<GhCliConfig | null> {
       const content = await file.text();
       return parseGhHostsYaml(content);
     }
-  } catch {
-  }
+  } catch {}
   return null;
 }
 
 export async function isGhCliConfigured(
-  host: string = "github.com"
+  host: string = "github.com",
 ): Promise<boolean> {
   const token = await getGhCliToken(host);
   return token !== null;
 }
 
 export async function getGhCliToken(
-  host: string = "github.com"
+  host: string = "github.com",
 ): Promise<string | null> {
   try {
     const result = await $`gh auth token --hostname ${host}`.quiet();
@@ -170,8 +168,7 @@ export async function getGhCliToken(
         return token;
       }
     }
-  } catch {
-  }
+  } catch {}
 
   const ghConfig = await loadGhCliConfig();
   if (ghConfig && host in ghConfig.hosts) {
@@ -187,15 +184,21 @@ export async function getGhCliHosts(): Promise<string[]> {
     const hosts: string[] = [];
     for (const line of output.split("\n")) {
       const trimmed = line.trim();
-      if (trimmed && !line.startsWith(" ") && !line.startsWith("\t") && !trimmed.startsWith("✓") && !trimmed.startsWith("X") && !trimmed.startsWith("-")) {
+      if (
+        trimmed &&
+        !line.startsWith(" ") &&
+        !line.startsWith("\t") &&
+        !trimmed.startsWith("✓") &&
+        !trimmed.startsWith("X") &&
+        !trimmed.startsWith("-")
+      ) {
         hosts.push(trimmed);
       }
     }
     if (hosts.length > 0) {
       return hosts;
     }
-  } catch {
-  }
+  } catch {}
 
   const ghConfig = await loadGhCliConfig();
   if (ghConfig) {
@@ -204,10 +207,7 @@ export async function getGhCliHosts(): Promise<string[]> {
   return [];
 }
 
-export function getConfigValue(
-  config: ReposConfig,
-  keyPath: string
-): unknown {
+export function getConfigValue(config: ReposConfig, keyPath: string): unknown {
   const keys = keyPath.split(".");
   let value: unknown = config;
 
@@ -225,7 +225,7 @@ export function getConfigValue(
 export function setConfigValue(
   config: ReposConfig,
   keyPath: string,
-  value: unknown
+  value: unknown,
 ): ReposConfig {
   const keys = keyPath.split(".");
   const result = { ...config };

@@ -3,17 +3,9 @@ import { render, Box, Text, useInput } from "ink";
 import SelectInput from "ink-select-input";
 import TextInput from "ink-text-input";
 import Spinner from "ink-spinner";
-import {
-  saveConfig,
-  configExists,
-  getHomeConfigPath,
-} from "../lib/config.js";
+import { saveConfig, configExists, getHomeConfigPath } from "../lib/config.js";
 import { syncRepoDb } from "../lib/repo-db.js";
-import {
-  checkGhCli,
-  detectGitHubHost,
-  getApiUrl,
-} from "../lib/github.js";
+import { checkGhCli, detectGitHubHost, getApiUrl } from "../lib/github.js";
 import type { ReposConfig, GitHubConfig } from "../types.js";
 
 type Step =
@@ -69,7 +61,7 @@ export function InitApp({ force, basePath, onComplete }: InitAppProps) {
       const configLocation = basePath ? "cwd" : "global";
       if (!force && (await configExists(configLocation, basePath))) {
         setError(
-          "Configuration already exists. Use --force to overwrite or 'repos config' to view/edit."
+          "Configuration already exists. Use --force to overwrite or 'repos config' to view/edit.",
         );
         setStep("done");
         return;
@@ -246,7 +238,9 @@ export function InitApp({ force, basePath, onComplete }: InitAppProps) {
           repos init - Setup Wizard
         </Text>
         <Box marginTop={1} flexDirection="column">
-          <Text>Enter GitHub Enterprise host (e.g., github.mycompany.com):</Text>
+          <Text>
+            Enter GitHub Enterprise host (e.g., github.mycompany.com):
+          </Text>
           <Box marginTop={1}>
             <Text color="cyan">{">"} </Text>
             <TextInput
@@ -262,9 +256,7 @@ export function InitApp({ force, basePath, onComplete }: InitAppProps) {
           </Box>
         </Box>
         <Box marginTop={1}>
-          <Text dimColor>
-            Enter Continue{onComplete && " • ⌫/Esc Back"}
-          </Text>
+          <Text dimColor>Enter Continue{onComplete && " • ⌫/Esc Back"}</Text>
         </Box>
       </Box>
     );
@@ -297,9 +289,7 @@ export function InitApp({ force, basePath, onComplete }: InitAppProps) {
           </Box>
         </Box>
         <Box marginTop={1}>
-          <Text dimColor>
-            Enter Continue{onComplete && " • ⌫/Esc Back"}
-          </Text>
+          <Text dimColor>Enter Continue{onComplete && " • ⌫/Esc Back"}</Text>
         </Box>
       </Box>
     );
@@ -359,7 +349,9 @@ export function InitApp({ force, basePath, onComplete }: InitAppProps) {
           <Text dimColor>Days: {days}</Text>
         </Box>
         <Box marginTop={1} flexDirection="column">
-          <Text>Code directory (commands run against repos in this directory):</Text>
+          <Text>
+            Code directory (commands run against repos in this directory):
+          </Text>
           <Box marginTop={1}>
             <Text color="cyan">{">"} </Text>
             <TextInput
