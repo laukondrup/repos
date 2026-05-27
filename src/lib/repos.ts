@@ -153,6 +153,22 @@ function isIgnoredByGitignore(
   return ignored;
 }
 
+async function isDirectoryLike(
+  entryPath: string,
+  entry: { isDirectory(): boolean; isSymbolicLink(): boolean },
+): Promise<boolean> {
+  if (entry.isDirectory()) return true;
+  if (entry.isSymbolicLink()) {
+    try {
+      const s = await stat(entryPath);
+      return s.isDirectory();
+    } catch {
+      return false;
+    }
+  }
+  return false;
+}
+
 export async function findRepos(
   basePath: string = process.cwd(),
 ): Promise<string[]> {
@@ -162,10 +178,10 @@ export async function findRepos(
     const entries = await readdir(basePath, { withFileTypes: true });
 
     for (const entry of entries) {
-      if (!entry.isDirectory()) continue;
       if (entry.name.startsWith(".")) continue;
 
       const fullPath = join(basePath, entry.name);
+      if (!(await isDirectoryLike(fullPath, entry))) continue;
       if (await hasGitMetadata(fullPath)) {
         repos.push(fullPath);
       }
@@ -229,10 +245,10 @@ export async function findReposRecursive(
     if (insideRepo && repoLocalDepth >= maxSubrepoScanDepth) return;
 
     for (const entry of entries) {
-      if (!entry.isDirectory()) continue;
       if (entry.name === ".git") continue;
 
       const childPath = join(currentPath, entry.name);
+      if (!(await isDirectoryLike(childPath, entry))) continue;
       const childRelPath = currentRelPath
         ? `${currentRelPath}/${entry.name}`
         : entry.name;
