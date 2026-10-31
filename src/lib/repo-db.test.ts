@@ -579,7 +579,9 @@ describe("repo-db labels", () => {
         configBasePath: basePath,
         bypassOrg: true,
       });
-      expect(afterScoped.find((item) => item.name === "alpha")?.labels, []);
+      expect(afterScoped.find((item) => item.name === "alpha")?.labels).toEqual(
+        [],
+      );
       expect(
         afterScoped.find((item) => item.name === "beta")?.labels,
       ).toContain("scoped");
